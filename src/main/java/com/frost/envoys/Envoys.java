@@ -10,6 +10,7 @@ import com.frost.envoys.init.ModEntities;
 import com.frost.envoys.init.ModItems;
 import com.frost.envoys.init.ModMenus;
 import com.frost.envoys.npc.entity.BaseNPC;
+import com.frost.envoys.quest.QuestKillTracker;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -43,6 +44,7 @@ public class Envoys {
         }
 
         NeoForge.EVENT_BUS.register(ServerEvents.class);
+        NeoForge.EVENT_BUS.register(QuestKillTracker.class);
 
         ActionEngineManager.initialize();
     }

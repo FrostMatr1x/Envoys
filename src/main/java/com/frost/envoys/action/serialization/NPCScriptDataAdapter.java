@@ -9,6 +9,8 @@ import com.frost.envoys.action.event.NpcKickEvent;
 import com.frost.envoys.action.event.NpcRangeEvent;
 import com.frost.envoys.action.event.NpcUpdateEvent;
 import com.frost.envoys.action.model.EntityActionData;
+import com.frost.envoys.Envoys;
+import com.frost.envoys.quest.QuestDefinition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
@@ -19,6 +21,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class NPCScriptDataAdapter implements JsonSerializer<NPCScriptData>, JsonDeserializer<NPCScriptData> {
@@ -48,6 +52,7 @@ public class NPCScriptDataAdapter implements JsonSerializer<NPCScriptData>, Json
             }
         }
         root.add("events", events);
+        root.add("quests", SUB_GSON.toJsonTree(src.quests != null ? src.quests : List.of()));
         return root;
     }
 
@@ -67,6 +72,24 @@ public class NPCScriptDataAdapter implements JsonSerializer<NPCScriptData>, Json
             if (passport != null) {
                 data.passport = passport;
             }
+        }
+
+        if (root.has("quests") && root.get("quests").isJsonArray()) {
+            List<QuestDefinition> quests = new ArrayList<>();
+            for (JsonElement element : root.getAsJsonArray("quests")) {
+                if (element == null || !element.isJsonObject()) {
+                    continue;
+                }
+                try {
+                    QuestDefinition quest = SUB_GSON.fromJson(element, QuestDefinition.class);
+                    if (quest != null) {
+                        quests.add(quest);
+                    }
+                } catch (RuntimeException e) {
+                    Envoys.LOGGER.warn("[Envoys] Skipping unreadable quest entry in NPC script: {}", e.getMessage());
+                }
+            }
+            data.quests = quests;
         }
 
         JsonObject eventsObj = root.has("events") && root.get("events").isJsonObject()

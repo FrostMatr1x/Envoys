@@ -2,22 +2,17 @@ package com.frost.envoys.action.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class ActionQuestGive extends AbstractActionData {
+public class ActionQuestMarkCompleted extends AbstractActionData {
 
     @SerializedName("quest_target")
     public String questTarget = "";
 
-    @Deprecated
-    public String questText = "";
-    @Deprecated
-    public String questType = "";
-
-    public ActionQuestGive(String id) {
+    public ActionQuestMarkCompleted(String id) {
         super(id);
     }
 
     @Override
     public String getType() {
-        return "quest_give";
+        return "quest_mark_completed";
     }
 }

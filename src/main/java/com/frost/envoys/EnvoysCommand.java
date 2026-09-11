@@ -6,12 +6,15 @@ import com.frost.envoys.action.ScriptRunner;
 import com.frost.envoys.config.NPCConfigManager;
 import com.frost.envoys.init.ModEntities;
 import com.frost.envoys.npc.entity.BaseNPC;
+import com.frost.envoys.quest.QuestDefinition;
+import com.frost.envoys.quest.QuestIndex;
 import com.frost.envoys.skin.model.SkinIndexData;
 import com.frost.envoys.skin.model.SkinIndexEntry;
 import com.frost.envoys.skin.service.SkinLocalService;
 import com.frost.envoys.skin.service.SkinSyncService;
 import com.frost.envoys.util.PathManager;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
@@ -51,6 +54,16 @@ public class EnvoysCommand {
                 .then(Commands.literal("tp")
                         .then(Commands.argument("npc", UuidArgument.uuid())
                                 .executes(ctx -> teleportToNpc(ctx.getSource(), UuidArgument.getUuid(ctx, "npc"))))
+                )
+                .then(Commands.literal("quest")
+                        .then(Commands.literal("list")
+                                .executes(ctx -> questList(ctx.getSource())))
+                        .then(Commands.literal("find")
+                                .then(Commands.argument("query", StringArgumentType.greedyString())
+                                        .executes(ctx -> questFind(ctx.getSource(), StringArgumentType.getString(ctx, "query")))))
+                        .then(Commands.literal("delete")
+                                .then(Commands.argument("uuid", StringArgumentType.word())
+                                        .executes(ctx -> questDelete(ctx.getSource(), StringArgumentType.getString(ctx, "uuid")))))
                 )
                 .then(Commands.literal("save")
                         .executes(ctx -> saveNpcConfigs(ctx.getSource())))
@@ -289,6 +302,101 @@ public class EnvoysCommand {
         ), true);
 
         return count;
+    }
+
+    private static int questList(CommandSourceStack source) {
+        List<QuestIndex.Entry> entries = QuestIndex.entries();
+        if (entries.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("§e[Envoys] Квесты не найдены."), false);
+            return 0;
+        }
+
+        for (QuestIndex.Entry entry : entries) {
+            QuestDefinition quest = entry.quest();
+            String line = String.format("[%s] | %s -> \"%s\" (NPC: %s)",
+                    safe(quest.questUuid), safe(quest.localId), safe(quest.title), entry.manager().npcUUID);
+            source.sendSuccess(() -> Component.literal(line), false);
+        }
+        source.sendSuccess(() -> Component.literal("§a[Envoys] Всего квестов: " + entries.size()), false);
+        return entries.size();
+    }
+
+    private static int questFind(CommandSourceStack source, String rawQuery) {
+        String query = rawQuery == null ? "" : rawQuery.trim();
+        if (query.isEmpty()) {
+            source.sendFailure(Component.literal("§c[Envoys] Укажите запрос."));
+            return 0;
+        }
+
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        int found = 0;
+        for (QuestIndex.Entry entry : QuestIndex.entries()) {
+            QuestDefinition quest = entry.quest();
+            boolean localMatch = quest.localId != null && quest.localId.equals(query);
+            boolean titleMatch = quest.title != null && quest.title.toLowerCase(Locale.ROOT).contains(lowerQuery);
+            if (!localMatch && !titleMatch) {
+                continue;
+            }
+            found++;
+            String line = String.format("%s | %s | \"%s\" | NPC: %s",
+                    safe(quest.questUuid), safe(quest.localId), safe(quest.title), entry.manager().npcUUID);
+            source.sendSuccess(() -> Component.literal(line), false);
+        }
+
+        if (found == 0) {
+            source.sendSuccess(() -> Component.literal("§e[Envoys] Ничего не найдено."), false);
+        } else {
+            final int total = found;
+            source.sendSuccess(() -> Component.literal("§a[Envoys] Найдено: " + total), false);
+        }
+        return found;
+    }
+
+    private static int questDelete(CommandSourceStack source, String rawUuid) {
+        String uuid = rawUuid == null ? "" : rawUuid.trim();
+        if (uuid.isEmpty()) {
+            source.sendFailure(Component.literal("§c[Envoys] Укажите quest_uuid."));
+            return 0;
+        }
+
+        Set<NPCInteractManager> changed = new LinkedHashSet<>();
+        int removed = 0;
+        for (QuestIndex.Entry entry : QuestIndex.entries()) {
+            if (uuid.equals(entry.quest().questUuid) && entry.manager().quests.remove(entry.quest())) {
+                removed++;
+                changed.add(entry.manager());
+            }
+        }
+
+        for (NPCInteractManager manager : changed) {
+            NPCConfigManager.save(manager);
+        }
+        if (removed > 0) {
+            QuestIndex.invalidate();
+        }
+
+        final int total = removed;
+        if (total == 0) {
+            source.sendSuccess(() -> Component.literal("§e[Envoys] Квест " + safe(uuid) + " не найден."), false);
+        } else {
+            source.sendSuccess(() -> Component.literal("§a[Envoys] Удалено квестов: " + total), true);
+        }
+        return total;
+    }
+
+    private static String safe(String value) {
+        if (value == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '\u00a7' || c < 0x20) {
+                continue;
+            }
+            sb.append(c);
+        }
+        return sb.toString();
     }
 
     private static void updateNpcFromPassport(BaseNPC npc, com.frost.envoys.action.NPCPassportData passport) {

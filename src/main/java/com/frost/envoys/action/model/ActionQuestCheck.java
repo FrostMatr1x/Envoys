@@ -1,7 +1,12 @@
 package com.frost.envoys.action.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class ActionQuestCheck extends AbstractActionData {
-    // [TODO] — признак выполнения хранится в runtime-слое (флаг в ActionContext)
+
+    @SerializedName("quest_target")
+    public String questTarget = "";
+
     public String actionIfCompleted;
     public String actionIfNotCompleted;
 
