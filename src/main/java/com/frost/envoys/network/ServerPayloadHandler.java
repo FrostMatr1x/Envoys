@@ -47,6 +47,14 @@ public class ServerPayloadHandler {
 
                 boolean isOp = player.hasPermissions(4);
 
+                ServerLevel level = player.serverLevel();
+                Entity target = level.getEntity(payload.npcId());
+                if (target != null && player.distanceToSqr(target) > 64.0D) {
+                    Envoys.LOGGER.warn("[Envoys] Player {} tried to edit NPC script {} from too far away!",
+                            player.getName().getString(), payload.npcId());
+                    return;
+                }
+
                 NPCInteractManager manager = NPCInteractManager.byUUID(payload.npcId())
                         .orElseGet(() -> new NPCInteractManager(payload.npcId()));
 
@@ -142,6 +150,10 @@ public class ServerPayloadHandler {
             }
 
             NPCInteractManager manager = NPCInteractManager.byUUID(payload.npcUuid()).orElse(null);
+            if (manager == null) {
+                Envoys.LOGGER.warn("[Envoys] Passport save for unknown NPC {} ignored", payload.npcUuid());
+                return;
+            }
 
             boolean isOp = player.hasPermissions(4);
             NPCPassportData p = manager.passport;

@@ -5,12 +5,20 @@ import com.frost.envoys.action.handler.CommandActionHandler;
 import com.frost.envoys.action.handler.DelayActionHandler;
 import com.frost.envoys.action.handler.DialogActionHandler;
 import com.frost.envoys.action.handler.MoveActionHandler;
+import com.frost.envoys.action.handler.QuestAdvanceStepActionHandler;
+import com.frost.envoys.action.handler.QuestCheckActionHandler;
+import com.frost.envoys.action.handler.QuestGiveActionHandler;
+import com.frost.envoys.action.handler.QuestMarkCompletedActionHandler;
 import com.frost.envoys.action.handler.TradeActionHandler;
 import com.frost.envoys.action.model.ActionChat;
 import com.frost.envoys.action.model.ActionCommand;
 import com.frost.envoys.action.model.ActionDelay;
 import com.frost.envoys.action.model.ActionDialog;
 import com.frost.envoys.action.model.ActionMove;
+import com.frost.envoys.action.model.ActionQuestAdvanceStep;
+import com.frost.envoys.action.model.ActionQuestCheck;
+import com.frost.envoys.action.model.ActionQuestGive;
+import com.frost.envoys.action.model.ActionQuestMarkCompleted;
 import com.frost.envoys.action.model.ActionTrade;
 
 public class ActionEngineManager {
@@ -26,6 +34,10 @@ public class ActionEngineManager {
         instance.registry().register(ActionDialog.class, new DialogActionHandler());
         instance.registry().register(ActionTrade.class, new TradeActionHandler());
         instance.registry().register(ActionCommand.class, new CommandActionHandler());
+        instance.registry().register(ActionQuestGive.class, new QuestGiveActionHandler());
+        instance.registry().register(ActionQuestCheck.class, new QuestCheckActionHandler());
+        instance.registry().register(ActionQuestAdvanceStep.class, new QuestAdvanceStepActionHandler());
+        instance.registry().register(ActionQuestMarkCompleted.class, new QuestMarkCompletedActionHandler());
     }
 
     public static NpcActionEngine getInstance() {

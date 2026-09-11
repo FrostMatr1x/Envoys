@@ -16,6 +16,7 @@ import com.frost.envoys.Envoys;
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.NPCScriptData;
 import com.frost.envoys.action.serialization.EntityActionAdapter;
+import com.frost.envoys.quest.QuestIndex;
 import com.google.gson.Gson;
 
 import net.neoforged.fml.loading.FMLPaths;
@@ -41,6 +42,7 @@ public class NPCConfigManager {
 
     public static void save(NPCInteractManager script) {
         NPCScriptData data = NPCScriptData.fromManager(script);
+        data.quests = NPCScriptData.sanitizeQuests(data.quests, script);
 
         Path file = getNpcFile(script.npcUUID);
         try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
@@ -48,6 +50,7 @@ public class NPCConfigManager {
         } catch (IOException e) {
             Envoys.LOGGER.error("[Envoys] Failed to save NPC script {}", script.npcUUID, e);
         }
+        QuestIndex.invalidate();
     }
 
     public static void saveAll() {
@@ -75,6 +78,9 @@ public class NPCConfigManager {
         } catch (IOException e) {
             Envoys.LOGGER.error("[Envoys] Failed to load NPC script {}", uuid, e);
             return Optional.empty();
+        } catch (RuntimeException e) {
+            Envoys.LOGGER.error("[Envoys] Skipping unreadable NPC script {}", uuid, e);
+            return Optional.empty();
         }
     }
 
@@ -89,13 +95,14 @@ public class NPCConfigManager {
                      String name = p.getFileName().toString().replace(".json", "");
                      try {
                          load(UUID.fromString(name));
-                     } catch (IllegalArgumentException e) {
+                     } catch (RuntimeException e) {
                          Envoys.LOGGER.warn("[Envoys] Skipping invalid NPC config file: {}", p);
                      }
                  });
         } catch (IOException e) {
             Envoys.LOGGER.error("[Envoys] Failed to list npc config dir", e);
         }
+        QuestIndex.invalidate();
         Envoys.LOGGER.info("[Envoys] Loaded {} NPC scripts", NPCInteractManager.SCRIPTS.size());
     }
 
@@ -106,6 +113,7 @@ public class NPCConfigManager {
         } catch (IOException e) {
             Envoys.LOGGER.error("[Envoys] Failed to delete NPC config {}", uuid, e);
         }
+        QuestIndex.invalidate();
     }
 
     public static List<UUID> getAllSavedUuids() {
