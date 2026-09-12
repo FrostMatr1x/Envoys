@@ -38,10 +38,7 @@ public final class QuestKillTracker {
 
         List<QuestDefinition> candidates = QuestIndex.killCandidates(killedType.toString());
         for (QuestDefinition quest : candidates) {
-            if (!PlayerQuestTags.hasActive(player, quest.questUuid)) {
-                continue;
-            }
-            PlayerQuestTags.addKill(player, quest);
+            PlayerQuestManager.addKill(player, quest);
         }
     }
 }

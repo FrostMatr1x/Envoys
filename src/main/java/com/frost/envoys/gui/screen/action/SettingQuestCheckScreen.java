@@ -1,6 +1,8 @@
 package com.frost.envoys.gui.screen.action;
 
+import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.model.ActionQuestCheck;
+import com.frost.envoys.gui.screen.QuestPickerScreen;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,20 +16,26 @@ public class SettingQuestCheckScreen extends Screen {
 
     private static final String COMPLETED_TOOLTIP = "ID действия, выполняемого, если квест выполнен (ветка «выполнено»). Пусто — конец цепочки. Формат: id_N";
     private static final String NOT_COMPLETED_TOOLTIP = "ID действия, выполняемого, если квест НЕ выполнен (ветка «не выполнено»). Пусто — конец цепочки. Формат: id_N";
+    private static final String TARGET_TOOLTIP = "local_id или quest_uuid; резолвится в текущем NPC, затем глобально по uuid";
 
     private final Screen parentScreen;
     private final ActionQuestCheck action;
+    private final NPCInteractManager manager;
 
+    private EditBox questTargetEditBox;
     private EditBox actionIfCompletedEditBox;
     private EditBox actionIfNotCompletedEditBox;
 
+    private String questTarget = "";
     private String actionIfCompleted = "";
     private String actionIfNotCompleted = "";
 
-    public SettingQuestCheckScreen(Screen parentScreen, ActionQuestCheck action) {
+    public SettingQuestCheckScreen(Screen parentScreen, ActionQuestCheck action, NPCInteractManager manager) {
         super(Component.literal("Настройка проверки квеста"));
         this.parentScreen = parentScreen;
         this.action = action;
+        this.manager = manager;
+        this.questTarget = action.questTarget != null ? action.questTarget : "";
         this.actionIfCompleted = action.actionIfCompleted != null ? action.actionIfCompleted : "";
         this.actionIfNotCompleted = action.actionIfNotCompleted != null ? action.actionIfNotCompleted : "";
     }
@@ -37,15 +45,31 @@ public class SettingQuestCheckScreen extends Screen {
         super.init();
 
         int centerX = this.width / 2;
-        int startY = this.height / 2 - 25;
+        int startY = this.height / 2 - 55;
 
-        this.actionIfCompletedEditBox = new EditBox(this.font, centerX + 10, startY - 2, 200, 20, Component.literal("actionIfCompleted"));
+        this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 200, 20, Component.literal("questTarget"));
+        this.questTargetEditBox.setValue(this.questTarget);
+        this.questTargetEditBox.setResponder(text -> this.questTarget = text);
+        this.questTargetEditBox.setTooltip(Tooltip.create(Component.literal(TARGET_TOOLTIP)));
+        this.addRenderableWidget(this.questTargetEditBox);
+
+        this.addRenderableWidget(Button.builder(
+            Component.literal("Выбрать"),
+            button -> Minecraft.getInstance().setScreen(new QuestPickerScreen(this, this.manager, selected -> {
+                this.questTarget = selected;
+                if (this.questTargetEditBox != null) {
+                    this.questTargetEditBox.setValue(selected);
+                }
+            }))
+        ).bounds(centerX + 100, startY - 2, 100, 20).build());
+
+        this.actionIfCompletedEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("actionIfCompleted"));
         this.actionIfCompletedEditBox.setValue(this.actionIfCompleted);
         this.actionIfCompletedEditBox.setResponder(text -> this.actionIfCompleted = text);
         this.actionIfCompletedEditBox.setTooltip(Tooltip.create(Component.literal(COMPLETED_TOOLTIP)));
         this.addRenderableWidget(this.actionIfCompletedEditBox);
 
-        this.actionIfNotCompletedEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("actionIfNotCompleted"));
+        this.actionIfNotCompletedEditBox = new EditBox(this.font, centerX + 10, startY + 58, 200, 20, Component.literal("actionIfNotCompleted"));
         this.actionIfNotCompletedEditBox.setValue(this.actionIfNotCompleted);
         this.actionIfNotCompletedEditBox.setResponder(text -> this.actionIfNotCompleted = text);
         this.actionIfNotCompletedEditBox.setTooltip(Tooltip.create(Component.literal(NOT_COMPLETED_TOOLTIP)));
@@ -65,6 +89,7 @@ public class SettingQuestCheckScreen extends Screen {
     }
 
     private void save() {
+        this.action.questTarget = this.questTarget.trim();
         this.action.actionIfCompleted = this.actionIfCompleted.trim();
         this.action.actionIfNotCompleted = this.actionIfNotCompleted.trim();
     }
@@ -74,11 +99,12 @@ public class SettingQuestCheckScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
-        int startY = this.height / 2 - 25;
+        int startY = this.height / 2 - 55;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Если выполнен (ID):", centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Если НЕ выполнен (ID):", centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, "Цель квеста:", centerX - 160, startY, 0xA0A0A0);
+        guiGraphics.drawString(this.font, "Если выполнен (ID):", centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, "Если НЕ выполнен (ID):", centerX - 160, startY + 60, 0xA0A0A0);
     }
 
     @Override

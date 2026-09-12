@@ -6,7 +6,7 @@ import com.frost.envoys.Envoys;
 import com.frost.envoys.action.ActionContext;
 import com.frost.envoys.action.NpcActionHandler;
 import com.frost.envoys.action.model.ActionQuestAdvanceStep;
-import com.frost.envoys.quest.PlayerQuestTags;
+import com.frost.envoys.quest.PlayerQuestManager;
 import com.frost.envoys.quest.QuestDefinition;
 import com.frost.envoys.quest.QuestResolver;
 
@@ -25,7 +25,7 @@ public final class QuestAdvanceStepActionHandler implements NpcActionHandler<Act
 
         Player player = context.player();
         if (player != null) {
-            PlayerQuestTags.advanceStep(player, resolved.get(), action.completionId);
+            PlayerQuestManager.advanceStep(player, resolved.get(), action.completionId);
         }
 
         context.advance(action.nextActionId);

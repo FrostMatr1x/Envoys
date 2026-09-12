@@ -16,7 +16,10 @@ import com.frost.envoys.util.PathManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -32,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class EnvoysCommand {
 
@@ -60,9 +64,11 @@ public class EnvoysCommand {
                                 .executes(ctx -> questList(ctx.getSource())))
                         .then(Commands.literal("find")
                                 .then(Commands.argument("query", StringArgumentType.greedyString())
+                                        .suggests(EnvoysCommand::suggestQuestLocalIds)
                                         .executes(ctx -> questFind(ctx.getSource(), StringArgumentType.getString(ctx, "query")))))
                         .then(Commands.literal("delete")
                                 .then(Commands.argument("uuid", StringArgumentType.word())
+                                        .suggests(EnvoysCommand::suggestQuestUuids)
                                         .executes(ctx -> questDelete(ctx.getSource(), StringArgumentType.getString(ctx, "uuid")))))
                 )
                 .then(Commands.literal("save")
@@ -382,6 +388,36 @@ public class EnvoysCommand {
             source.sendSuccess(() -> Component.literal("§a[Envoys] Удалено квестов: " + total), true);
         }
         return total;
+    }
+
+    private static CompletableFuture<Suggestions> suggestQuestUuids(
+            CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        String remaining = builder.getRemainingLowerCase();
+        Set<String> seen = new HashSet<>();
+        for (QuestIndex.Entry entry : QuestIndex.entries()) {
+            String uuid = entry.quest().questUuid;
+            if (uuid != null && !uuid.isBlank()
+                    && uuid.toLowerCase(Locale.ROOT).startsWith(remaining)
+                    && seen.add(uuid)) {
+                builder.suggest(uuid);
+            }
+        }
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestQuestLocalIds(
+            CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        String remaining = builder.getRemainingLowerCase();
+        Set<String> seen = new HashSet<>();
+        for (QuestIndex.Entry entry : QuestIndex.entries()) {
+            String localId = entry.quest().localId;
+            if (localId != null && !localId.isBlank()
+                    && localId.toLowerCase(Locale.ROOT).startsWith(remaining)
+                    && seen.add(localId)) {
+                builder.suggest(localId);
+            }
+        }
+        return builder.buildFuture();
     }
 
     private static String safe(String value) {

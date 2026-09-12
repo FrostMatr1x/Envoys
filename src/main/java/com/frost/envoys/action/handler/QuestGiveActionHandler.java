@@ -6,7 +6,7 @@ import com.frost.envoys.Envoys;
 import com.frost.envoys.action.ActionContext;
 import com.frost.envoys.action.NpcActionHandler;
 import com.frost.envoys.action.model.ActionQuestGive;
-import com.frost.envoys.quest.PlayerQuestTags;
+import com.frost.envoys.quest.PlayerQuestManager;
 import com.frost.envoys.quest.QuestDefinition;
 import com.frost.envoys.quest.QuestResolver;
 
@@ -25,7 +25,7 @@ public final class QuestGiveActionHandler implements NpcActionHandler<ActionQues
 
         Player player = context.player();
         if (player != null) {
-            PlayerQuestTags.give(player, resolved.get());
+            PlayerQuestManager.give(player, resolved.get().questUuid);
         }
 
         context.advance(action.nextActionId);

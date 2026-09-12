@@ -13,15 +13,19 @@ import com.frost.envoys.action.model.ActionCommand;
 import com.frost.envoys.action.model.ActionDelay;
 import com.frost.envoys.action.model.ActionDialog;
 import com.frost.envoys.action.model.ActionMove;
+import com.frost.envoys.action.model.ActionQuestAdvanceStep;
 import com.frost.envoys.action.model.ActionQuestCheck;
 import com.frost.envoys.action.model.ActionQuestGive;
+import com.frost.envoys.action.model.ActionQuestMarkCompleted;
 import com.frost.envoys.action.model.ActionTrade;
 import com.frost.envoys.action.model.EntityActionData;
 import com.frost.envoys.action.serialization.EntityActionAdapter;
+import com.frost.envoys.gui.screen.action.SettingAdvanceStepScreen;
 import com.frost.envoys.gui.screen.action.SettingChatScreen;
 import com.frost.envoys.gui.screen.action.SettingCommandScreen;
 import com.frost.envoys.gui.screen.action.SettingDelayScreen;
 import com.frost.envoys.gui.screen.action.SettingDialogScreen;
+import com.frost.envoys.gui.screen.action.SettingMarkCompletedScreen;
 import com.frost.envoys.gui.screen.action.SettingMoveScreen;
 import com.frost.envoys.gui.screen.action.SettingQuestCheckScreen;
 import com.frost.envoys.gui.screen.action.SettingQuestGiveScreen;
@@ -77,7 +81,8 @@ public class NPCScriptScreen extends Screen {
 
         final ActionType[] availableTypes = this.isCreativeTuner
                 ? new ActionType[]{ ActionType.DIALOD, ActionType.TRADE, ActionType.COMMAND, ActionType.QUEST_GIVE,
-                        ActionType.QUEST_CHECK, ActionType.MOVE, ActionType.DELAY, ActionType.CHAT }
+                        ActionType.QUEST_CHECK, ActionType.QUEST_ADVANCE_STEP, ActionType.QUEST_MARK_COMPLETED,
+                        ActionType.MOVE, ActionType.DELAY, ActionType.CHAT }
                 : new ActionType[]{ ActionType.DIALOD };
 
         this.addRenderableWidget(Button.builder(
@@ -118,6 +123,8 @@ public class NPCScriptScreen extends Screen {
                     case COMMAND -> new ActionCommand(id);
                     case QUEST_GIVE -> new ActionQuestGive(id);
                     case QUEST_CHECK -> new ActionQuestCheck(id);
+                    case QUEST_ADVANCE_STEP -> new ActionQuestAdvanceStep(id);
+                    case QUEST_MARK_COMPLETED -> new ActionQuestMarkCompleted(id);
                     case MOVE -> new ActionMove(id);
                     case DELAY -> new ActionDelay(id);
                     case CHAT -> new ActionChat(id);
@@ -232,6 +239,8 @@ public class NPCScriptScreen extends Screen {
                 case "command" -> ActionType.COMMAND;
                 case "quest_give" -> ActionType.QUEST_GIVE;
                 case "quest_check" -> ActionType.QUEST_CHECK;
+                case "quest_advance_step" -> ActionType.QUEST_ADVANCE_STEP;
+                case "quest_mark_completed" -> ActionType.QUEST_MARK_COMPLETED;
                 case "move" -> ActionType.MOVE;
                 case "delay" -> ActionType.DELAY;
                 case "chat" -> ActionType.CHAT;
@@ -246,9 +255,13 @@ public class NPCScriptScreen extends Screen {
                 } else if (actionData instanceof ActionCommand commandAction) {
                     Minecraft.getInstance().setScreen(new SettingCommandScreen(NPCScriptScreen.this, commandAction));
                 } else if (actionData instanceof ActionQuestGive questGiveAction) {
-                    Minecraft.getInstance().setScreen(new SettingQuestGiveScreen(NPCScriptScreen.this, questGiveAction));
+                    Minecraft.getInstance().setScreen(new SettingQuestGiveScreen(NPCScriptScreen.this, questGiveAction, NPCScriptScreen.this.manager));
                 } else if (actionData instanceof ActionQuestCheck questCheckAction) {
-                    Minecraft.getInstance().setScreen(new SettingQuestCheckScreen(NPCScriptScreen.this, questCheckAction));
+                    Minecraft.getInstance().setScreen(new SettingQuestCheckScreen(NPCScriptScreen.this, questCheckAction, NPCScriptScreen.this.manager));
+                } else if (actionData instanceof ActionQuestAdvanceStep questAdvanceStepAction) {
+                    Minecraft.getInstance().setScreen(new SettingAdvanceStepScreen(NPCScriptScreen.this, questAdvanceStepAction, NPCScriptScreen.this.manager));
+                } else if (actionData instanceof ActionQuestMarkCompleted questMarkCompletedAction) {
+                    Minecraft.getInstance().setScreen(new SettingMarkCompletedScreen(NPCScriptScreen.this, questMarkCompletedAction, NPCScriptScreen.this.manager));
                 } else if (actionData instanceof ActionMove moveAction) {
                     Minecraft.getInstance().setScreen(new SettingMoveScreen(NPCScriptScreen.this, moveAction));
                 } else if (actionData instanceof ActionDelay delayAction) {
@@ -301,6 +314,8 @@ public class NPCScriptScreen extends Screen {
         COMMAND("Команда"),
         QUEST_GIVE("Выдача квеста"),
         QUEST_CHECK("Проверка квеста"),
+        QUEST_ADVANCE_STEP("Продвинуть этап"),
+        QUEST_MARK_COMPLETED("Отметить выполненным"),
         MOVE("Передвижение"),
         DELAY("Ожидание"),
         CHAT("Сообщение в чат");

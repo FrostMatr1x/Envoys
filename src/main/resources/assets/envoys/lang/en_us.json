@@ -1,14 +1,8 @@
 {
-  "itemGroup.envoys": "Envoys",
-  "item.envoys.npc_tuner": "NPC Tuner",
-  "item.envoys.survival_npc_tuner": "Survival NPC Tuner",
-  "item.envoys.npc_spawn_egg": "NPC spawn egg",
-
-  "envoys.configuration.title": "Envoys Configs",
-  "envoys.configuration.section.envoys.common.toml": "Envoys Configs",
-  "envoys.configuration.section.envoys.common.toml.title": "Envoys Configs",
-  "envoys.configuration.items": "Item List",
-  "envoys.configuration.logDirtBlock": "Log Dirt Block",
-  "envoys.configuration.magicNumberIntroduction": "Magic Number Text",
-  "envoys.configuration.magicNumber": "Magic Number"
+  "key.categories.envoys": "Envoys",
+  "key.envoys.quest_wall": "Quest Wall",
+  "envoys.current_quest.progress": "%s / %s",
+  "envoys.quest_wall.title": "Quest Wall",
+  "envoys.quest_wall.empty": "No active quests",
+  "envoys.quest_wall.pinned": "Pinned"
 }
