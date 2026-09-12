@@ -63,6 +63,11 @@ public class EventCreationScreen extends Screen {
         }
 
         this.addRenderableWidget(Button.builder(
+            Component.literal("Квесты"),
+            button -> Minecraft.getInstance().setScreen(new QuestManagementScreen(this, this.manager, this.isCreativeTuner))
+        ).bounds(centerX - 205, this.height - 35, 100, 20).build());
+
+        this.addRenderableWidget(Button.builder(
             Component.literal("Назад"),
             button -> {
                 this.saveAndSync();

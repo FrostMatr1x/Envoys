@@ -5,6 +5,7 @@ import com.frost.envoys.event.ClientEvents;
 import com.frost.envoys.event.CommonEvents;
 import com.frost.envoys.event.ServerEvents;
 import com.frost.envoys.gui.screen.NPCTradeScreen;
+import com.frost.envoys.init.ModAttachments;
 import com.frost.envoys.init.ModCreativeTabs;
 import com.frost.envoys.init.ModEntities;
 import com.frost.envoys.init.ModItems;
@@ -33,6 +34,7 @@ public class Envoys {
         ModEntities.NPC_TYPES.register(modEventBus);
         ModCreativeTabs.CREATIVE_TABS.register(modEventBus);
         ModMenus.MENUS.register(modEventBus);
+        ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
 
         modEventBus.addListener(this::registerAttributes);
         modEventBus.addListener(ModCreativeTabs::addCreative);
@@ -40,7 +42,8 @@ public class Envoys {
         modEventBus.register(CommonEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
-            modEventBus.register(ClientEvents.class);
+            modEventBus.register(ClientEvents.ModBusEvents.class);
+            NeoForge.EVENT_BUS.register(ClientEvents.GameBusEvents.class);
         }
 
         NeoForge.EVENT_BUS.register(ServerEvents.class);

@@ -1,14 +1,8 @@
 {
-  "itemGroup.envoys": "Envoys",
-  "item.envoys.npc_tuner": "Настройщик NPC",
-  "item.envoys.survival_npc_tuner": "Стандартный настройщик NPC",
-  "item.envoys.npc_spawn_egg": "яйцо призыва NPC",
-
-  "envoys.configuration.title": "Envoys Configs",
-  "envoys.configuration.section.envoys.common.toml": "Envoys Configs",
-  "envoys.configuration.section.envoys.common.toml.title": "Envoys Configs",
-  "envoys.configuration.items": "Item List",
-  "envoys.configuration.logDirtBlock": "Log Dirt Block",
-  "envoys.configuration.magicNumberIntroduction": "Magic Number Text",
-  "envoys.configuration.magicNumber": "Magic Number"
+  "key.categories.envoys": "Envoys",
+  "key.envoys.quest_wall": "Стена квестов",
+  "envoys.current_quest.progress": "%s / %s",
+  "envoys.quest_wall.title": "Стена квестов",
+  "envoys.quest_wall.empty": "Нет активных квестов",
+  "envoys.quest_wall.pinned": "Закреплён"
 }

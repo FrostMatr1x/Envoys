@@ -21,6 +21,7 @@ import com.frost.envoys.network.payload.SelectDialogAnswerPayload;
 import com.frost.envoys.network.payload.SkinConfirmedPayload;
 import com.frost.envoys.network.payload.SkinDataPayload;
 import com.frost.envoys.network.payload.SkinInfoPayload;
+import com.frost.envoys.network.payload.SyncPlayerQuestsPayload;
 import com.frost.envoys.network.payload.TradeAllPayload;
 
 import net.neoforged.bus.api.SubscribeEvent;
@@ -124,6 +125,12 @@ public class CommonEvents {
                 AnimDataPayload.TYPE,
                 AnimDataPayload.CODEC,
                 FMLEnvironment.dist.isClient() ? ClientAnimPayloadHandler::handleAnimData : (payload, context) -> {}
+        );
+
+        registrar.playToClient(
+                SyncPlayerQuestsPayload.TYPE,
+                SyncPlayerQuestsPayload.CODEC,
+                FMLEnvironment.dist.isClient() ? ClientPayloadHandler::handleSyncPlayerQuests : (payload, context) -> {}
         );
     }
 }

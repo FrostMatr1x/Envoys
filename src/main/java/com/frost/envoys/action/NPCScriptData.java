@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import com.frost.envoys.Envoys;
 import com.frost.envoys.action.event.EventType;
@@ -50,6 +51,9 @@ public class NPCScriptData {
 
     public static List<QuestDefinition> sanitizeQuests(List<QuestDefinition> input, NPCInteractManager owner) {
         List<QuestDefinition> result = new ArrayList<>();
+        if (input == null) {
+            return result;
+        }
         Set<String> localIds = new HashSet<>();
         Set<String> uuids = new HashSet<>();
         for (QuestDefinition quest : input) {
@@ -79,8 +83,18 @@ public class NPCScriptData {
     }
 
     private static boolean uuidUsedByOtherNpc(String uuid, NPCInteractManager owner) {
+        if (uuid == null || uuid.isBlank()) {
+            return false;
+        }
+        UUID ownerNpcUuid = owner != null ? owner.npcUUID : null;
         for (NPCInteractManager manager : NPCInteractManager.SCRIPTS.values()) {
             if (manager == null || manager == owner || manager.quests == null) {
+                continue;
+            }
+            // A different manager object can still belong to the same NPC (for example the
+            // client-side editing copy created by ClientPayloadHandler in singleplayer, where
+            // client and server share the static SCRIPTS map). That is not "another NPC".
+            if (ownerNpcUuid != null && ownerNpcUuid.equals(manager.npcUUID)) {
                 continue;
             }
             for (QuestDefinition quest : manager.quests) {

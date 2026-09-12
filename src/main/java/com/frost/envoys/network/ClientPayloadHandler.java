@@ -8,12 +8,14 @@ import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.NPCPassportData;
 import com.frost.envoys.action.NPCScriptData;
 import com.frost.envoys.action.serialization.EntityActionAdapter;
+import com.frost.envoys.client.quest.ClientQuestTracker;
 import com.frost.envoys.gui.screen.NPCDialogScreen;
 import com.frost.envoys.gui.screen.NPCDialogScreen.DialogOption;
 import com.frost.envoys.gui.screen.NPCConfigScreen;
 import com.frost.envoys.network.payload.OpenDialogPayload;
 import com.frost.envoys.network.payload.OpenSettingGuiPayload;
 import com.frost.envoys.network.payload.SelectDialogAnswerPayload;
+import com.frost.envoys.network.payload.SyncPlayerQuestsPayload;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -94,5 +96,9 @@ public class ClientPayloadHandler {
                 payload.npcUuid()
             ));
         });
+    }
+
+    public static void handleSyncPlayerQuests(final SyncPlayerQuestsPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> ClientQuestTracker.get().replace(payload.quests()));
     }
 }

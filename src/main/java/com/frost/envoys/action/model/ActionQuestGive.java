@@ -7,11 +7,6 @@ public class ActionQuestGive extends AbstractActionData {
     @SerializedName("quest_target")
     public String questTarget = "";
 
-    @Deprecated
-    public String questText = "";
-    @Deprecated
-    public String questType = "";
-
     public ActionQuestGive(String id) {
         super(id);
     }

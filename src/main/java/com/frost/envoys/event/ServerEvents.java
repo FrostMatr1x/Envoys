@@ -4,10 +4,13 @@ import com.frost.envoys.Envoys;
 import com.frost.envoys.EnvoysCommand;
 import com.frost.envoys.config.NPCConfigManager;
 import com.frost.envoys.npc.merchant.TradeCounterStore;
+import com.frost.envoys.quest.PlayerQuestManager;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
@@ -29,5 +32,19 @@ public class ServerEvents {
     public static void onServerStopping(ServerStoppingEvent event) {
         NPCConfigManager.saveAll();
         TradeCounterStore.saveAll();
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            PlayerQuestManager.sync(serverPlayer);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            PlayerQuestManager.sync(serverPlayer);
+        }
     }
 }

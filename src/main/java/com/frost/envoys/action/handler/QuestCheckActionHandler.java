@@ -6,7 +6,7 @@ import com.frost.envoys.Envoys;
 import com.frost.envoys.action.ActionContext;
 import com.frost.envoys.action.NpcActionHandler;
 import com.frost.envoys.action.model.ActionQuestCheck;
-import com.frost.envoys.quest.PlayerQuestTags;
+import com.frost.envoys.quest.PlayerQuestManager;
 import com.frost.envoys.quest.QuestDefinition;
 import com.frost.envoys.quest.QuestInventoryUtil;
 import com.frost.envoys.quest.QuestResolver;
@@ -34,16 +34,15 @@ public final class QuestCheckActionHandler implements NpcActionHandler<ActionQue
             if (quest.type == QuestType.ITEM) {
                 Item item = QuestInventoryUtil.resolveItem(quest.itemId);
                 completed = item != null
-                        && PlayerQuestTags.hasActive(player, quest.questUuid)
+                        && PlayerQuestManager.isActive(player, quest.questUuid)
                         && QuestInventoryUtil.hasAtLeast(player, item, quest.itemCount);
             } else {
-                completed = PlayerQuestTags.hasCompleted(player, quest.questUuid);
+                completed = PlayerQuestManager.isCompleted(player, quest.questUuid);
             }
         }
 
         if (completed) {
-            PlayerQuestTags.removeCompleted(player, quest.questUuid);
-            PlayerQuestTags.removeActive(player, quest.questUuid);
+            PlayerQuestManager.reset(player, quest.questUuid);
             if (quest.type == QuestType.ITEM && quest.consumeItems) {
                 QuestInventoryUtil.consume(player, QuestInventoryUtil.resolveItem(quest.itemId), quest.itemCount);
             }
