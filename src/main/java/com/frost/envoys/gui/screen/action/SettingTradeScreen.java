@@ -35,8 +35,10 @@ public class SettingTradeScreen extends Screen {
     private final Screen parentScreen;
     private final List<Trade> trades = new ArrayList<>();
     private EditBox idEditBox;
+    private EditBox baseSlotsEditBox;
     private Button settingsButton;
     private String nextId = "";
+    private String baseSlotsText = "";
     private int tradesScrollOffset = 0;
     private int selectedRow = -1;
 
@@ -45,6 +47,7 @@ public class SettingTradeScreen extends Screen {
         this.parentScreen = parentScreen;
         this.action = action;
         this.nextId = action.nextActionId != null ? action.nextActionId : "";
+        this.baseSlotsText = action.baseSlots == null ? "" : String.valueOf(action.baseSlots);
         
         for (com.frost.envoys.npc.NPCTrade npcTrade : action.trades) {
             Trade t = new Trade();
@@ -91,10 +94,26 @@ public class SettingTradeScreen extends Screen {
         this.idEditBox.setTooltip(Tooltip.create(Component.literal("ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N")));
         this.idEditBox.setResponder(text -> this.nextId = text);
         this.addRenderableWidget(this.idEditBox);
+
+        this.baseSlotsEditBox = new EditBox(this.font, centerX - 175, this.height - 65, 60, 20, Component.literal("baseSlots"));
+        this.baseSlotsEditBox.setFilter(text -> text.matches("\\d*"));
+        this.baseSlotsEditBox.setValue(this.baseSlotsText);
+        this.baseSlotsEditBox.setResponder(text -> this.baseSlotsText = text);
+        this.baseSlotsEditBox.setTooltip(Tooltip.create(Component.literal("Сколько первых сделок показывать. Пусто — все. Значение >= 0; merchant_level_up увеличивает лимит на 1 за срабатывание")));
+        this.addRenderableWidget(this.baseSlotsEditBox);
     }
 
     private void saveData() {
         this.action.nextActionId = this.nextId.trim();
+        if (this.baseSlotsText == null || this.baseSlotsText.isBlank()) {
+            this.action.baseSlots = null;
+        } else {
+            try {
+                this.action.baseSlots = Math.max(0, Integer.parseInt(this.baseSlotsText.trim()));
+            } catch (NumberFormatException e) {
+                this.action.baseSlots = null;
+            }
+        }
         this.action.trades.clear();
         for (Trade t : this.trades) {
             NPCTrade newTrade = new NPCTrade(
@@ -171,6 +190,7 @@ public class SettingTradeScreen extends Screen {
         int infoY = START_Y + MAX_ROWS * ROW_HEIGHT + 2;
         guiGraphics.drawCenteredString(this.font, CONTROLS_INFO_1, centerX, infoY, 0x808080);
         guiGraphics.drawString(this.font, ID_LABEL, centerX - 110, this.height - 60, 0xA0A0A0);
+        guiGraphics.drawString(this.font, "Слотов:", centerX - 175, this.height - 77, 0xA0A0A0);
 
         if (!hoveredStack.isEmpty()) {
             guiGraphics.renderTooltip(this.font, hoveredStack, mouseX, mouseY);

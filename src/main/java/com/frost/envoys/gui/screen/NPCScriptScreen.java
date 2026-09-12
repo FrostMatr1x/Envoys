@@ -12,11 +12,15 @@ import com.frost.envoys.action.model.ActionChat;
 import com.frost.envoys.action.model.ActionCommand;
 import com.frost.envoys.action.model.ActionDelay;
 import com.frost.envoys.action.model.ActionDialog;
+import com.frost.envoys.action.model.ActionLoadPoint;
+import com.frost.envoys.action.model.ActionMerchantLevelUp;
 import com.frost.envoys.action.model.ActionMove;
 import com.frost.envoys.action.model.ActionQuestAdvanceStep;
 import com.frost.envoys.action.model.ActionQuestCheck;
 import com.frost.envoys.action.model.ActionQuestGive;
 import com.frost.envoys.action.model.ActionQuestMarkCompleted;
+import com.frost.envoys.action.model.ActionSavePoint;
+import com.frost.envoys.action.model.ActionStart;
 import com.frost.envoys.action.model.ActionTrade;
 import com.frost.envoys.action.model.EntityActionData;
 import com.frost.envoys.action.serialization.EntityActionAdapter;
@@ -25,10 +29,14 @@ import com.frost.envoys.gui.screen.action.SettingChatScreen;
 import com.frost.envoys.gui.screen.action.SettingCommandScreen;
 import com.frost.envoys.gui.screen.action.SettingDelayScreen;
 import com.frost.envoys.gui.screen.action.SettingDialogScreen;
+import com.frost.envoys.gui.screen.action.SettingLoadPointScreen;
 import com.frost.envoys.gui.screen.action.SettingMarkCompletedScreen;
+import com.frost.envoys.gui.screen.action.SettingMerchantLevelUpScreen;
 import com.frost.envoys.gui.screen.action.SettingMoveScreen;
 import com.frost.envoys.gui.screen.action.SettingQuestCheckScreen;
 import com.frost.envoys.gui.screen.action.SettingQuestGiveScreen;
+import com.frost.envoys.gui.screen.action.SettingSavePointScreen;
+import com.frost.envoys.gui.screen.action.SettingStartScreen;
 import com.frost.envoys.gui.screen.action.SettingTradeScreen;
 
 import net.minecraft.client.Minecraft;
@@ -52,6 +60,7 @@ public class NPCScriptScreen extends Screen {
     private ActionList actionList;
     private ActionType selectedTypeToAdd = ActionType.DIALOD;
     private EditBox idInputField;
+    private Button typeButton;
 
     public NPCScriptScreen(Screen parentScreen, NPCInteractManager manager, NpcEventData event, boolean isCreativeTuner) {
         super(Component.literal("Цепочка действий"));
@@ -79,15 +88,12 @@ public class NPCScriptScreen extends Screen {
             }
         }
 
-        final ActionType[] availableTypes = this.isCreativeTuner
-                ? new ActionType[]{ ActionType.DIALOD, ActionType.TRADE, ActionType.COMMAND, ActionType.QUEST_GIVE,
-                        ActionType.QUEST_CHECK, ActionType.QUEST_ADVANCE_STEP, ActionType.QUEST_MARK_COMPLETED,
-                        ActionType.MOVE, ActionType.DELAY, ActionType.CHAT }
-                : new ActionType[]{ ActionType.DIALOD };
+        this.selectedTypeToAdd = this.clampType(this.selectedTypeToAdd);
 
-        this.addRenderableWidget(Button.builder(
+        this.typeButton = Button.builder(
             Component.literal("Тип: " + this.selectedTypeToAdd.getDisplayName()),
             button -> {
+                ActionType[] availableTypes = this.availableTypes();
                 int currentIndex = 0;
                 for (int i = 0; i < availableTypes.length; i++) {
                     if (availableTypes[i] == this.selectedTypeToAdd) {
@@ -99,7 +105,8 @@ public class NPCScriptScreen extends Screen {
                 this.selectedTypeToAdd = availableTypes[nextIndex];
                 button.setMessage(Component.literal("Тип: " + this.selectedTypeToAdd.getDisplayName()));
             }
-        ).bounds(centerX - 190, this.height - 35, buttonWidth, 20).build());
+        ).bounds(centerX - 190, this.height - 35, buttonWidth, 20).build();
+        this.addRenderableWidget(this.typeButton);
 
         this.idInputField = new EditBox(this.font, centerX - 80, this.height - 35, idFieldWidth, 20, Component.literal("ID"));
         this.idInputField.setValue("id_" + (this.actionList.children().size() + 1));
@@ -117,6 +124,11 @@ public class NPCScriptScreen extends Screen {
                     id = incrementId(id);
                 }
 
+                if (this.selectedTypeToAdd == ActionType.START && this.hasActionType(ActionStart.class)) {
+                    this.refreshTypeButton();
+                    return;
+                }
+
                 EntityActionData newAction = switch (this.selectedTypeToAdd) {
                     case DIALOD -> new ActionDialog(id, manager.passport.npcName);
                     case TRADE -> new ActionTrade(id);
@@ -128,10 +140,15 @@ public class NPCScriptScreen extends Screen {
                     case MOVE -> new ActionMove(id);
                     case DELAY -> new ActionDelay(id);
                     case CHAT -> new ActionChat(id);
+                    case START -> new ActionStart(id);
+                    case SAVE_POINT -> new ActionSavePoint(id);
+                    case LOAD_POINT -> new ActionLoadPoint(id);
+                    case MERCHANT_LEVEL_UP -> new ActionMerchantLevelUp(id);
                 };
 
                 this.event.actions().add(newAction);
                 this.actionList.addAction(newAction);
+                this.refreshTypeButton();
 
                 this.idInputField.setValue(incrementId(id));
             }
@@ -149,6 +166,57 @@ public class NPCScriptScreen extends Screen {
                 }
             }
         ).bounds(centerX + 80, this.height - 35, buttonWidth, 20).build());
+    }
+
+    private ActionType[] availableTypes() {
+        if (this.event.actions() == null || this.event.actions().isEmpty()) {
+            return new ActionType[]{ ActionType.START };
+        }
+
+        ActionType[] base = this.isCreativeTuner
+                ? new ActionType[]{ ActionType.DIALOD, ActionType.TRADE, ActionType.COMMAND, ActionType.QUEST_GIVE,
+                        ActionType.QUEST_CHECK, ActionType.QUEST_ADVANCE_STEP, ActionType.QUEST_MARK_COMPLETED,
+                        ActionType.MOVE, ActionType.DELAY, ActionType.CHAT, ActionType.SAVE_POINT, ActionType.LOAD_POINT,
+                        ActionType.MERCHANT_LEVEL_UP }
+                : new ActionType[]{ ActionType.DIALOD };
+
+        if (this.hasActionType(ActionStart.class)) {
+            return base;
+        }
+
+        ActionType[] withStart = new ActionType[base.length + 1];
+        withStart[0] = ActionType.START;
+        System.arraycopy(base, 0, withStart, 1, base.length);
+        return withStart;
+    }
+
+    private ActionType clampType(ActionType desired) {
+        ActionType[] available = this.availableTypes();
+        for (ActionType candidate : available) {
+            if (candidate == desired) {
+                return desired;
+            }
+        }
+        return available[0];
+    }
+
+    private void refreshTypeButton() {
+        this.selectedTypeToAdd = this.clampType(this.selectedTypeToAdd);
+        if (this.typeButton != null) {
+            this.typeButton.setMessage(Component.literal("Тип: " + this.selectedTypeToAdd.getDisplayName()));
+        }
+    }
+
+    private boolean hasActionType(Class<? extends EntityActionData> type) {
+        if (this.event.actions() == null) {
+            return false;
+        }
+        for (EntityActionData action : this.event.actions()) {
+            if (type.isInstance(action)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean containsActionId(String id) {
@@ -244,6 +312,10 @@ public class NPCScriptScreen extends Screen {
                 case "move" -> ActionType.MOVE;
                 case "delay" -> ActionType.DELAY;
                 case "chat" -> ActionType.CHAT;
+                case "start" -> ActionType.START;
+                case "save_point" -> ActionType.SAVE_POINT;
+                case "load_point" -> ActionType.LOAD_POINT;
+                case "merchant_level_up" -> ActionType.MERCHANT_LEVEL_UP;
                 default -> ActionType.DIALOD;
             };
 
@@ -268,6 +340,14 @@ public class NPCScriptScreen extends Screen {
                     Minecraft.getInstance().setScreen(new SettingDelayScreen(NPCScriptScreen.this, delayAction));
                 } else if (actionData instanceof ActionChat chatAction) {
                     Minecraft.getInstance().setScreen(new SettingChatScreen(NPCScriptScreen.this, chatAction));
+                } else if (actionData instanceof ActionStart startAction) {
+                    Minecraft.getInstance().setScreen(new SettingStartScreen(NPCScriptScreen.this, startAction));
+                } else if (actionData instanceof ActionSavePoint savePointAction) {
+                    Minecraft.getInstance().setScreen(new SettingSavePointScreen(NPCScriptScreen.this, savePointAction));
+                } else if (actionData instanceof ActionLoadPoint loadPointAction) {
+                    Minecraft.getInstance().setScreen(new SettingLoadPointScreen(NPCScriptScreen.this, loadPointAction));
+                } else if (actionData instanceof ActionMerchantLevelUp merchantLevelUpAction) {
+                    Minecraft.getInstance().setScreen(new SettingMerchantLevelUpScreen(NPCScriptScreen.this, merchantLevelUpAction));
                 }
             }).bounds(0, 0, 75, 20).build();
 
@@ -318,7 +398,11 @@ public class NPCScriptScreen extends Screen {
         QUEST_MARK_COMPLETED("Отметить выполненным"),
         MOVE("Передвижение"),
         DELAY("Ожидание"),
-        CHAT("Сообщение в чат");
+        CHAT("Сообщение в чат"),
+        START("Старт"),
+        SAVE_POINT("Точка сохранения"),
+        LOAD_POINT("Точка загрузки"),
+        MERCHANT_LEVEL_UP("Повышение уровня торговца");
 
         private final String displayName;
 

@@ -3,7 +3,7 @@
     "scaling": {
       "type": "nine_slice",
       "width": 48,
-      "height": 32,
+      "height": 33,
       "border": {
         "left": 20,
         "top": 6,

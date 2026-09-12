@@ -25,7 +25,7 @@ public class CurrentQuestOverlay implements LayeredDraw.Layer {
 
     private static final int MIN_W = 48;
     private static final int MAX_W = 144;
-    private static final int MIN_H = 32;
+    private static final int MIN_H = 33;
 
     private static final int MARGIN = 10;
     private static final float ALPHA = 0.8F;
@@ -75,8 +75,10 @@ public class CurrentQuestOverlay implements LayeredDraw.Layer {
             contentHeight += 12;
         }
 
-        int bottomSectionHeight = 46;
-        int h = Math.max(MIN_H, contentHeight + bottomSectionHeight);
+        int bottomSectionHeight = 26;
+        int rawH = Math.max(MIN_H, contentHeight + bottomSectionHeight);
+        int step = Math.max(1, (MIN_H + 1) / 2);
+        int h = ((rawH + step - 1) / step) * step;
 
         int x = guiGraphics.guiWidth() - w - MARGIN;
         int y = MARGIN;
@@ -88,7 +90,7 @@ public class CurrentQuestOverlay implements LayeredDraw.Layer {
         RenderSystem.disableBlend();
 
         int textX = x + 14;
-        int lineY = y + 14;
+        int lineY = y + 20;
 
         for (FormattedCharSequence line : titleLines) {
             guiGraphics.drawString(minecraft.font, line, textX, lineY, TEXT_DARK, false);
@@ -99,14 +101,14 @@ public class CurrentQuestOverlay implements LayeredDraw.Layer {
             guiGraphics.drawString(minecraft.font, npcName, textX, lineY + 2, TEXT_MUTED, false);
         }
 
-        guiGraphics.drawString(minecraft.font, progress, textX, y + h - 26, entry.completed() ? TEXT_DONE : TEXT_DARK, false);
+        guiGraphics.drawString(minecraft.font, progress, textX, y + h - 16, entry.completed() ? TEXT_DONE : TEXT_DARK, false);
 
         if (hasItem) {
             Item item = QuestInventoryUtil.resolveItem(entry.itemId());
             if (item != null) {
                 ItemStack stack = new ItemStack(item);
                 int itemX = x + w - 32;
-                int itemY = y + h - 36;
+                int itemY = y + h - 20;
                 guiGraphics.renderFakeItem(stack, itemX, itemY);
                 guiGraphics.renderItemDecorations(minecraft.font, stack, itemX, itemY);
             }
