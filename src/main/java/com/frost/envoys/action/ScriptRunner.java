@@ -12,6 +12,7 @@ import com.frost.envoys.action.event.NpcEventData;
 import com.frost.envoys.action.event.NpcRangeEvent;
 import com.frost.envoys.action.model.AbstractActionData;
 import com.frost.envoys.action.model.ActionMove;
+import com.frost.envoys.action.model.ActionSavePoint;
 import com.frost.envoys.action.model.EntityActionData;
 import com.frost.envoys.npc.entity.BaseNPC;
 
@@ -161,6 +162,18 @@ public final class ScriptRunner {
 
         Envoys.LOGGER.warn("[Envoys] Unknown next action id '{}' for NPC {}", nextActionId, manager.npcUUID);
         finish();
+    }
+
+    public ActionSavePoint findSavePoint(String checkpointUuid) {
+        if (checkpointUuid == null || checkpointUuid.isEmpty()) {
+            return null;
+        }
+        for (EntityActionData action : chain) {
+            if (action instanceof ActionSavePoint savePoint && checkpointUuid.equals(savePoint.checkpointUuid)) {
+                return savePoint;
+            }
+        }
+        return null;
     }
 
     public void tick() {

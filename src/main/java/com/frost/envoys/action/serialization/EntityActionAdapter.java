@@ -5,11 +5,15 @@ import com.frost.envoys.action.model.ActionChat;
 import com.frost.envoys.action.model.ActionCommand;
 import com.frost.envoys.action.model.ActionDelay;
 import com.frost.envoys.action.model.ActionDialog;
+import com.frost.envoys.action.model.ActionLoadPoint;
+import com.frost.envoys.action.model.ActionMerchantLevelUp;
 import com.frost.envoys.action.model.ActionMove;
 import com.frost.envoys.action.model.ActionQuestAdvanceStep;
 import com.frost.envoys.action.model.ActionQuestCheck;
 import com.frost.envoys.action.model.ActionQuestGive;
 import com.frost.envoys.action.model.ActionQuestMarkCompleted;
+import com.frost.envoys.action.model.ActionSavePoint;
+import com.frost.envoys.action.model.ActionStart;
 import com.frost.envoys.action.model.ActionTrade;
 import com.frost.envoys.action.model.EntityActionData;
 import com.google.gson.Gson;
@@ -81,6 +85,10 @@ public class EntityActionAdapter implements JsonSerializer<EntityActionData>, Js
             case "move" -> SUB_GSON.fromJson(obj, ActionMove.class);
             case "delay" -> SUB_GSON.fromJson(obj, ActionDelay.class);
             case "chat" -> SUB_GSON.fromJson(obj, ActionChat.class);
+            case "start" -> SUB_GSON.fromJson(obj, ActionStart.class);
+            case "save_point" -> SUB_GSON.fromJson(obj, ActionSavePoint.class);
+            case "load_point" -> SUB_GSON.fromJson(obj, ActionLoadPoint.class);
+            case "merchant_level_up" -> SUB_GSON.fromJson(obj, ActionMerchantLevelUp.class);
             default -> throw new JsonParseException("[Envoys] Unknown EntityAction type: " + type);
         };
     }

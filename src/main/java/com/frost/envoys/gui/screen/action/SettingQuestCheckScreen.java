@@ -47,7 +47,7 @@ public class SettingQuestCheckScreen extends Screen {
         int centerX = this.width / 2;
         int startY = this.height / 2 - 55;
 
-        this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 200, 20, Component.literal("questTarget"));
+        this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 80, 20, Component.literal("questTarget"));
         this.questTargetEditBox.setValue(this.questTarget);
         this.questTargetEditBox.setResponder(text -> this.questTarget = text);
         this.questTargetEditBox.setTooltip(Tooltip.create(Component.literal(TARGET_TOOLTIP)));
@@ -61,7 +61,7 @@ public class SettingQuestCheckScreen extends Screen {
                     this.questTargetEditBox.setValue(selected);
                 }
             }))
-        ).bounds(centerX + 100, startY - 2, 100, 20).build());
+        ).bounds(centerX + 110, startY - 2, 100, 20).build());
 
         this.actionIfCompletedEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("actionIfCompleted"));
         this.actionIfCompletedEditBox.setValue(this.actionIfCompleted);

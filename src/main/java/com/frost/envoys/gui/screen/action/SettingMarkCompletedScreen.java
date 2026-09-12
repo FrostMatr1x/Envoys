@@ -43,7 +43,7 @@ public class SettingMarkCompletedScreen extends Screen {
         int centerX = this.width / 2;
         int startY = this.height / 2 - 40;
 
-        this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 200, 20, Component.literal("questTarget"));
+        this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 80, 20, Component.literal("questTarget"));
         this.questTargetEditBox.setValue(this.questTarget);
         this.questTargetEditBox.setResponder(text -> this.questTarget = text);
         this.questTargetEditBox.setTooltip(Tooltip.create(Component.literal(TARGET_TOOLTIP)));
@@ -57,7 +57,7 @@ public class SettingMarkCompletedScreen extends Screen {
                     this.questTargetEditBox.setValue(selected);
                 }
             }))
-        ).bounds(centerX + 100, startY - 2, 100, 20).build());
+        ).bounds(centerX + 110, startY - 2, 100, 20).build());
 
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);

@@ -7,6 +7,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.frost.envoys.Envoys;
+import com.frost.envoys.action.MerchantSlotData;
 import com.frost.envoys.action.model.ActionTrade;
 import com.frost.envoys.gui.bridges.TradeGuiBridge;
 import com.frost.envoys.gui.menu.NPCMerchantMenu;
@@ -117,27 +118,10 @@ public class NPCMerchant implements Merchant, TradeGuiBridge {
         this.playTradeSound();
     }
 
-    public void updateOfferPrice(MerchantOffer offer) {
-        if (this.tradingPlayer == null || this.currentAction == null) return;
-
-        int sourceIndex = resolveOfferSourceIndex(offer);
-        if (sourceIndex < 0 || sourceIndex >= this.currentAction.trades.size()) {
-            return;
+    private void rebuildOffers() {
+        if (this.tradingPlayer != null && this.currentAction != null) {
+            this.offers = buildOffers(this.currentAction, this.tradingPlayer);
         }
-
-        NPCTrade trade = this.currentAction.trades.get(sourceIndex);
-
-        int completedTrades = TradeCounterStore.getCompletedTrades(
-            this.owner.getUUID(), 
-            this.tradingPlayer.getUUID(), 
-            sourceIndex, 
-            trade
-        );
-
-        float priceIncreasePerTrade = Math.max(0f, trade.priceMultiplier - 1.0f);
-        int extraCost = (int) (completedTrades * priceIncreasePerTrade);
-
-        offer.setSpecialPriceDiff(extraCost);
     }
 
     public void recordTrade(MerchantOffer offer, int times) {
@@ -155,7 +139,7 @@ public class NPCMerchant implements Merchant, TradeGuiBridge {
         NPCTrade trade = this.currentAction.trades.get(sourceIndex);
         TradeCounterStore.onTradeCompleted(this.owner.getUUID(), player.getUUID(), sourceIndex, trade, times);
 
-        updateOfferPrice(offer);
+        rebuildOffers();
     }
 
     @Override
@@ -213,11 +197,22 @@ public class NPCMerchant implements Merchant, TradeGuiBridge {
         UUID playerUuid = player.getUUID();
         List<NPCTrade> trades = action.trades;
 
+        int unlocked = MerchantSlotData.getUnlocked(player, npcUuid.toString());
+        int limit = (action.baseSlots == null || action.baseSlots < 0)
+            ? Integer.MAX_VALUE
+            : action.baseSlots + unlocked;
+
+        int displayed = 0;
+
         for (int i = 0; i < trades.size(); i++) {
             NPCTrade trade = trades.get(i);
             if (!isValidTrade(trade)) {
                 continue;
             }
+            if (displayed >= limit) {
+                break;
+            }
+            displayed++;
 
             ItemStack in1 = trade.input1;
             ItemStack in2 = trade.input2;
@@ -229,27 +224,79 @@ public class NPCMerchant implements Merchant, TradeGuiBridge {
                 ? DataComponentPredicate.EMPTY
                 : DataComponentPredicate.allOf(customComponents1);
 
-            ItemCost costA = new ItemCost(
-                in1.getItemHolder(),
-                scaledIn1.getCount(),
-                predicate1,
-                scaledIn1
-            );
+            int baseCountA = scaledIn1.getCount();
+            int completedTrades = TradeCounterStore.getCompletedTrades(npcUuid, playerUuid, i, trade);
+            float priceIncreasePerTrade = Math.max(0f, trade.priceMultiplier - 1.0f);
+            int extraCost = (int) (completedTrades * priceIncreasePerTrade);
+            int totalA = baseCountA + extraCost;
+            int maxA = scaledIn1.getMaxStackSize();
 
+            ItemCost costA;
             Optional<ItemCost> costB = Optional.empty();
-            if (in2 != null && !in2.isEmpty()) {
-                ItemStack scaledIn2 = trade.getScaledInput(in2);
-                DataComponentMap customComponents2 = NPCTrade.getCustomComponents(in2);
-                DataComponentPredicate predicate2 = customComponents2.isEmpty()
-                    ? DataComponentPredicate.EMPTY
-                    : DataComponentPredicate.allOf(customComponents2);
 
-                costB = Optional.of(new ItemCost(
-                    in2.getItemHolder(),
-                    scaledIn2.getCount(),
-                    predicate2,
-                    scaledIn2
-                ));
+            if (totalA <= maxA) {
+                costA = new ItemCost(in1.getItemHolder(), totalA, predicate1, scaledIn1.copyWithCount(totalA));
+
+                if (in2 != null && !in2.isEmpty()) {
+                    ItemStack scaledIn2 = trade.getScaledInput(in2);
+                    DataComponentMap customComponents2 = NPCTrade.getCustomComponents(in2);
+                    DataComponentPredicate predicate2 = customComponents2.isEmpty()
+                        ? DataComponentPredicate.EMPTY
+                        : DataComponentPredicate.allOf(customComponents2);
+
+                    costB = Optional.of(new ItemCost(
+                        in2.getItemHolder(),
+                        scaledIn2.getCount(),
+                        predicate2,
+                        scaledIn2
+                    ));
+                }
+            } else {
+                int overflow = totalA - maxA;
+                costA = new ItemCost(in1.getItemHolder(), maxA, predicate1, scaledIn1.copyWithCount(maxA));
+
+                if (in2 == null || in2.isEmpty()) {
+                    int overflowCount = Math.min(overflow, maxA);
+                    costB = Optional.of(new ItemCost(
+                        in1.getItemHolder(),
+                        overflowCount,
+                        predicate1,
+                        scaledIn1.copyWithCount(overflowCount)
+                    ));
+                } else if (ItemStack.isSameItemSameComponents(in2, in1)) {
+                    ItemStack scaledIn2 = trade.getScaledInput(in2);
+                    DataComponentMap customComponents2 = NPCTrade.getCustomComponents(in2);
+                    DataComponentPredicate predicate2 = customComponents2.isEmpty()
+                        ? DataComponentPredicate.EMPTY
+                        : DataComponentPredicate.allOf(customComponents2);
+
+                    int maxB = scaledIn2.getMaxStackSize();
+                    int requestedB = scaledIn2.getCount() + overflow;
+                    int mergedB = Math.min(requestedB, maxB);
+                    if (requestedB > maxB) {
+                        Envoys.LOGGER.warn("[Envoys] Price overflow for NPC {} trade {} was clamped: second slot cannot hold {} items", npcUuid, i, requestedB);
+                    }
+                    costB = Optional.of(new ItemCost(
+                        in2.getItemHolder(),
+                        mergedB,
+                        predicate2,
+                        scaledIn2.copyWithCount(mergedB)
+                    ));
+                } else {
+                    ItemStack scaledIn2 = trade.getScaledInput(in2);
+                    DataComponentMap customComponents2 = NPCTrade.getCustomComponents(in2);
+                    DataComponentPredicate predicate2 = customComponents2.isEmpty()
+                        ? DataComponentPredicate.EMPTY
+                        : DataComponentPredicate.allOf(customComponents2);
+
+                    Envoys.LOGGER.warn("[Envoys] Price overflow for NPC {} trade {} not applied: second slot holds a different item", npcUuid, i);
+                    costB = Optional.of(new ItemCost(
+                        in2.getItemHolder(),
+                        scaledIn2.getCount(),
+                        predicate2,
+                        scaledIn2
+                    ));
+                }
             }
 
             ItemStack result = out.copy();
@@ -265,10 +312,6 @@ public class NPCMerchant implements Merchant, TradeGuiBridge {
                 }
             }
 
-            int completedTrades = TradeCounterStore.getCompletedTrades(npcUuid, playerUuid, i, trade);
-            float priceIncreasePerTrade = Math.max(0f, trade.priceMultiplier - 1.0f);
-            int initialExtraCost = (int) (completedTrades * priceIncreasePerTrade);
-
             MerchantOffer offer = new MerchantOffer(
                 costA,
                 costB,
@@ -278,7 +321,6 @@ public class NPCMerchant implements Merchant, TradeGuiBridge {
                 trade.priceMultiplier
             );
 
-            offer.setSpecialPriceDiff(initialExtraCost);
             if (outOfStock) {
                 offer.setToOutOfStock();
             }

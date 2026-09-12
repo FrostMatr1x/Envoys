@@ -57,7 +57,7 @@ public class SettingQuestGiveScreen extends Screen {
                     this.questTargetEditBox.setValue(selected);
                 }
             }))
-        ).bounds(centerX + 125, startY - 2, 100, 20).build());
+        ).bounds(centerX + 110, startY - 2, 100, 20).build());
 
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);

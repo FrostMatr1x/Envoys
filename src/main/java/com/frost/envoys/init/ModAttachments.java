@@ -1,6 +1,8 @@
 package com.frost.envoys.init;
 
 import com.frost.envoys.Envoys;
+import com.frost.envoys.action.MerchantSlotData;
+import com.frost.envoys.action.PlayerCheckpointData;
 import com.frost.envoys.quest.PlayerQuestTracker;
 
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -20,6 +22,20 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("player_quests", () -> AttachmentType
                     .builder(() -> new PlayerQuestTracker())
                     .serialize(PlayerQuestTracker.CODEC)
+                    .copyOnDeath()
+                    .build());
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<PlayerCheckpointData>> PLAYER_CHECKPOINTS =
+            ATTACHMENT_TYPES.register("player_checkpoints", () -> AttachmentType
+                    .builder(() -> new PlayerCheckpointData())
+                    .serialize(PlayerCheckpointData.CODEC)
+                    .copyOnDeath()
+                    .build());
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<MerchantSlotData>> PLAYER_MERCHANT_SLOTS =
+            ATTACHMENT_TYPES.register("player_merchant_slots", () -> AttachmentType
+                    .builder(() -> new MerchantSlotData())
+                    .serialize(MerchantSlotData.CODEC)
                     .copyOnDeath()
                     .build());
 }

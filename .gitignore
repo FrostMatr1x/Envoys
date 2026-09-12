@@ -53,6 +53,9 @@ bin/
 ### VS Code ###
 .vscode/
 
+### Kilo ###
+.kilo/
+
 ### Mac OS ###
 .DS_Store
 
