@@ -32,14 +32,14 @@ public class AnimSyncService {
     public record AnimListEntry(String name, String hash) {
     }
 
-    public static CompletableFuture<AnimLoadResult> loadAnimAsync(String name, File worldDir) {
+    public static CompletableFuture<AnimLoadResult> loadAnimAsync(String name) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (name == null || name.isBlank()) {
                     return new AnimLoadResult(name, null, null, "Пустое имя анимации");
                 }
 
-                Path animDir = PathManager.getServerAnimDir(worldDir);
+                Path animDir = PathManager.getServerAnimDir();
                 if (!Files.isDirectory(animDir)) {
                     return new AnimLoadResult(name, null, null, "Папка анимаций не найдена");
                 }
@@ -72,11 +72,11 @@ public class AnimSyncService {
         }, IO_EXECUTOR);
     }
 
-    public static CompletableFuture<List<AnimListEntry>> listAnimsAsync(File worldDir) {
+    public static CompletableFuture<List<AnimListEntry>> listAnimsAsync() {
         return CompletableFuture.supplyAsync(() -> {
             List<AnimListEntry> result = new ArrayList<>();
             try {
-                Path animDir = PathManager.getServerAnimDir(worldDir);
+                Path animDir = PathManager.getServerAnimDir();
                 if (!Files.isDirectory(animDir)) return result;
 
                 try (Stream<Path> files = Files.list(animDir)) {

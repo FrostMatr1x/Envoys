@@ -10,6 +10,7 @@ import com.frost.envoys.skin.gui.SkinGuiPreview;
 import com.frost.envoys.skin.model.SkinIndexData;
 import com.frost.envoys.skin.service.SkinLocalService;
 import com.frost.envoys.skin.service.SkinSyncService;
+import com.frost.envoys.util.ClientPathManager;
 import com.frost.envoys.util.PathManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 
@@ -222,7 +223,7 @@ public class NPCSkinScreen extends Screen {
         this.isLoading = true;
         this.errorMessage = null;
 
-        SkinSyncService.loadSkinAsync(currentSkinValue, currentSkinType.name(), null, true)
+        SkinSyncService.loadSkinAsync(currentSkinValue, currentSkinType.name(), true)
                 .thenAccept(result -> {
                     Minecraft.getInstance().execute(() -> {
                         this.isLoading = false;
@@ -253,10 +254,10 @@ public class NPCSkinScreen extends Screen {
 
     private void scanSkinFolder() {
         this.localSkinFiles.clear();
-        File skinsDir = PathManager.getClientEnvoysDir().toFile();
+        File skinsDir = ClientPathManager.getClientEnvoysDir().toFile();
         if (!skinsDir.exists()) skinsDir.mkdirs();
 
-        SkinIndexData index = SkinLocalService.readIndex(PathManager.getClientIndexFile());
+        SkinIndexData index = SkinLocalService.readIndex(ClientPathManager.getClientIndexFile());
         index.skins.forEach(e -> this.localSkinFiles.add(e.path));
     }
 

@@ -22,9 +22,7 @@ public class ServerAnimPayloadHandler {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
-            File worldDir = player.getServer().getWorldPath(LevelResource.ROOT).toFile();
-
-            AnimSyncService.listAnimsAsync(worldDir).thenAccept(entries -> {
+            AnimSyncService.listAnimsAsync().thenAccept(entries -> {
                 List<AnimListPayload.AnimInfo> infos = new ArrayList<>(entries.size());
                 for (AnimSyncService.AnimListEntry entry : entries) {
                     infos.add(new AnimListPayload.AnimInfo(entry.name(), entry.hash()));
@@ -38,9 +36,7 @@ public class ServerAnimPayloadHandler {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
-            File worldDir = player.getServer().getWorldPath(LevelResource.ROOT).toFile();
-
-            AnimSyncService.loadAnimAsync(payload.name(), worldDir).thenAccept(result -> {
+            AnimSyncService.loadAnimAsync(payload.name()).thenAccept(result -> {
                 if (result.isSuccess()) {
                     PacketDistributor.sendToPlayer(player, new AnimDataPayload(result.name(), result.jsonData()));
                 } else {

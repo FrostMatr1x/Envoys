@@ -4,6 +4,7 @@ import com.frost.envoys.Envoys;
 import com.frost.envoys.skin.model.SkinIndexData;
 import com.frost.envoys.skin.model.SkinIndexEntry;
 import com.frost.envoys.skin.model.SkinMetaData;
+import com.frost.envoys.util.ClientPathManager;
 import com.frost.envoys.util.PathManager;
 import com.frost.envoys.util.SkinModelUtil;
 
@@ -41,15 +42,15 @@ public class SkinSyncService {
         return name.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 
-    public static CompletableFuture<SkinFetchResult> loadSkinAsync(String query, String skinType, File worldDir, boolean isClient) {
+    public static CompletableFuture<SkinFetchResult> loadSkinAsync(String query, String skinType, boolean isClient) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (query == null || query.isBlank()) {
                     return new SkinFetchResult(null, null, null, null, "Пустой запрос");
                 }
 
-                Path cacheDir = isClient ? PathManager.getClientSkinCacheDir() : PathManager.getServerSkinCacheDir(worldDir);
-                File indexFile = isClient ? PathManager.getClientIndexFile() : PathManager.getServerIndexFile(worldDir);
+                Path cacheDir = isClient ? ClientPathManager.getClientSkinCacheDir() : PathManager.getServerSkinCacheDir();
+                File indexFile = isClient ? ClientPathManager.getClientIndexFile() : PathManager.getServerIndexFile();
 
                 String normalizedQuery = query.trim();
                 boolean isUrlType = "URL".equalsIgnoreCase(skinType) || normalizedQuery.startsWith("http://") || normalizedQuery.startsWith("https://");
@@ -90,7 +91,7 @@ public class SkinSyncService {
                     return new SkinFetchResult(data, hash, model, "url", null);
                 }
 
-                Path searchFolder = isClient ? PathManager.getClientEnvoysDir() : PathManager.getServerSkinDir(worldDir);
+                Path searchFolder = isClient ? ClientPathManager.getClientEnvoysDir() : PathManager.getServerSkinDir();
                 Optional<Path> foundFile = SkinLocalService.findSkinRecursively(searchFolder, normalizedQuery);
                 if (foundFile.isPresent()) {
                     byte[] data = Files.readAllBytes(foundFile.get());

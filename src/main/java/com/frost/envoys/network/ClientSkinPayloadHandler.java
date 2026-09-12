@@ -9,6 +9,7 @@ import com.frost.envoys.network.payload.SkinInfoPayload;
 import com.frost.envoys.skin.gui.SkinGuiPreview;
 import com.frost.envoys.skin.model.SkinMetaData;
 import com.frost.envoys.skin.service.SkinCacheService;
+import com.frost.envoys.util.ClientPathManager;
 import com.frost.envoys.util.PathManager;
 import com.frost.envoys.util.SkinModelUtil;
 
@@ -25,7 +26,7 @@ public class ClientSkinPayloadHandler {
     public static void handleSkinInfo(final SkinInfoPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> {
             String uuidStr = payload.npcUuid().toString();
-            Path cacheDir = PathManager.getClientSkinCacheDir();
+            Path cacheDir = ClientPathManager.getClientSkinCacheDir();
             Path cachedPng = cacheDir.resolve(uuidStr + ".png");
 
             if (Files.exists(cachedPng)) {
@@ -60,7 +61,7 @@ public class ClientSkinPayloadHandler {
                 String model = SkinModelUtil.detectModel(pngData);
 
                 SkinCacheService.saveToCache(
-                        PathManager.getClientSkinCacheDir(),
+                        ClientPathManager.getClientSkinCacheDir(),
                         uuidStr,
                         pngData,
                         new SkinMetaData(uuidStr, hash, model, "server", System.currentTimeMillis())

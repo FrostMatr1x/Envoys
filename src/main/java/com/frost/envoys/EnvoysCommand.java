@@ -83,8 +83,8 @@ public class EnvoysCommand {
         MinecraftServer server = source.getServer();
         File worldDir = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toFile();
 
-        Path cacheDir = PathManager.getServerSkinCacheDir(worldDir);
-        File indexFile = PathManager.getServerIndexFile(worldDir);
+        Path cacheDir = PathManager.getServerSkinCacheDir();
+        File indexFile = PathManager.getServerIndexFile();
 
         if (!Files.exists(cacheDir) || !indexFile.exists()) {
             source.sendSuccess(() -> Component.literal("§e[Envoys] Кэш скинов пуст."), false);
