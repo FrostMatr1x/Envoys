@@ -5,6 +5,7 @@ import com.frost.envoys.client.EmoteIntegration;
 import com.frost.envoys.network.payload.AnimDataPayload;
 import com.frost.envoys.network.payload.AnimListPayload;
 import com.frost.envoys.skin.service.SkinCacheService;
+import com.frost.envoys.util.ClientPathManager;
 import com.frost.envoys.util.PathManager;
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import dev.kosmx.playerAnim.core.data.gson.AnimationSerializing;
@@ -22,7 +23,7 @@ public class ClientAnimPayloadHandler {
         context.enqueueWork(() -> {
             if (payload.animations() == null) return;
             for (AnimListPayload.AnimInfo info : payload.animations()) {
-                Path cached = PathManager.getClientAnimDir().resolve(EmoteIntegration.sanitizeAnimName(info.name()) + ".json");
+                Path cached = ClientPathManager.getClientAnimDir().resolve(EmoteIntegration.sanitizeAnimName(info.name()) + ".json");
                 if (Files.exists(cached)) {
                     try {
                         byte[] data = Files.readAllBytes(cached);
@@ -47,7 +48,7 @@ public class ClientAnimPayloadHandler {
                     return;
                 }
 
-                Path file = PathManager.getClientAnimDir().resolve(EmoteIntegration.sanitizeAnimName(payload.name()) + ".json");
+                Path file = ClientPathManager.getClientAnimDir().resolve(EmoteIntegration.sanitizeAnimName(payload.name()) + ".json");
                 Files.write(file, data);
 
                 if (EmoteIntegration.isLibPresent()) {

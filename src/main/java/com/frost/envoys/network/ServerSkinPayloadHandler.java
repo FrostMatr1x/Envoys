@@ -30,10 +30,9 @@ public class ServerSkinPayloadHandler {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
-            File worldDir = player.getServer().getWorldPath(LevelResource.ROOT).toFile();
             String uuidStr = payload.npcUuid().toString();
 
-            SkinSyncService.loadSkinAsync(uuidStr, "FILE", worldDir, false)
+            SkinSyncService.loadSkinAsync(uuidStr, "FILE", false)
                     .thenAccept(result -> {
                         if (result.isSuccess()) {
                             PacketDistributor.sendToPlayer(player, 
@@ -53,9 +52,8 @@ public class ServerSkinPayloadHandler {
             if (context.player() == null) return;
 
             ServerPlayer player = (ServerPlayer) context.player();
-            File worldDir = player.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toFile();
 
-            SkinSyncService.loadSkinAsync(payload.skinValue(), payload.skinType(), worldDir, false)
+            SkinSyncService.loadSkinAsync(payload.skinValue(), payload.skinType(), false)
                     .thenAccept(result -> {
                         if (result.isSuccess()) {
                             NPCInteractManager manager = NPCInteractManager.byUUID(payload.npcUuid())

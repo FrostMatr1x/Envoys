@@ -5,6 +5,7 @@ import com.frost.envoys.EnvoysCommand;
 import com.frost.envoys.config.NPCConfigManager;
 import com.frost.envoys.npc.merchant.TradeCounterStore;
 import com.frost.envoys.quest.PlayerQuestManager;
+import com.frost.envoys.util.PathManager;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,6 +25,7 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onServerStarting(ServerStartingEvent event) {
+        PathManager.initServer(event.getServer());
         NPCConfigManager.loadAll();
         TradeCounterStore.loadAll();
     }
@@ -32,6 +34,7 @@ public class ServerEvents {
     public static void onServerStopping(ServerStoppingEvent event) {
         NPCConfigManager.saveAll();
         TradeCounterStore.saveAll();
+        PathManager.clearServer();
     }
 
     @SubscribeEvent

@@ -1,88 +1,71 @@
 package com.frost.envoys.util;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ServerData;
-import net.neoforged.fml.loading.FMLPaths;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class PathManager {
 
-    private static String currentServerId = "singleplayer";
+    private static Path serverWorldDir = null;
 
-    public static void setServerId(String hostAndPort) {
-        if (hostAndPort == null || hostAndPort.isBlank()) {
-            currentServerId = "singleplayer";
-        } else {
-            currentServerId = hostAndPort.replaceAll("[^a-zA-Z0-9.-]", "_");
-        }
+    public static void initServer(MinecraftServer server) {
+        serverWorldDir = server.getWorldPath(LevelResource.ROOT);
     }
 
-    public static String getServerId() {
-        if (Minecraft.getInstance().isLocalServer()) {
-            return "singleplayer";
-        }
-        ServerData data = Minecraft.getInstance().getCurrentServer();
-        if (data != null) {
-            return data.ip.replaceAll("[^a-zA-Z0-9.-]", "_");
-        }
-        return currentServerId;
+    public static void clearServer() {
+        serverWorldDir = null;
     }
 
-    public static Path getClientEnvoysDir() {
-        return FMLPaths.GAMEDIR.get().resolve("envoysCache").resolve(getServerId());
+    public static Path getServerWorldDir() {
+        if (serverWorldDir == null) {
+            throw new IllegalStateException("Server world directory has not been initialized yet!");
+        }
+        return serverWorldDir;
     }
 
-    public static Path getClientSkinCacheDir() {
-        Path p = getClientEnvoysDir().resolve("skins").resolve("cache");
-        p.toFile().mkdirs();
+    public static Path getServerEnvoysDir() {
+        return getServerWorldDir().resolve("envoys");
+    }
+
+    public static Path getServerSkinDir() {
+        Path p = getServerEnvoysDir().resolve("skins");
+        createDirectories(p);
         return p;
     }
 
-    public static File getClientIndexFile() {
-        Path p = getClientEnvoysDir().resolve("skin");
-        p.toFile().mkdirs();
+    public static Path getServerSkinCacheDir() {
+        Path p = getServerSkinDir().resolve("cache");
+        createDirectories(p);
+        return p;
+    }
+
+    public static File getServerIndexFile() {
+        Path p = getServerEnvoysDir().resolve("skin");
+        createDirectories(p);
         return p.resolve("index.json").toFile();
     }
 
-    public static Path getServerEnvoysDir(File worldDir) {
-        return worldDir.toPath().resolve("envoys");
-    }
-
-    public static Path getServerSkinDir(File worldDir) {
-        Path p = getServerEnvoysDir(worldDir).resolve("skins");
-        p.toFile().mkdirs();
+    public static Path getServerAnimDir() {
+        Path p = getServerEnvoysDir().resolve("anim");
+        createDirectories(p);
         return p;
     }
 
-    public static Path getServerSkinCacheDir(File worldDir) {
-        Path p = getServerSkinDir(worldDir).resolve("cache");
-        p.toFile().mkdirs();
+    public static Path getServerNPCsDir() {
+        Path p = getServerEnvoysDir().resolve("npcs");
+        createDirectories(p);
         return p;
     }
 
-    public static File getServerIndexFile(File worldDir) {
-        Path p = getServerEnvoysDir(worldDir).resolve("skin");
-        p.toFile().mkdirs();
-        return p.resolve("index.json").toFile();
-    }
-
-    public static Path getClientAnimDir() {
-        Path p = getClientEnvoysDir().resolve("anim");
-        p.toFile().mkdirs();
-        return p;
-    }
-
-    public static Path getServerAnimDir(File worldDir) {
-        Path p = getServerEnvoysDir(worldDir).resolve("anim");
-        p.toFile().mkdirs();
-        return p;
-    }
-
-    public static Path getServerNPCsDir(File worldDir) {
-        Path p = getServerEnvoysDir(worldDir).resolve("npcs");
-        p.toFile().mkdirs();
-        return p;
+    private static void createDirectories(Path path) {
+        try {
+            Files.createDirectories(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

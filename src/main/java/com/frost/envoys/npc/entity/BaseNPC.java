@@ -87,7 +87,7 @@ public class BaseNPC extends PathfinderMob {
 
         if (clientSkinLocation == null || !lastLoadedHash.equalsIgnoreCase(hash)) {
             this.lastLoadedHash = hash;
-            SkinSyncService.loadSkinAsync(value, type, null, true).thenAccept(result -> {
+            SkinSyncService.loadSkinAsync(value, type, true).thenAccept(result -> {
                 if (result.isSuccess()) {
                     Minecraft.getInstance().execute(() -> {
                         this.clientSkinLocation = SkinGuiPreview.registerDynamicSkin("npc_" + getUUID(), result.pngData());
