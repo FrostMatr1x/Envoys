@@ -32,6 +32,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -49,6 +50,9 @@ public class BaseNPC extends PathfinderMob {
     private boolean scriptedMovement = false;
     private final Set<UUID> playersInRange = new HashSet<>();
 
+    private LookAtPlayerGoal lookAtPlayerGoal;
+    private RandomLookAroundGoal randomLookAroundGoal;
+
     public static final EntityDataAccessor<String> SKIN_TYPE = SynchedEntityData.defineId(BaseNPC.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<String> SKIN_VALUE = SynchedEntityData.defineId(BaseNPC.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<String> SKIN_MODEL = SynchedEntityData.defineId(BaseNPC.class, EntityDataSerializers.STRING);
@@ -64,7 +68,32 @@ public class BaseNPC extends PathfinderMob {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 6.0F));
+        this.lookAtPlayerGoal = new LookAtPlayerGoal(this, Player.class, 6.0F);
+        this.goalSelector.addGoal(2, this.lookAtPlayerGoal);
+        this.randomLookAroundGoal = new RandomLookAroundGoal(this);
+        this.goalSelector.addGoal(3, this.randomLookAroundGoal);
+    }
+
+    public void setLookLocked(boolean locked) {
+        if (locked) {
+            if (this.lookAtPlayerGoal != null) {
+                this.goalSelector.removeGoal(this.lookAtPlayerGoal);
+            }
+            if (this.randomLookAroundGoal != null) {
+                this.goalSelector.removeGoal(this.randomLookAroundGoal);
+            }
+        } else {
+            if (this.lookAtPlayerGoal == null
+                    || !this.goalSelector.getAvailableGoals().stream().anyMatch(e -> e.getGoal() == this.lookAtPlayerGoal)) {
+                this.lookAtPlayerGoal = new LookAtPlayerGoal(this, Player.class, 6.0F);
+                this.goalSelector.addGoal(2, this.lookAtPlayerGoal);
+            }
+            if (this.randomLookAroundGoal == null
+                    || !this.goalSelector.getAvailableGoals().stream().anyMatch(e -> e.getGoal() == this.randomLookAroundGoal)) {
+                this.randomLookAroundGoal = new RandomLookAroundGoal(this);
+                this.goalSelector.addGoal(3, this.randomLookAroundGoal);
+            }
+        }
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -173,6 +202,8 @@ public class BaseNPC extends PathfinderMob {
 
         this.setInvulnerable(!passport.canTakeDamage);
         this.setInvisible(!passport.isVisible);
+
+        this.setLookLocked(passport.lookLocked);
     }
 
     @Override
@@ -242,6 +273,7 @@ public class BaseNPC extends PathfinderMob {
                         p.canTakeDamage,
                         p.useGravity,
                         p.creativeTunerOnly,
+                        p.lookLocked,
                         jsonScript,
                         p.emote != null ? p.emote : ""
                     ));

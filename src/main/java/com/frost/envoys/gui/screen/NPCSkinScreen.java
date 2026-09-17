@@ -371,6 +371,7 @@ public class NPCSkinScreen extends Screen {
                         p.canTakeDamage,
                         p.useGravity,
                         p.creativeTunerOnly,
+                        p.lookLocked,
                         this.currentEmote
                 )
         );

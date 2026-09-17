@@ -30,6 +30,7 @@ public class NPCPassportScreen extends Screen {
     private boolean canTakeDamage;
     private boolean useGravity;
     private boolean creativeTunerOnly;
+    private boolean lookLocked;
 
     private EditBox nameField;
     private EditBox sizeField;
@@ -56,6 +57,7 @@ public class NPCPassportScreen extends Screen {
         this.canTakeDamage = p.canTakeDamage;
         this.useGravity = p.useGravity;
         this.creativeTunerOnly = p.creativeTunerOnly;
+        this.lookLocked = p.lookLocked;
     }
 
     @Override
@@ -159,6 +161,14 @@ public class NPCPassportScreen extends Screen {
         creativeOnlyCheckbox.active = this.isCreativeTuner;
         this.addRenderableWidget(creativeOnlyCheckbox);
 
+        Checkbox lookLockedCheckbox = Checkbox.builder(Component.literal("Заблокировать автоповорот"), this.font)
+                .pos(rightX, 165)
+                .selected(this.lookLocked)
+                .onValueChange((checkbox, selected) -> this.lookLocked = selected)
+                .build();
+        lookLockedCheckbox.active = true;
+        this.addRenderableWidget(lookLockedCheckbox);
+
         int buttonY = this.height - 35;
 
         this.addRenderableWidget(Button.builder(
@@ -234,6 +244,7 @@ public class NPCPassportScreen extends Screen {
             p.npcName = this.npcName;
             p.isHoldPosEnabled = this.isHoldPosEnabled;
             p.size = this.size;
+            p.lookLocked = this.lookLocked;
 
             if (this.isCreativeTuner) {
                 p.speed = this.speed;
@@ -259,6 +270,7 @@ public class NPCPassportScreen extends Screen {
                 p.canTakeDamage,
                 p.useGravity,
                 p.creativeTunerOnly,
+                p.lookLocked,
                 p.emote != null ? p.emote : ""
             ));
         }

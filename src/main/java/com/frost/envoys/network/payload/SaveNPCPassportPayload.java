@@ -20,6 +20,7 @@ public record SaveNPCPassportPayload(
     boolean canTakeDamage,
     boolean useGravity,
     boolean creativeTunerOnly,
+    boolean lookLocked,
     String emote
 ) implements CustomPacketPayload {
 
@@ -40,6 +41,7 @@ public record SaveNPCPassportPayload(
             buf.writeBoolean(payload.canTakeDamage);
             buf.writeBoolean(payload.useGravity);
             buf.writeBoolean(payload.creativeTunerOnly);
+            buf.writeBoolean(payload.lookLocked);
             buf.writeUtf(payload.emote != null ? payload.emote : "");
         },
         buf -> new SaveNPCPassportPayload(
@@ -49,6 +51,7 @@ public record SaveNPCPassportPayload(
             buf.readFloat(),
             buf.readFloat(),
             new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble()),
+            buf.readBoolean(),
             buf.readBoolean(),
             buf.readBoolean(),
             buf.readBoolean(),

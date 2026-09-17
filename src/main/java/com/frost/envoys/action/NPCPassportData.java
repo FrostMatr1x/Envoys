@@ -1,7 +1,5 @@
 package com.frost.envoys.action;
 
-import java.io.Console;
-
 public class NPCPassportData {
     public String npcName = "";
     public float size = 1.0f;
@@ -15,6 +13,7 @@ public class NPCPassportData {
     public boolean canTakeDamage = false;
     public boolean useGravity = true;
     public boolean creativeTunerOnly = false;
+    public boolean lookLocked = false;
     public String emote = "";
 
     public String skinType = "NICKNAME";

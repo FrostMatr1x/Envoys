@@ -176,11 +176,13 @@ public class ServerPayloadHandler {
                 p.canTakeDamage = payload.canTakeDamage();
                 p.useGravity = payload.useGravity();
                 p.creativeTunerOnly = payload.creativeTunerOnly();
+                p.lookLocked = payload.lookLocked();
                 p.emote = payload.emote();
             } else {
 
                 p.npcName = sanitizeName(payload.name());
                 p.isHoldPosEnabled = payload.isHoldPosEnabled();
+                p.lookLocked = payload.lookLocked();
 
                 if (Float.isFinite(payload.size())) {
                     p.size = Math.clamp(0.1f, payload.size(), 5.0f);

@@ -21,6 +21,7 @@ public record OpenSettingGuiPayload(
     boolean canTakeDamage,
     boolean useGravity,
     boolean creativeTunerOnly,
+    boolean lookLocked,
     String jsonScript,
     String emote
 ) implements CustomPacketPayload {
@@ -43,6 +44,7 @@ public record OpenSettingGuiPayload(
             buf.writeBoolean(payload.canTakeDamage);
             buf.writeBoolean(payload.useGravity);
             buf.writeBoolean(payload.creativeTunerOnly);
+            buf.writeBoolean(payload.lookLocked);
             buf.writeUtf(payload.jsonScript != null ? payload.jsonScript : "", 1048576);
             buf.writeUtf(payload.emote != null ? payload.emote : "");
         },
@@ -54,6 +56,7 @@ public record OpenSettingGuiPayload(
             buf.readFloat(),
             buf.readFloat(),
             new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble()),
+            buf.readBoolean(),
             buf.readBoolean(),
             buf.readBoolean(),
             buf.readBoolean(),
