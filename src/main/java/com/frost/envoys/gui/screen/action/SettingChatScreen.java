@@ -45,6 +45,7 @@ public class SettingChatScreen extends Screen {
         this.messageEditBox = new EditBox(this.font, centerX + 10, startY - 2, 200, 20, Component.literal("message"));
         this.messageEditBox.setValue(this.message);
         this.messageEditBox.setResponder(text -> this.message = text);
+        this.messageEditBox.setMaxLength(256);
         this.addRenderableWidget(this.messageEditBox);
 
         this.isGlobalCheckbox = Checkbox.builder(Component.literal("Глобально (всем игрокам)"), this.font)

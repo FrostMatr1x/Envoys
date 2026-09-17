@@ -12,6 +12,7 @@ import com.frost.envoys.action.model.ActionQuestAdvanceStep;
 import com.frost.envoys.action.model.ActionQuestCheck;
 import com.frost.envoys.action.model.ActionQuestGive;
 import com.frost.envoys.action.model.ActionQuestMarkCompleted;
+import com.frost.envoys.action.model.ActionRandomizer;
 import com.frost.envoys.action.model.ActionSavePoint;
 import com.frost.envoys.action.model.ActionStart;
 import com.frost.envoys.action.model.ActionTrade;
@@ -89,6 +90,7 @@ public class EntityActionAdapter implements JsonSerializer<EntityActionData>, Js
             case "save_point" -> SUB_GSON.fromJson(obj, ActionSavePoint.class);
             case "load_point" -> SUB_GSON.fromJson(obj, ActionLoadPoint.class);
             case "merchant_level_up" -> SUB_GSON.fromJson(obj, ActionMerchantLevelUp.class);
+            case "randomizer" -> SUB_GSON.fromJson(obj, ActionRandomizer.class);
             default -> throw new JsonParseException("[Envoys] Unknown EntityAction type: " + type);
         };
     }

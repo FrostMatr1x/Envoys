@@ -19,6 +19,7 @@ import com.frost.envoys.action.model.ActionQuestAdvanceStep;
 import com.frost.envoys.action.model.ActionQuestCheck;
 import com.frost.envoys.action.model.ActionQuestGive;
 import com.frost.envoys.action.model.ActionQuestMarkCompleted;
+import com.frost.envoys.action.model.ActionRandomizer;
 import com.frost.envoys.action.model.ActionSavePoint;
 import com.frost.envoys.action.model.ActionStart;
 import com.frost.envoys.action.model.ActionTrade;
@@ -35,6 +36,7 @@ import com.frost.envoys.gui.screen.action.SettingMerchantLevelUpScreen;
 import com.frost.envoys.gui.screen.action.SettingMoveScreen;
 import com.frost.envoys.gui.screen.action.SettingQuestCheckScreen;
 import com.frost.envoys.gui.screen.action.SettingQuestGiveScreen;
+import com.frost.envoys.gui.screen.action.SettingRandomizerScreen;
 import com.frost.envoys.gui.screen.action.SettingSavePointScreen;
 import com.frost.envoys.gui.screen.action.SettingStartScreen;
 import com.frost.envoys.gui.screen.action.SettingTradeScreen;
@@ -144,6 +146,7 @@ public class NPCScriptScreen extends Screen {
                     case SAVE_POINT -> new ActionSavePoint(id);
                     case LOAD_POINT -> new ActionLoadPoint(id);
                     case MERCHANT_LEVEL_UP -> new ActionMerchantLevelUp(id);
+                    case RANDOMIZER -> new ActionRandomizer(id);
                 };
 
                 this.event.actions().add(newAction);
@@ -177,7 +180,7 @@ public class NPCScriptScreen extends Screen {
                 ? new ActionType[]{ ActionType.DIALOD, ActionType.TRADE, ActionType.COMMAND, ActionType.QUEST_GIVE,
                         ActionType.QUEST_CHECK, ActionType.QUEST_ADVANCE_STEP, ActionType.QUEST_MARK_COMPLETED,
                         ActionType.MOVE, ActionType.DELAY, ActionType.CHAT, ActionType.SAVE_POINT, ActionType.LOAD_POINT,
-                        ActionType.MERCHANT_LEVEL_UP }
+                        ActionType.MERCHANT_LEVEL_UP, ActionType.RANDOMIZER }
                 : new ActionType[]{ ActionType.DIALOD };
 
         if (this.hasActionType(ActionStart.class)) {
@@ -316,6 +319,7 @@ public class NPCScriptScreen extends Screen {
                 case "save_point" -> ActionType.SAVE_POINT;
                 case "load_point" -> ActionType.LOAD_POINT;
                 case "merchant_level_up" -> ActionType.MERCHANT_LEVEL_UP;
+                case "randomizer" -> ActionType.RANDOMIZER;
                 default -> ActionType.DIALOD;
             };
 
@@ -348,6 +352,8 @@ public class NPCScriptScreen extends Screen {
                     Minecraft.getInstance().setScreen(new SettingLoadPointScreen(NPCScriptScreen.this, loadPointAction));
                 } else if (actionData instanceof ActionMerchantLevelUp merchantLevelUpAction) {
                     Minecraft.getInstance().setScreen(new SettingMerchantLevelUpScreen(NPCScriptScreen.this, merchantLevelUpAction));
+                } else if (actionData instanceof ActionRandomizer randomizerAction) {
+                    Minecraft.getInstance().setScreen(new SettingRandomizerScreen(NPCScriptScreen.this, randomizerAction));
                 }
             }).bounds(0, 0, 75, 20).build();
 
@@ -402,7 +408,8 @@ public class NPCScriptScreen extends Screen {
         START("Старт"),
         SAVE_POINT("Точка сохранения"),
         LOAD_POINT("Точка загрузки"),
-        MERCHANT_LEVEL_UP("Повышение уровня торговца");
+        MERCHANT_LEVEL_UP("Повышение уровня торговца"),
+        RANDOMIZER("Рандомайзер");
 
         private final String displayName;
 

@@ -43,6 +43,7 @@ public class ClientPayloadHandler {
             p.canTakeDamage = payload.canTakeDamage();
             p.useGravity = payload.useGravity();
             p.creativeTunerOnly = payload.creativeTunerOnly();
+            p.lookLocked = payload.lookLocked();
             p.emote = payload.emote();
 
             NPCInteractManager screenManager = manager;

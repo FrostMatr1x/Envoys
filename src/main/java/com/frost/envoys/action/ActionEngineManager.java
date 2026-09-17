@@ -11,6 +11,7 @@ import com.frost.envoys.action.handler.QuestAdvanceStepActionHandler;
 import com.frost.envoys.action.handler.QuestCheckActionHandler;
 import com.frost.envoys.action.handler.QuestGiveActionHandler;
 import com.frost.envoys.action.handler.QuestMarkCompletedActionHandler;
+import com.frost.envoys.action.handler.RandomizerActionHandler;
 import com.frost.envoys.action.handler.SavePointActionHandler;
 import com.frost.envoys.action.handler.StartActionHandler;
 import com.frost.envoys.action.handler.TradeActionHandler;
@@ -25,6 +26,7 @@ import com.frost.envoys.action.model.ActionQuestAdvanceStep;
 import com.frost.envoys.action.model.ActionQuestCheck;
 import com.frost.envoys.action.model.ActionQuestGive;
 import com.frost.envoys.action.model.ActionQuestMarkCompleted;
+import com.frost.envoys.action.model.ActionRandomizer;
 import com.frost.envoys.action.model.ActionSavePoint;
 import com.frost.envoys.action.model.ActionStart;
 import com.frost.envoys.action.model.ActionTrade;
@@ -50,6 +52,7 @@ public class ActionEngineManager {
         instance.registry().register(ActionSavePoint.class, new SavePointActionHandler());
         instance.registry().register(ActionLoadPoint.class, new LoadPointActionHandler());
         instance.registry().register(ActionMerchantLevelUp.class, new MerchantLevelUpActionHandler());
+        instance.registry().register(ActionRandomizer.class, new RandomizerActionHandler());
     }
 
     public static NpcActionEngine getInstance() {
