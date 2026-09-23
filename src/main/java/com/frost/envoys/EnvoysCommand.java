@@ -5,6 +5,7 @@ import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.ScriptRunner;
 import com.frost.envoys.config.NPCConfigManager;
 import com.frost.envoys.init.ModEntities;
+import com.frost.envoys.lua.LuaEngineManager;
 import com.frost.envoys.npc.entity.BaseNPC;
 import com.frost.envoys.quest.QuestDefinition;
 import com.frost.envoys.quest.QuestIndex;
@@ -74,7 +75,10 @@ public class EnvoysCommand {
                 .then(Commands.literal("save")
                         .executes(ctx -> saveNpcConfigs(ctx.getSource())))
                 .then(Commands.literal("load")
-                        .executes(ctx -> reloadNpcConfigs(ctx.getSource())));
+                        .executes(ctx -> reloadNpcConfigs(ctx.getSource())))
+                .then(Commands.literal("lua")
+                        .then(Commands.literal("reload")
+                                .executes(ctx -> reloadLuaScripts(ctx.getSource()))));
 
         dispatcher.register(command);
     }
@@ -308,6 +312,16 @@ public class EnvoysCommand {
         ), true);
 
         return count;
+    }
+
+    private static int reloadLuaScripts(CommandSourceStack source) {
+        LuaEngineManager.ReloadResult result = LuaEngineManager.reloadAll();
+        final String message = String.format(
+                "§a[Envoys] Lua: загружено %d, ошибок %d",
+                result.loaded(), result.failed()
+        );
+        source.sendSuccess(() -> Component.literal(message), true);
+        return result.loaded();
     }
 
     private static int questList(CommandSourceStack source) {

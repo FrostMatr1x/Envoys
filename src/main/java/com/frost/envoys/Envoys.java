@@ -1,6 +1,7 @@
 package com.frost.envoys;
 
 import com.frost.envoys.action.ActionEngineManager;
+import com.frost.envoys.config.Config;
 import com.frost.envoys.event.ClientEvents;
 import com.frost.envoys.event.CommonEvents;
 import com.frost.envoys.event.ServerEvents;
@@ -19,6 +20,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -40,6 +42,8 @@ public class Envoys {
         modEventBus.addListener(ModCreativeTabs::addCreative);
 
         modEventBus.register(CommonEvents.class);
+
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
         if (FMLEnvironment.dist.isClient()) {
             modEventBus.register(ClientEvents.ModBusEvents.class);
