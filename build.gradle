@@ -36,6 +36,10 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        name = "SquidDev"
+        url = "https://maven.squiddev.cc"
+    }
 }
 
 base {
@@ -147,6 +151,15 @@ dependencies {
 
     implementation "curse.maven:sophisticated-core-618298:8627791"
     implementation "curse.maven:sophisticated-backpacks-422301:8627841"
+
+    jarJar(implementation('cc.tweaked:cobalt') {
+        version {
+            strictly '[0.9.0, 1.0.0)'
+            prefer '0.9.7'
+        }
+    })
+
+    additionalRuntimeClasspath 'cc.tweaked:cobalt:0.9.7'
 
     // Example project dependency using a sister or child project:
     // implementation project(":myproject")

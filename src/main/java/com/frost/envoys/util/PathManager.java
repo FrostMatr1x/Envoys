@@ -61,6 +61,12 @@ public class PathManager {
         return p;
     }
 
+    public static Path getServerLuaDir() {
+        Path p = getServerEnvoysDir().resolve("lua");
+        createDirectories(p);
+        return p;
+    }
+
     private static void createDirectories(Path path) {
         try {
             Files.createDirectories(path);

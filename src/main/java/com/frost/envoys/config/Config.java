@@ -16,6 +16,17 @@ public class Config {
             .comment("What you want the introduction message to be for the magic number")
             .define("magicNumberIntroduction", "The magic number is... ");
 
+    public static final ModConfigSpec.BooleanValue LUA_ENABLED = BUILDER
+            .comment("Enable the Lua scripting engine for NPCs")
+            .define("lua.enabled", true);
 
-    static final ModConfigSpec SPEC = BUILDER.build();
+    public static final ModConfigSpec.IntValue LUA_INSTRUCTION_LIMIT = BUILDER
+            .comment("Maximum Lua instructions executed per coroutine resume before it is interrupted")
+            .defineInRange("lua.instructionLimit", 50000, 1000, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.BooleanValue LUA_ALLOW_COMMANDS = BUILDER
+            .comment("Allow NPC Lua scripts to run server commands via envoys.command (permission level 4)")
+            .define("lua.allowCommands", true);
+
+    public static final ModConfigSpec SPEC = BUILDER.build();
 }
