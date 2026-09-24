@@ -9,11 +9,13 @@ import com.frost.envoys.network.ServerPayloadHandler;
 import com.frost.envoys.network.ServerSkinPayloadHandler;
 import com.frost.envoys.network.payload.AnimDataPayload;
 import com.frost.envoys.network.payload.AnimListPayload;
+import com.frost.envoys.network.payload.LuaScriptUploadResultPayload;
 import com.frost.envoys.network.payload.OpenDialogPayload;
 import com.frost.envoys.network.payload.OpenSettingGuiPayload;
 import com.frost.envoys.network.payload.RequestAnimListPayload;
 import com.frost.envoys.network.payload.RequestAnimPayload;
 import com.frost.envoys.network.payload.RequestSkinPayload;
+import com.frost.envoys.network.payload.SaveNpcLuaScriptPayload;
 import com.frost.envoys.network.payload.SaveNPCPassportPayload;
 import com.frost.envoys.network.payload.SaveNPCScriptPayload;
 import com.frost.envoys.network.payload.SaveNPCSkinPayload;
@@ -53,6 +55,18 @@ public class CommonEvents {
             SaveNPCScriptPayload.TYPE,
             SaveNPCScriptPayload.CODEC,
             ServerPayloadHandler::handleSaveNPCScript
+        );
+
+        registrar.playToServer(
+            SaveNpcLuaScriptPayload.TYPE,
+            SaveNpcLuaScriptPayload.CODEC,
+            ServerPayloadHandler::handleSaveNpcLuaScript
+        );
+
+        registrar.playToClient(
+            LuaScriptUploadResultPayload.TYPE,
+            LuaScriptUploadResultPayload.CODEC,
+            FMLEnvironment.dist.isClient() ? ClientPayloadHandler::handleLuaScriptUploadResult : (payload, context) -> {}
         );
 
         registrar.playToServer(

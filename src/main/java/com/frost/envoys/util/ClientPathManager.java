@@ -51,4 +51,10 @@ public class ClientPathManager {
         p.toFile().mkdirs();
         return p;
     }
+
+    public static Path getClientLocalLuaDir() {
+        Path p = FMLPaths.GAMEDIR.get().resolve("envoys").resolve("local");
+        p.toFile().mkdirs();
+        return p;
+    }
 }

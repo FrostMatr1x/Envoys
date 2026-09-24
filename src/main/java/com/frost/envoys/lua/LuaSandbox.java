@@ -8,6 +8,7 @@ import org.squiddev.cobalt.LuaState;
 import org.squiddev.cobalt.LuaTable;
 import org.squiddev.cobalt.compiler.CompileException;
 import org.squiddev.cobalt.compiler.LoadState;
+import org.squiddev.cobalt.compiler.LuaC;
 import org.squiddev.cobalt.function.LuaClosure;
 import org.squiddev.cobalt.interrupt.InterruptAction;
 import org.squiddev.cobalt.interrupt.InterruptHandler;
@@ -44,6 +45,13 @@ public final class LuaSandbox {
     public static LuaClosure compile(LuaState state, String source) throws CompileException, LuaError {
         byte[] bytes = (source == null ? "" : source).getBytes(StandardCharsets.UTF_8);
         return LoadState.load(state, new ByteArrayInputStream(bytes), "main.lua", state.globals());
+    }
+
+    public static void compileOnly(String source) throws CompileException, LuaError {
+        InstructionBudget budget = new InstructionBudget();
+        LuaState state = createState(budget);
+        byte[] bytes = (source == null ? "" : source).getBytes(StandardCharsets.UTF_8);
+        LuaC.compile(state, new ByteArrayInputStream(bytes), "main.lua");
     }
 
     public static final class InstructionBudget implements InterruptHandler {
