@@ -2,8 +2,13 @@ package com.frost.envoys.lua;
 
 import com.frost.envoys.Envoys;
 import com.frost.envoys.action.event.EventType;
+import com.frost.envoys.action.model.ActionTrade;
 import com.frost.envoys.config.Config;
+import com.frost.envoys.gui.menu.NPCMerchantMenu;
+import com.frost.envoys.network.payload.OpenDialogPayload;
+import com.frost.envoys.npc.NPCTrade;
 import com.frost.envoys.npc.entity.BaseNPC;
+import com.frost.envoys.npc.merchant.NPCMerchant;
 
 import org.squiddev.cobalt.Constants;
 import org.squiddev.cobalt.LuaError;
@@ -18,15 +23,29 @@ import org.squiddev.cobalt.function.LuaClosure;
 import org.squiddev.cobalt.function.LuaFunction;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -126,7 +145,7 @@ public final class LuaNpcEngine {
             return;
         }
         LuaPlayerProxy proxy = null;
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+        if (player instanceof ServerPlayer serverPlayer) {
             proxy = new LuaPlayerProxy(serverPlayer.getUUID(), serverPlayer.serverLevel());
         }
         queue.push(new LuaEvent(type, proxy));
@@ -310,6 +329,8 @@ public final class LuaNpcEngine {
                         resume(script, Constants.NONE);
                     }
                 }
+                case DIALOG, TRADE -> {
+                }
             }
         }
     }
@@ -399,6 +420,177 @@ public final class LuaNpcEngine {
         setPending(state, PendingAction.waitEvent(eventName, timeout));
     }
 
+    void beginDialogue(LuaState state, String message, LinkedHashMap<String, String> answers, LuaPlayerProxy player) throws LuaError {
+        ServerPlayer serverPlayer = player.resolve();
+        PacketDistributor.sendToPlayer(serverPlayer, new OpenDialogPayload(
+                npcUUID,
+                "lua",
+                npcDisplayName(),
+                Component.literal(message == null ? "" : message),
+                answers
+        ));
+        setPending(state, PendingAction.dialog(serverPlayer.getUUID()));
+        Script script = current;
+        if (script != null) {
+            script.target = player;
+        }
+    }
+
+    public void onDialogAnswer(UUID playerUuid, String choice) {
+        if (lua == null || errored || playerUuid == null) {
+            return;
+        }
+        for (Script script : new ArrayList<>(active)) {
+            PendingAction pending = script.pending;
+            if (pending != null
+                    && pending.kind == PendingAction.Kind.DIALOG
+                    && playerUuid.equals(pending.dialogPlayer)) {
+                resume(script, (choice == null || choice.isEmpty()) ? Constants.NIL : LuaStrings.toLua(choice));
+                return;
+            }
+        }
+    }
+
+    boolean beginTrade(LuaState state, List<NPCTrade> trades, LuaPlayerProxy player) throws LuaError {
+        if (npc == null) {
+            return false;
+        }
+
+        ServerPlayer serverPlayer = player.resolve();
+        ActionTrade action = new ActionTrade("lua");
+        action.trades.addAll(trades);
+
+        Script script = current;
+        NPCMerchant merchant = new NPCMerchant(npc, action, serverPlayer);
+        merchant.openTradingScreen(serverPlayer, Component.literal("Торговля"), 0, () -> onTradeClosed(script));
+
+        if (!(serverPlayer.containerMenu instanceof NPCMerchantMenu menu) || menu.getMerchant() != merchant) {
+            return false;
+        }
+
+        setPending(state, PendingAction.trade());
+        if (script != null) {
+            script.target = player;
+        }
+        return true;
+    }
+
+    private void onTradeClosed(Script script) {
+        if (lua == null || errored || script == null) {
+            return;
+        }
+        PendingAction pending = script.pending;
+        if (pending == null || pending.kind != PendingAction.Kind.TRADE) {
+            return;
+        }
+        resume(script, Constants.NONE);
+    }
+
+    LuaPlayerProxy currentTargetProxy() {
+        return currentTarget;
+    }
+
+    double npcYaw() {
+        return npc == null ? 0.0D : npc.getYRot();
+    }
+
+    void playSound(String id, float volume, float pitch) throws LuaError {
+        if (npc == null) {
+            return;
+        }
+        ResourceLocation key = ResourceLocation.tryParse(id);
+        if (key == null || !BuiltInRegistries.SOUND_EVENT.containsKey(key)) {
+            throw new LuaError("unknown sound: " + id);
+        }
+        SoundEvent event = BuiltInRegistries.SOUND_EVENT.get(key);
+        npc.level().playSound(null, npc.getX(), npc.getY(), npc.getZ(), event, SoundSource.NEUTRAL, volume, pitch);
+    }
+
+    void spawnParticle(String id, int count, double speed, double dx, double dy, double dz) throws LuaError {
+        if (npc == null) {
+            return;
+        }
+        ResourceLocation key = ResourceLocation.tryParse(id);
+        if (key == null || !BuiltInRegistries.PARTICLE_TYPE.containsKey(key)) {
+            throw new LuaError("unknown particle: " + id);
+        }
+        if (!(BuiltInRegistries.PARTICLE_TYPE.get(key) instanceof ParticleOptions options)) {
+            throw new LuaError("particle requires options: " + id);
+        }
+        if (npc.level() instanceof ServerLevel level) {
+            level.sendParticles(options, npc.getX(), npc.getY(), npc.getZ(), count, dx, dy, dz, speed);
+        }
+    }
+
+    void lookAt(LuaValue target) throws LuaError {
+        if (npc == null) {
+            return;
+        }
+
+        double x;
+        double y;
+        double z;
+        if (target instanceof LuaPlayerProxy proxy) {
+            ServerPlayer player = proxy.resolve();
+            x = player.getX();
+            y = player.getEyeY();
+            z = player.getZ();
+        } else if (target instanceof LuaTable table) {
+            x = table.rawget("x").checkDouble();
+            y = table.rawget("y").checkDouble();
+            z = table.rawget("z").checkDouble();
+        } else {
+            throw new LuaError("lookAt expects a player or a position table");
+        }
+
+        double dx = x - npc.getX();
+        double dy = y - npc.getEyeY();
+        double dz = z - npc.getZ();
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+
+        float yaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+        float pitch = (float) (-(Mth.atan2(dy, horizontal) * (180.0D / Math.PI)));
+
+        npc.setYRot(yaw);
+        npc.yBodyRot = yaw;
+        npc.yHeadRot = yaw;
+        npc.setXRot(pitch);
+    }
+
+    void teleport(double x, double y, double z, float yaw, float pitch) {
+        if (npc == null) {
+            return;
+        }
+        npc.getNavigation().stop();
+        npc.endScriptedMovement();
+        if (npc.level() instanceof ServerLevel level) {
+            npc.teleportTo(level, x, y, z, Set.<RelativeMovement>of(), yaw, pitch);
+        }
+    }
+
+    void applyEffect(String id, int duration, int amplifier, boolean showParticles) throws LuaError {
+        if (npc == null) {
+            return;
+        }
+        ResourceLocation key = ResourceLocation.tryParse(id);
+        if (key == null) {
+            throw new LuaError("unknown effect: " + id);
+        }
+        Optional<Holder.Reference<MobEffect>> holder = BuiltInRegistries.MOB_EFFECT.getHolder(key);
+        if (holder.isEmpty()) {
+            throw new LuaError("unknown effect: " + id);
+        }
+        npc.addEffect(new MobEffectInstance(holder.get(), duration, amplifier, false, showParticles));
+    }
+
+    String npcDisplayName() {
+        if (npc == null) {
+            return "NPC";
+        }
+        Component custom = npc.getCustomName();
+        return custom != null ? custom.getString() : npc.getName().getString();
+    }
+
     void registerCallback(EventType type, LuaFunction function, int extra) {
         int interval = Math.max(1, extra <= 0 ? 1 : extra);
         double radius = extra > 0 ? extra : 4.0D;
@@ -459,8 +651,7 @@ public final class LuaNpcEngine {
         if (npc == null) {
             return Constants.EMPTYSTRING;
         }
-        Component custom = npc.getCustomName();
-        return ValueFactory.valueOf(custom != null ? custom.getString() : npc.getName().getString());
+        return LuaStrings.toLua(npcDisplayName());
     }
 
     LuaValue playersInRangeTable(int radius) {
@@ -497,8 +688,12 @@ public final class LuaNpcEngine {
         private enum Kind {
             WAIT_TICKS,
             MOVE,
-            WAIT_EVENT
+            WAIT_EVENT,
+            DIALOG,
+            TRADE
         }
+
+        private UUID dialogPlayer;
 
         private final Kind kind;
 
@@ -550,6 +745,16 @@ public final class LuaNpcEngine {
             pending.hasTimeout = timeout > 0;
             pending.timeoutRemaining = timeout;
             return pending;
+        }
+
+        private static PendingAction dialog(UUID player) {
+            PendingAction pending = new PendingAction(Kind.DIALOG);
+            pending.dialogPlayer = player;
+            return pending;
+        }
+
+        private static PendingAction trade() {
+            return new PendingAction(Kind.TRADE);
         }
     }
 }

@@ -41,8 +41,8 @@ public final class LuaPlayerProxy extends LuaUserdata {
 
     private LuaValue index(String key) throws LuaError {
         return switch (key) {
-            case "name" -> ValueFactory.valueOf(resolve().getGameProfile().getName());
-            case "uuid" -> ValueFactory.valueOf(playerId.toString());
+            case "name" -> LuaStrings.toLua(resolve().getGameProfile().getName());
+            case "uuid" -> LuaStrings.toLua(playerId.toString());
             case "pos" -> {
                 ServerPlayer player = resolve();
                 LuaTable pos = new LuaTable();
@@ -52,7 +52,7 @@ public final class LuaPlayerProxy extends LuaUserdata {
                 yield pos;
             }
             case "sendMessage" -> LibFunction.create((LibFunction.TwoArg) (state, self, message) -> {
-                asProxy(self).resolve().sendSystemMessage(Component.literal(message.checkString()));
+                asProxy(self).resolve().sendSystemMessage(Component.literal(LuaStrings.toJava(message)));
                 return Constants.NIL;
             });
             case "distanceTo" -> LibFunction.create((LibFunction.TwoArg) (state, self, target) -> {
@@ -91,7 +91,7 @@ public final class LuaPlayerProxy extends LuaUserdata {
     private static LuaTable createMetatable() {
         LuaTable metatable = new LuaTable();
         metatable.rawset("__index", LibFunction.create((LibFunction.TwoArg) (LuaState state, LuaValue self, LuaValue key) ->
-                asProxy(self).index(key.checkString())));
+                asProxy(self).index(LuaStrings.toJava(key))));
         return metatable;
     }
 }
