@@ -44,6 +44,7 @@ public class SettingQuestGiveScreen extends Screen {
         int startY = this.height / 2 - 45;
 
         this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 80, 20, Component.literal("questTarget"));
+        this.questTargetEditBox.setMaxLength(128);
         this.questTargetEditBox.setValue(this.questTarget);
         this.questTargetEditBox.setResponder(text -> this.questTarget = text);
         this.questTargetEditBox.setTooltip(Tooltip.create(Component.literal(TARGET_TOOLTIP)));

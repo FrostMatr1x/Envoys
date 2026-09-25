@@ -1,6 +1,7 @@
 package com.frost.envoys.event;
 
 import com.frost.envoys.Envoys;
+import com.frost.envoys.client.ClientLuaCommands;
 import com.frost.envoys.client.overlay.CurrentQuestOverlay;
 import com.frost.envoys.client.quest.ClientQuestTracker;
 import com.frost.envoys.gui.screen.NPCTradeScreen;
@@ -20,6 +21,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -84,6 +86,13 @@ public class ClientEvents {
         @SubscribeEvent
         public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
             ClientQuestTracker.get().clear();
+            com.frost.envoys.client.ClientLuaScriptBridge.clear();
+            com.frost.envoys.client.gui.backup.ClientBackupManager.flushActive();
+        }
+
+        @SubscribeEvent
+        public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
+            ClientLuaCommands.register(event.getDispatcher());
         }
     }
 }

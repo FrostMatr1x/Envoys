@@ -27,9 +27,11 @@ public final class PlayerQuestManager {
             return;
         }
         PlayerQuestTracker tracker = tracker(player);
-        
-        if (!tracker.has(questUuid))
-        {
+        QuestProgress existing = tracker.get(questUuid);
+
+        if (existing == null || existing.getStatus() != QuestStatus.ACTIVE) {
+            // A completed (or stale) entry must not block re-giving the quest:
+            // the check action resets it, so re-activation is the expected flow.
             tracker.put(questUuid, new QuestProgress(QuestStatus.ACTIVE, List.of(), 0));
             syncIfServer(player);
         }
@@ -70,7 +72,11 @@ public final class PlayerQuestManager {
     }
 
     public static void addKill(Player player, QuestDefinition quest) {
-        if (player == null || quest == null || isBlank(quest.questUuid)) {
+        addKill(player, quest, 1);
+    }
+
+    public static void addKill(Player player, QuestDefinition quest, int amount) {
+        if (player == null || quest == null || isBlank(quest.questUuid) || amount <= 0) {
             return;
         }
         if (!isActive(player, quest.questUuid)) {
@@ -80,11 +86,27 @@ public final class PlayerQuestManager {
         if (progress == null) {
             return;
         }
-        progress.setKillCount(progress.getKillCount() + 1);
+        progress.setKillCount(progress.getKillCount() + amount);
         if (progress.getKillCount() >= Math.max(1, quest.killCount)) {
             markCompleted(player, quest.questUuid);
         }
         syncIfServer(player);
+    }
+
+    public static QuestStatus status(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !player.hasData(ModAttachments.PLAYER_QUESTS)) {
+            return QuestStatus.NOT_STARTED;
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress == null ? QuestStatus.NOT_STARTED : progress.getStatus();
+    }
+
+    public static List<String> completedSteps(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !player.hasData(ModAttachments.PLAYER_QUESTS)) {
+            return List.of();
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress == null ? List.of() : List.copyOf(progress.getCompletedSteps());
     }
 
     public static void markCompleted(Player player, String questUuid) {

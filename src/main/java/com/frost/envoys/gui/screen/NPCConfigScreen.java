@@ -51,7 +51,13 @@ public class NPCConfigScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(
             Component.literal("Редактировать сценарий"), 
-            button -> Minecraft.getInstance().setScreen(new EventCreationScreen(this, this.npcManager, this.isCreativeTuner))
+            button -> {
+                if (com.frost.envoys.client.gui.backup.ClientBackupManager.exists(this.npcManager.npcUUID)) {
+                    Minecraft.getInstance().setScreen(new BackupRestoreScreen(this, this.npcManager, this.isCreativeTuner));
+                } else {
+                    Minecraft.getInstance().setScreen(new EventCreationScreen(this, this.npcManager, this.isCreativeTuner));
+                }
+            }
         ).bounds(centerX, startY + 60, buttonWidth, buttonHeight).build());
 
         this.addRenderableWidget(Button.builder(

@@ -205,8 +205,7 @@ public class QuestManagementScreen extends Screen {
         public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
             String localId = this.quest.localId != null ? this.quest.localId : "";
             String title = this.quest.title != null ? this.quest.title : "";
-            String uuid = this.quest.questUuid != null ? this.quest.questUuid : "";
-            String label = "[" + localId + "] " + title + " — " + this.quest.type + " (" + uuid + ")";
+            String label = (title.isBlank() ? localId : title) + " — " + this.quest.type;
             guiGraphics.drawString(Minecraft.getInstance().font, label, left + 5, top + (height - 8) / 2, 0xFFFFFF, false);
 
             this.upButton.setX(left + width - 187);

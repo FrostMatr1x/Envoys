@@ -3,6 +3,7 @@ package com.frost.envoys.event;
 import com.frost.envoys.Envoys;
 import com.frost.envoys.EnvoysCommand;
 import com.frost.envoys.config.NPCConfigManager;
+import com.frost.envoys.lua.LuaEngineManager;
 import com.frost.envoys.npc.merchant.TradeCounterStore;
 import com.frost.envoys.quest.PlayerQuestManager;
 import com.frost.envoys.util.PathManager;
@@ -28,10 +29,12 @@ public class ServerEvents {
         PathManager.initServer(event.getServer());
         NPCConfigManager.loadAll();
         TradeCounterStore.loadAll();
+        LuaEngineManager.init();
     }
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
+        LuaEngineManager.shutdownAll();
         NPCConfigManager.saveAll();
         TradeCounterStore.saveAll();
         PathManager.clearServer();

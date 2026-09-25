@@ -12,6 +12,9 @@ import com.frost.envoys.client.quest.ClientQuestTracker;
 import com.frost.envoys.gui.screen.NPCDialogScreen;
 import com.frost.envoys.gui.screen.NPCDialogScreen.DialogOption;
 import com.frost.envoys.gui.screen.NPCConfigScreen;
+import com.frost.envoys.client.ClientLuaScriptBridge;
+import com.frost.envoys.network.payload.LuaScriptUploadResultPayload;
+import com.frost.envoys.network.payload.NpcLuaScriptResponsePayload;
 import com.frost.envoys.network.payload.OpenDialogPayload;
 import com.frost.envoys.network.payload.OpenSettingGuiPayload;
 import com.frost.envoys.network.payload.SelectDialogAnswerPayload;
@@ -101,5 +104,19 @@ public class ClientPayloadHandler {
 
     public static void handleSyncPlayerQuests(final SyncPlayerQuestsPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> ClientQuestTracker.get().replace(payload.quests()));
+    }
+
+    public static void handleLuaScriptUploadResult(final LuaScriptUploadResultPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            String prefix = payload.success() ? "§a" : "§c";
+            String message = payload.message() == null ? "" : payload.message();
+            if (Minecraft.getInstance().player != null) {
+                Minecraft.getInstance().player.sendSystemMessage(Component.literal(prefix + message));
+            }
+        });
+    }
+
+    public static void handleNpcLuaScriptResponse(final NpcLuaScriptResponsePayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> ClientLuaScriptBridge.deliver(payload));
     }
 }

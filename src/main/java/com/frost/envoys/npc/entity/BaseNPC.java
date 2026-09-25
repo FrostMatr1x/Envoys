@@ -5,10 +5,10 @@ import com.frost.envoys.action.NPCPassportData;
 import com.frost.envoys.action.NPCScriptData;
 import com.frost.envoys.action.ScriptRunner;
 import com.frost.envoys.action.event.EventType;
-import com.frost.envoys.action.event.NpcEventData;
-import com.frost.envoys.action.event.NpcRangeEvent;
 import com.frost.envoys.action.serialization.EntityActionAdapter;
 import com.frost.envoys.client.EmoteIntegration;
+import com.frost.envoys.lua.LuaEngineManager;
+import com.frost.envoys.lua.LuaNpcEngine;
 import com.frost.envoys.init.ModItems;
 import com.frost.envoys.network.payload.OpenSettingGuiPayload;
 import com.frost.envoys.skin.gui.SkinGuiPreview;
@@ -223,6 +223,7 @@ public class BaseNPC extends PathfinderMob {
             NPCInteractManager.byUUID(this.getUUID()).ifPresent(manager -> {
                 this.applyPassportData(manager.passport);
             });
+            LuaEngineManager.ensure(this.getUUID());
         }
     }
 
@@ -232,7 +233,7 @@ public class BaseNPC extends PathfinderMob {
 
         if (!this.level().isClientSide) {
             boolean isCreativeTuner = stack.is(ModItems.NPC_TUNER.get());
-            boolean isSurvivalTuner = stack.is(ModItems.SURVIVAL_NPC_TUNER.get());
+            boolean isSurvivalTuner = false;//stack.is(ModItems.SURVIVAL_NPC_TUNER.get());
 
             if (isCreativeTuner || isSurvivalTuner) {
                 if (player instanceof ServerPlayer serverPlayer) {
@@ -280,7 +281,16 @@ public class BaseNPC extends PathfinderMob {
                 }
                 return InteractionResult.SUCCESS;
             } else {
-                ScriptRunner.getOrCreate(this).start(EventType.CLICK, player);
+                LuaNpcEngine luaEngine = LuaEngineManager.getEngine(this.getUUID());
+                if (luaEngine != null) {
+                    if (luaEngine.isErrored()) {
+                        if (player instanceof ServerPlayer serverPlayer && serverPlayer.hasPermissions(4)) {
+                            serverPlayer.sendSystemMessage(Component.literal("§c[Envoys] Lua: " + luaEngine.errorText()));
+                        }
+                    } else {
+                        luaEngine.dispatchEvent(EventType.CLICK, player);
+                    }
+                }
             }
         }
         return InteractionResult.sidedSuccess(this.level().isClientSide);
@@ -293,6 +303,8 @@ public class BaseNPC extends PathfinderMob {
             EmoteIntegration.tickClient(this);
             return;
         }
+
+        trackPassportLocation();
 
         if (passport.isHoldPosEnabled && !scriptedMovement) {
             double targetX = passport.holdX;
@@ -309,48 +321,10 @@ public class BaseNPC extends PathfinderMob {
     }
 
     private void tickScriptEngine() {
-        ScriptRunner runner = ScriptRunner.RUNNERS.get(this.getUUID());
-        if (runner != null) {
-            runner.tick();
+        LuaNpcEngine luaEngine = LuaEngineManager.ensure(this.getUUID());
+        if (luaEngine != null) {
+            luaEngine.tick(this);
         }
-
-        NPCInteractManager manager = NPCInteractManager.byUUID(this.getUUID()).orElse(null);
-        if (manager == null) {
-            return;
-        }
-
-        NpcEventData updateEvent = manager.getEvent(EventType.UPDATE);
-        if (hasActions(updateEvent)) {
-            ScriptRunner.getOrCreate(this).start(EventType.UPDATE, null);
-        }
-
-        NpcEventData rangeEvent = manager.getEvent(EventType.RANGE);
-        if (rangeEvent instanceof NpcRangeEvent range && range.enabled() && hasActions(range)) {
-            tickRangeTrigger(range);
-        } else {
-            playersInRange.clear();
-        }
-    }
-
-    private void tickRangeTrigger(NpcRangeEvent event) {
-        float radius = Math.max(0.1f, event.rangeDistance);
-        double radiusSqr = (double) radius * radius;
-
-        for (Player player : this.level().players()) {
-            UUID id = player.getUUID();
-            boolean inside = player.distanceToSqr(this) <= radiusSqr;
-            if (inside) {
-                if (playersInRange.add(id)) {
-                    ScriptRunner.getOrCreate(this).start(EventType.RANGE, player);
-                }
-            } else {
-                playersInRange.remove(id);
-            }
-        }
-    }
-
-    private static boolean hasActions(NpcEventData event) {
-        return event != null && event.enabled() && event.actions() != null && !event.actions().isEmpty();
     }
 
     @Override
@@ -362,7 +336,16 @@ public class BaseNPC extends PathfinderMob {
 
         if (!this.level().isClientSide) {
             Player attacker = (source.getEntity() instanceof Player player) ? player : null;
-            ScriptRunner.getOrCreate(this).start(EventType.KICK, attacker);
+            LuaNpcEngine luaEngine = LuaEngineManager.getEngine(this.getUUID());
+            if (luaEngine != null) {
+                if (luaEngine.isErrored()) {
+                    if (attacker instanceof ServerPlayer serverPlayer && serverPlayer.hasPermissions(4)) {
+                        serverPlayer.sendSystemMessage(Component.literal("§c[Envoys] Lua: " + luaEngine.errorText()));
+                    }
+                } else {
+                    luaEngine.dispatchEvent(EventType.KICK, attacker);
+                }
+            }
         }
 
         if (passport.canTakeDamage) {
@@ -371,10 +354,39 @@ public class BaseNPC extends PathfinderMob {
         return false;
     }
 
+    private void trackPassportLocation() {
+        if (passport == null || this.level() == null) {
+            return;
+        }
+        passport.dimension = this.level().dimension().location().toString();
+        passport.lastX = this.getX();
+        passport.lastY = this.getY();
+        passport.lastZ = this.getZ();
+        passport.hasLastPosition = true;
+
+        // NPCConfigManager persists the SCRIPTS manager passport, not this entity's
+        // field. If the two objects diverged (manager created after the entity), the
+        // saved config would never contain a location, leaving the record
+        // unverifiable by /envoys cleanup npcs. Mirror the tracked location through.
+        NPCInteractManager manager = NPCInteractManager.byUUID(this.getUUID()).orElse(null);
+        if (manager != null && manager.passport != null && manager.passport != this.passport) {
+            NPCPassportData saved = manager.passport;
+            saved.dimension = passport.dimension;
+            saved.lastX = passport.lastX;
+            saved.lastY = passport.lastY;
+            saved.lastZ = passport.lastZ;
+            saved.hasLastPosition = true;
+        }
+    }
+
     @Override
     public void remove(Entity.RemovalReason reason) {
+        if (this.level() != null && !this.level().isClientSide) {
+            trackPassportLocation();
+        }
         super.remove(reason);
         if (this.level() != null && !this.level().isClientSide) {
+            LuaEngineManager.remove(this.getUUID());
             ScriptRunner.remove(this.getUUID());
         }
     }
