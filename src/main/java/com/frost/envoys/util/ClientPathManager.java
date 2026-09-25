@@ -57,4 +57,10 @@ public class ClientPathManager {
         p.toFile().mkdirs();
         return p;
     }
+
+    public static Path getClientLocalTempDir() {
+        Path p = getClientLocalLuaDir().resolve(".temp");
+        p.toFile().mkdirs();
+        return p;
+    }
 }

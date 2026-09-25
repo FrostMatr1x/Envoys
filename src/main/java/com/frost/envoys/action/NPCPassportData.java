@@ -20,4 +20,10 @@ public class NPCPassportData {
     public String skinValue = "";
     public String skinModel = "classic";
     public String skinHash = "";
+
+    public String dimension = "";
+    public double lastX;
+    public double lastY;
+    public double lastZ;
+    public boolean hasLastPosition = false;
 }

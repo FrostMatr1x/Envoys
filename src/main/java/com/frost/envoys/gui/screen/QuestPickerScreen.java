@@ -113,7 +113,7 @@ public class QuestPickerScreen extends Screen {
         public QuestEntry(QuestDefinition quest) {
             String localId = quest.localId != null ? quest.localId : "";
             String title = quest.title != null ? quest.title : "";
-            String label = "[" + localId + "] " + title;
+            String label = title.isBlank() ? localId : title;
 
             this.selectButton = Button.builder(Component.literal(label), button -> {
                 if (QuestPickerScreen.this.onSelect != null) {

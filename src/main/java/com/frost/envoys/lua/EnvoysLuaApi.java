@@ -2,11 +2,11 @@ package com.frost.envoys.lua;
 
 import com.frost.envoys.action.MerchantSlotData;
 import com.frost.envoys.action.NPCInteractManager;
+import com.frost.envoys.action.PlayerCheckpointData;
 import com.frost.envoys.action.event.EventType;
 import com.frost.envoys.npc.NPCTrade;
 import com.frost.envoys.quest.PlayerQuestManager;
 import com.frost.envoys.quest.QuestDefinition;
-import com.frost.envoys.quest.QuestIndex;
 import com.frost.envoys.quest.QuestInventoryUtil;
 import com.frost.envoys.quest.QuestResolver;
 import com.frost.envoys.quest.QuestType;
@@ -73,6 +73,7 @@ public final class EnvoysLuaApi {
                 RegisteredFunction.ofV("start", this::questStart),
                 RegisteredFunction.ofV("advance", this::questAdvance),
                 RegisteredFunction.ofV("complete", this::questComplete),
+                RegisteredFunction.ofV("reset", this::questReset),
         });
         envoys.rawset("quest", quest);
 
@@ -82,6 +83,13 @@ public final class EnvoysLuaApi {
                 RegisteredFunction.ofV("addUnlocked", this::merchantAddUnlocked),
         });
         envoys.rawset("merchant", merchant);
+
+        LuaTable checkpoint = new LuaTable();
+        RegisteredFunction.bind(checkpoint, new RegisteredFunction[]{
+                RegisteredFunction.ofV("get", this::checkpointGet),
+                RegisteredFunction.ofV("set", this::checkpointSet),
+        });
+        envoys.rawset("checkpoint", checkpoint);
 
         state.globals().rawset("envoys", envoys);
     }
@@ -181,6 +189,31 @@ public final class EnvoysLuaApi {
         return Constants.NONE;
     }
 
+    private Varargs checkpointGet(LuaState state, Varargs args) throws LuaError {
+        String key = validateCheckpointKey(LuaStrings.toJava(args.arg(1)));
+        ServerPlayer player = resolvePlayer(engine, args, 2).resolve();
+        String value = PlayerCheckpointData.getCheckpoint(player, engine.npcUUID().toString(), key);
+        return value == null ? Constants.NIL : LuaStrings.toLua(value);
+    }
+
+    private Varargs checkpointSet(LuaState state, Varargs args) throws LuaError {
+        String key = validateCheckpointKey(LuaStrings.toJava(args.arg(1)));
+        String value = LuaStrings.toJava(args.arg(2));
+        if (value.isEmpty() || value.length() > 256) {
+            throw new LuaError("checkpoint value must be 1..256 characters");
+        }
+        ServerPlayer player = resolvePlayer(engine, args, 3).resolve();
+        PlayerCheckpointData.setCheckpoint(player, engine.npcUUID().toString(), key, value);
+        return Constants.NONE;
+    }
+
+    private static String validateCheckpointKey(String key) throws LuaError {
+        if (key == null || !key.matches("[a-zA-Z0-9_]{1,64}")) {
+            throw new LuaError("checkpoint key must match [a-zA-Z0-9_]{1,64}");
+        }
+        return key;
+    }
+
     private Varargs questStatus(LuaState state, Varargs args) throws LuaError {
         QuestDefinition quest = resolveQuest(LuaStrings.toJava(args.arg(1)));
         ServerPlayer player = resolveQuestPlayer(args, 2);
@@ -248,25 +281,22 @@ public final class EnvoysLuaApi {
         return Constants.NONE;
     }
 
+    private Varargs questReset(LuaState state, Varargs args) throws LuaError {
+        QuestDefinition quest = resolveQuest(LuaStrings.toJava(args.arg(1)));
+        ServerPlayer player = resolveQuestPlayer(args, 2);
+        PlayerQuestManager.reset(player, quest.questUuid);
+        return Constants.NONE;
+    }
+
     private QuestDefinition resolveQuest(String id) throws LuaError {
         if (id == null || id.isBlank()) {
             throw new LuaError("quest not found: " + id);
         }
 
         NPCInteractManager manager = NPCInteractManager.byUUID(engine.npcUUID()).orElse(null);
-        Optional<QuestDefinition> local = QuestResolver.resolve(manager, id);
-        if (local.isPresent()) {
-            return local.get();
-        }
-
-        for (QuestIndex.Entry entry : QuestIndex.entries()) {
-            QuestDefinition quest = entry.quest();
-            if (quest == null) {
-                continue;
-            }
-            if (id.equals(quest.localId) || id.equals(quest.questUuid)) {
-                return quest;
-            }
+        Optional<QuestDefinition> resolved = QuestResolver.resolve(manager, id);
+        if (resolved.isPresent()) {
+            return resolved.get();
         }
 
         throw new LuaError("quest not found: " + id);

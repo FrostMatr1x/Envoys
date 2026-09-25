@@ -38,6 +38,20 @@ public final class ClientLocalScriptStore {
         return result;
     }
 
+    public static boolean writeScript(String fileName, String source) {
+        if (fileName == null || !FILE_NAME.matcher(fileName).matches()) {
+            return false;
+        }
+        Path file = localDir().resolve(fileName);
+        try {
+            Files.writeString(file, source == null ? "" : source, StandardCharsets.UTF_8);
+            return true;
+        } catch (IOException e) {
+            Envoys.LOGGER.error("[Envoys] Failed to write local Lua script {}", file, e);
+            return false;
+        }
+    }
+
     public static String readScript(String fileName) {
         if (fileName == null || !FILE_NAME.matcher(fileName).matches()) {
             return null;

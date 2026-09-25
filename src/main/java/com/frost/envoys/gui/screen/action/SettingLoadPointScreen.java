@@ -12,24 +12,21 @@ import net.minecraft.network.chat.Component;
 
 public class SettingLoadPointScreen extends Screen {
 
-    private static final String SAVE_ID_TOOLTIP = "ID пула сохранений, из которого нужно загрузить последнюю точку";
-    private static final String FALLBACK_TOOLTIP = "Переход, если сохранение не найдено";
-
     private final Screen parentScreen;
     private final ActionLoadPoint action;
 
-    private EditBox saveIdEditBox;
-    private EditBox fallbackActionIdEditBox;
+    private EditBox targetEditBox;
+    private EditBox nextActionIdEditBox;
 
-    private String saveId = "";
-    private String fallbackActionId = "";
+    private String target = "";
+    private String nextActionId = "";
 
     public SettingLoadPointScreen(Screen parentScreen, ActionLoadPoint action) {
-        super(Component.literal("Настройка точки загрузки"));
+        super(Component.literal("Загрузить точку"));
         this.parentScreen = parentScreen;
         this.action = action;
-        this.saveId = action.saveId != null ? action.saveId : "";
-        this.fallbackActionId = action.nextActionId != null ? action.nextActionId : "";
+        this.target = action.saveId != null ? action.saveId : "";
+        this.nextActionId = action.nextActionId != null ? action.nextActionId : "";
     }
 
     @Override
@@ -37,36 +34,35 @@ public class SettingLoadPointScreen extends Screen {
         super.init();
 
         int centerX = this.width / 2;
-        int startY = this.height / 2 - 30;
+        int startY = this.height / 2 - 35;
 
-        this.saveIdEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("saveId"));
-        this.saveIdEditBox.setValue(this.saveId);
-        this.saveIdEditBox.setResponder(text -> this.saveId = text);
-        this.saveIdEditBox.setTooltip(Tooltip.create(Component.literal(SAVE_ID_TOOLTIP)));
-        this.addRenderableWidget(this.saveIdEditBox);
+        this.targetEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("target"));
+        this.targetEditBox.setValue(this.target);
+        this.targetEditBox.setResponder(text -> this.target = text);
+        this.targetEditBox.setTooltip(Tooltip.create(Component.literal("Ключ точки сохранения, к которой нужно вернуться")));
+        this.addRenderableWidget(this.targetEditBox);
 
-        this.fallbackActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 30, 200, 20, Component.literal("fallbackActionId"));
-        this.fallbackActionIdEditBox.setValue(this.fallbackActionId);
-        this.fallbackActionIdEditBox.setResponder(text -> this.fallbackActionId = text);
-        this.fallbackActionIdEditBox.setTooltip(Tooltip.create(Component.literal(FALLBACK_TOOLTIP)));
-        this.addRenderableWidget(this.fallbackActionIdEditBox);
+        this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 30, 200, 20,
+                Component.literal("nextActionId"));
+        this.nextActionIdEditBox.setValue(this.nextActionId);
+        this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(
+                "Следующий ID")));
+        this.addRenderableWidget(this.nextActionIdEditBox);
 
-        this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
-            button -> {
-                this.save();
-                if (this.parentScreen != null) {
-                    Minecraft.getInstance().setScreen(this.parentScreen);
-                } else {
-                    this.onClose();
-                }
+        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> {
+            this.save();
+            if (this.parentScreen != null) {
+                Minecraft.getInstance().setScreen(this.parentScreen);
+            } else {
+                this.onClose();
             }
-        ).bounds(centerX - 100, this.height - 35, 200, 20).build());
+        }).bounds(centerX - 100, this.height - 35, 200, 20).build());
     }
 
     private void save() {
-        this.action.saveId = this.saveId.trim();
-        this.action.nextActionId = this.fallbackActionId.trim();
+        this.action.saveId = this.target.trim();
+        this.action.nextActionId = this.nextActionId.trim();
     }
 
     @Override
@@ -74,11 +70,12 @@ public class SettingLoadPointScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
-        int startY = this.height / 2 - 30;
+        int startY = this.height / 2 - 35;
 
-        guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "ID пула сохранений:", centerX - 160, startY + 6, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Если сохранения нет:", centerX - 160, startY + 36, 0xA0A0A0);
+        guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xA0A0A0);
+        guiGraphics.drawString(this.font, "Ключ точки:", centerX - 160, startY + 6, 0xA0A0A0);
+        guiGraphics.drawString(this.font, "Следующий ID:",
+                centerX - 160, startY + 36, 0xA0A0A0);
     }
 
     @Override

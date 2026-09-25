@@ -233,7 +233,7 @@ public class BaseNPC extends PathfinderMob {
 
         if (!this.level().isClientSide) {
             boolean isCreativeTuner = stack.is(ModItems.NPC_TUNER.get());
-            boolean isSurvivalTuner = stack.is(ModItems.SURVIVAL_NPC_TUNER.get());
+            boolean isSurvivalTuner = false;//stack.is(ModItems.SURVIVAL_NPC_TUNER.get());
 
             if (isCreativeTuner || isSurvivalTuner) {
                 if (player instanceof ServerPlayer serverPlayer) {
@@ -304,6 +304,8 @@ public class BaseNPC extends PathfinderMob {
             return;
         }
 
+        trackPassportLocation();
+
         if (passport.isHoldPosEnabled && !scriptedMovement) {
             double targetX = passport.holdX;
             double targetY = passport.holdY;
@@ -352,8 +354,36 @@ public class BaseNPC extends PathfinderMob {
         return false;
     }
 
+    private void trackPassportLocation() {
+        if (passport == null || this.level() == null) {
+            return;
+        }
+        passport.dimension = this.level().dimension().location().toString();
+        passport.lastX = this.getX();
+        passport.lastY = this.getY();
+        passport.lastZ = this.getZ();
+        passport.hasLastPosition = true;
+
+        // NPCConfigManager persists the SCRIPTS manager passport, not this entity's
+        // field. If the two objects diverged (manager created after the entity), the
+        // saved config would never contain a location, leaving the record
+        // unverifiable by /envoys cleanup npcs. Mirror the tracked location through.
+        NPCInteractManager manager = NPCInteractManager.byUUID(this.getUUID()).orElse(null);
+        if (manager != null && manager.passport != null && manager.passport != this.passport) {
+            NPCPassportData saved = manager.passport;
+            saved.dimension = passport.dimension;
+            saved.lastX = passport.lastX;
+            saved.lastY = passport.lastY;
+            saved.lastZ = passport.lastZ;
+            saved.hasLastPosition = true;
+        }
+    }
+
     @Override
     public void remove(Entity.RemovalReason reason) {
+        if (this.level() != null && !this.level().isClientSide) {
+            trackPassportLocation();
+        }
         super.remove(reason);
         if (this.level() != null && !this.level().isClientSide) {
             LuaEngineManager.remove(this.getUUID());

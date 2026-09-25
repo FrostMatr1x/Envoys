@@ -12,6 +12,7 @@ public final class LuaEngineManager {
 
     private static final Map<UUID, LuaNpcEngine> ENGINES = new HashMap<>();
     private static final Set<UUID> ABSENT = new HashSet<>();
+    private static final Set<UUID> STOPPED = new HashSet<>();
 
     private LuaEngineManager() {
     }
@@ -24,14 +25,29 @@ public final class LuaEngineManager {
     }
 
     public static LuaNpcEngine getEngine(UUID npcId) {
-        if (!Config.LUA_ENABLED.get()) {
+        if (!Config.LUA_ENABLED.get() || STOPPED.contains(npcId)) {
             return null;
         }
         return ENGINES.get(npcId);
     }
 
+    public static void stop(UUID npcId) {
+        if (npcId == null) {
+            return;
+        }
+        STOPPED.add(npcId);
+        LuaNpcEngine engine = ENGINES.remove(npcId);
+        if (engine != null) {
+            engine.shutdown();
+        }
+    }
+
+    public static boolean isStopped(UUID npcId) {
+        return npcId != null && STOPPED.contains(npcId);
+    }
+
     public static LuaNpcEngine ensure(UUID npcId) {
-        if (!Config.LUA_ENABLED.get()) {
+        if (!Config.LUA_ENABLED.get() || STOPPED.contains(npcId)) {
             return null;
         }
         LuaNpcEngine existing = ENGINES.get(npcId);
@@ -52,6 +68,7 @@ public final class LuaEngineManager {
         if (!Config.LUA_ENABLED.get()) {
             return null;
         }
+        STOPPED.remove(npcId);
         LuaNpcEngine previous = ENGINES.remove(npcId);
         if (previous != null) {
             previous.shutdown();
@@ -80,6 +97,7 @@ public final class LuaEngineManager {
             return new ReloadResult(0, 0);
         }
 
+        STOPPED.clear();
         Set<UUID> known = new HashSet<>(LuaScriptStore.listNpcsWithScripts());
         known.addAll(ENGINES.keySet());
         known.addAll(ABSENT);

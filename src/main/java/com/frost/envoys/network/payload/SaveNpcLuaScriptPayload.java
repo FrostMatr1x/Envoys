@@ -8,7 +8,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record SaveNpcLuaScriptPayload(UUID npcId, String fileName, String source) implements CustomPacketPayload {
+public record SaveNpcLuaScriptPayload(UUID npcId, String fileName, String source, boolean restartEngine) implements CustomPacketPayload {
     public static final Type<SaveNpcLuaScriptPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath("envoys", "save_npc_lua_script"));
 
@@ -16,6 +16,7 @@ public record SaveNpcLuaScriptPayload(UUID npcId, String fileName, String source
             UUIDUtil.STREAM_CODEC, SaveNpcLuaScriptPayload::npcId,
             ByteBufCodecs.stringUtf8(256), SaveNpcLuaScriptPayload::fileName,
             ByteBufCodecs.stringUtf8(1048576), SaveNpcLuaScriptPayload::source,
+            ByteBufCodecs.BOOL, SaveNpcLuaScriptPayload::restartEngine,
             SaveNpcLuaScriptPayload::new
     );
 
