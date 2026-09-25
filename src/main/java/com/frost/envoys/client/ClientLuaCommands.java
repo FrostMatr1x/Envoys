@@ -1,5 +1,6 @@
 package com.frost.envoys.client;
 
+import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.network.payload.SaveNpcLuaScriptPayload;
 import com.frost.envoys.npc.entity.BaseNPC;
 
@@ -42,7 +43,11 @@ public final class ClientLuaCommands {
                                                 .suggests(ClientLuaCommands::suggestFiles)
                                                 .executes(ctx -> send(
                                                         StringArgumentType.getString(ctx, "target"),
-                                                        StringArgumentType.getString(ctx, "file"))))))));
+                                                        StringArgumentType.getString(ctx, "file"))))))
+                        .then(Commands.literal("pull")
+                                .then(Commands.argument("target", StringArgumentType.word())
+                                        .suggests(ClientLuaCommands::suggestTargets)
+                                        .executes(ctx -> pull(StringArgumentType.getString(ctx, "target")))))));
     }
 
     private static int list() {
@@ -70,9 +75,60 @@ public final class ClientLuaCommands {
             return 0;
         }
 
-        PacketDistributor.sendToServer(new SaveNpcLuaScriptPayload(npcId, fileName, source));
+        PacketDistributor.sendToServer(new SaveNpcLuaScriptPayload(npcId, fileName, source, true));
         message("§7[Envoys] Отправка " + fileName + " для NPC " + npcId + "...");
         return 1;
+    }
+
+    private static int pull(String target) {
+        UUID npcId = resolveTarget(target);
+        if (npcId == null) {
+            return 0;
+        }
+
+        String npcName = resolveNpcName(target, npcId);
+        ClientLuaScriptBridge.requestPull(npcId, payload -> {
+            if (!payload.exists()) {
+                message("§c[Envoys] Не удалось выгрузить скрипт: " + payload.message());
+                return;
+            }
+            String fileName = ScriptNames.fileName(npcName, npcId);
+            if (ClientLocalScriptStore.writeScript(fileName, payload.source())) {
+                message("§a[Envoys] Скрипт сохранён: envoys/local/" + fileName);
+            } else {
+                message("§c[Envoys] Не удалось записать файл " + fileName);
+            }
+        });
+        message("§7[Envoys] Запрос скрипта для NPC " + npcId + "...");
+        return 1;
+    }
+
+    private static String resolveNpcName(String target, UUID npcId) {
+        Entity entity = resolveTargetEntity(target, npcId);
+        if (entity != null && entity.getCustomName() != null && !entity.getCustomName().getString().isBlank()) {
+            return entity.getCustomName().getString();
+        }
+        NPCInteractManager manager = NPCInteractManager.byUUID(npcId).orElse(null);
+        if (manager != null && manager.passport != null && manager.passport.npcName != null
+                && !manager.passport.npcName.isBlank()) {
+            return manager.passport.npcName;
+        }
+        return "npc";
+    }
+
+    private static Entity resolveTargetEntity(String target, UUID npcId) {
+        if ("aim".equalsIgnoreCase(target)) {
+            return crosshairNpc();
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level != null) {
+            for (Entity entity : minecraft.level.entitiesForRendering()) {
+                if (npcId.equals(entity.getUUID())) {
+                    return entity;
+                }
+            }
+        }
+        return null;
     }
 
     private static CompletableFuture<Suggestions> suggestTargets(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {

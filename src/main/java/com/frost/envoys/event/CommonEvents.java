@@ -9,7 +9,9 @@ import com.frost.envoys.network.ServerPayloadHandler;
 import com.frost.envoys.network.ServerSkinPayloadHandler;
 import com.frost.envoys.network.payload.AnimDataPayload;
 import com.frost.envoys.network.payload.AnimListPayload;
+import com.frost.envoys.network.payload.FetchNpcLuaScriptPayload;
 import com.frost.envoys.network.payload.LuaScriptUploadResultPayload;
+import com.frost.envoys.network.payload.NpcLuaScriptResponsePayload;
 import com.frost.envoys.network.payload.OpenDialogPayload;
 import com.frost.envoys.network.payload.OpenSettingGuiPayload;
 import com.frost.envoys.network.payload.RequestAnimListPayload;
@@ -67,6 +69,18 @@ public class CommonEvents {
             LuaScriptUploadResultPayload.TYPE,
             LuaScriptUploadResultPayload.CODEC,
             FMLEnvironment.dist.isClient() ? ClientPayloadHandler::handleLuaScriptUploadResult : (payload, context) -> {}
+        );
+
+        registrar.playToServer(
+            FetchNpcLuaScriptPayload.TYPE,
+            FetchNpcLuaScriptPayload.CODEC,
+            ServerPayloadHandler::handleFetchNpcLuaScript
+        );
+
+        registrar.playToClient(
+            NpcLuaScriptResponsePayload.TYPE,
+            NpcLuaScriptResponsePayload.CODEC,
+            FMLEnvironment.dist.isClient() ? ClientPayloadHandler::handleNpcLuaScriptResponse : (payload, context) -> {}
         );
 
         registrar.playToServer(

@@ -14,16 +14,19 @@ public final class QuestResolver {
             return Optional.empty();
         }
 
+        String key = target.trim();
+        String normalizedKey = QuestIndex.normalizeUuid(key);
+
         QuestDefinition uuidMatch = null;
         if (currentNpc != null && currentNpc.quests != null) {
             for (QuestDefinition quest : currentNpc.quests) {
                 if (quest == null) {
                     continue;
                 }
-                if (target.equals(quest.localId)) {
+                if (quest.localId != null && key.equals(quest.localId.trim())) {
                     return Optional.of(quest);
                 }
-                if (uuidMatch == null && target.equals(quest.questUuid)) {
+                if (uuidMatch == null && uuidEquals(quest.questUuid, key, normalizedKey)) {
                     uuidMatch = quest;
                 }
             }
@@ -32,6 +35,15 @@ public final class QuestResolver {
             return Optional.of(uuidMatch);
         }
 
-        return QuestIndex.byUuid(target);
+        // Fall back to the global index (other NPCs), matching by quest_uuid or local_id.
+        return QuestIndex.resolve(key);
+    }
+
+    private static boolean uuidEquals(String questUuid, String key, String normalizedKey) {
+        if (questUuid == null || questUuid.isBlank()) {
+            return false;
+        }
+        String trimmed = questUuid.trim();
+        return trimmed.equals(key) || QuestIndex.normalizeUuid(trimmed).equals(normalizedKey);
     }
 }

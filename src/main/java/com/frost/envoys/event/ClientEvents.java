@@ -86,6 +86,8 @@ public class ClientEvents {
         @SubscribeEvent
         public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
             ClientQuestTracker.get().clear();
+            com.frost.envoys.client.ClientLuaScriptBridge.clear();
+            com.frost.envoys.client.gui.backup.ClientBackupManager.flushActive();
         }
 
         @SubscribeEvent

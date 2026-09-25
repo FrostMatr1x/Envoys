@@ -112,19 +112,10 @@ public class QuestEditScreen extends Screen {
         this.addRenderableWidget(this.titleEditBox);
 
         this.uuidEditBox = new EditBox(this.font, controlX, startY + 50, controlWidth, 20, Component.literal("quest_uuid"));
+        this.uuidEditBox.setMaxLength(36);
         this.uuidEditBox.setValue(this.questUuid);
         this.uuidEditBox.setResponder(text -> this.questUuid = text);
         this.addRenderableWidget(this.uuidEditBox);
-
-        this.addRenderableWidget(Button.builder(
-            Component.literal("Сгенерировать"),
-            button -> {
-                this.questUuid = QuestDefinition.generateUuid();
-                if (this.uuidEditBox != null) {
-                    this.uuidEditBox.setValue(this.questUuid);
-                }
-            }
-        ).bounds(controlX + controlWidth + 5, startY + 50, 100, 20).build());
 
         this.visibleCheckbox = Checkbox.builder(Component.literal("Показывать в GUI"), this.font)
             .pos(labelX, startY + 78)

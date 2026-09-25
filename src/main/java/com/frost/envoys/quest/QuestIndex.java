@@ -18,6 +18,8 @@ public final class QuestIndex {
     private record Snapshot(
             List<Entry> entries,
             Map<String, List<QuestDefinition>> byUuid,
+            Map<String, List<QuestDefinition>> byNormalizedUuid,
+            Map<String, List<QuestDefinition>> byLocalId,
             Map<String, List<QuestDefinition>> byKillEntity) {
     }
 
@@ -34,16 +36,52 @@ public final class QuestIndex {
         return snapshot().entries();
     }
 
+    public static String normalizeUuid(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim().replace("-", "").toLowerCase(Locale.ROOT);
+    }
+
     public static Optional<QuestDefinition> byUuid(String uuid) {
         if (uuid == null || uuid.isBlank()) {
             return Optional.empty();
         }
-        List<QuestDefinition> matches = snapshot().byUuid().get(uuid);
+        String key = uuid.trim();
+        Optional<QuestDefinition> exact = unique(snapshot().byUuid().get(key), "quest_uuid", key);
+        if (exact.isPresent()) {
+            return exact;
+        }
+        String normalized = normalizeUuid(key);
+        return unique(snapshot().byNormalizedUuid().get(normalized), "quest_uuid", key);
+    }
+
+    public static Optional<QuestDefinition> byLocalId(String localId) {
+        if (localId == null || localId.isBlank()) {
+            return Optional.empty();
+        }
+        String key = localId.trim();
+        return unique(snapshot().byLocalId().get(key), "local_id", key);
+    }
+
+    public static Optional<QuestDefinition> resolve(String target) {
+        if (target == null || target.isBlank()) {
+            return Optional.empty();
+        }
+        Optional<QuestDefinition> byUuid = byUuid(target);
+        if (byUuid.isPresent()) {
+            return byUuid;
+        }
+        return byLocalId(target);
+    }
+
+    private static Optional<QuestDefinition> unique(List<QuestDefinition> matches, String kind, String key) {
         if (matches == null || matches.isEmpty()) {
             return Optional.empty();
         }
         if (matches.size() > 1) {
-            Envoys.LOGGER.warn("[Envoys] Duplicate quest_uuid '{}' found on {} NPCs; refusing to resolve it.", uuid, matches.size());
+            Envoys.LOGGER.warn("[Envoys] Duplicate {} '{}' found on {} NPCs; refusing to resolve it.",
+                    kind, key, matches.size());
             return Optional.empty();
         }
         return Optional.of(matches.get(0));
@@ -78,6 +116,8 @@ public final class QuestIndex {
 
         List<Entry> entries = new ArrayList<>();
         Map<String, List<QuestDefinition>> byUuid = new HashMap<>();
+        Map<String, List<QuestDefinition>> byNormalizedUuid = new HashMap<>();
+        Map<String, List<QuestDefinition>> byLocalId = new HashMap<>();
         Map<String, List<QuestDefinition>> byKillEntity = new HashMap<>();
 
         for (NPCInteractManager manager : NPCInteractManager.SCRIPTS.values()) {
@@ -91,7 +131,12 @@ public final class QuestIndex {
                 entries.add(new Entry(manager, quest));
 
                 if (quest.questUuid != null && !quest.questUuid.isBlank()) {
-                    byUuid.computeIfAbsent(quest.questUuid, key -> new ArrayList<>()).add(quest);
+                    String uuid = quest.questUuid.trim();
+                    byUuid.computeIfAbsent(uuid, key -> new ArrayList<>()).add(quest);
+                    byNormalizedUuid.computeIfAbsent(normalizeUuid(uuid), key -> new ArrayList<>()).add(quest);
+                }
+                if (quest.localId != null && !quest.localId.isBlank()) {
+                    byLocalId.computeIfAbsent(quest.localId.trim(), key -> new ArrayList<>()).add(quest);
                 }
 
                 if (quest.type == QuestType.KILL && quest.entityId != null && !quest.entityId.isBlank()) {
@@ -114,6 +159,8 @@ public final class QuestIndex {
         Snapshot built = new Snapshot(
                 List.copyOf(entries),
                 freeze(byUuid),
+                freeze(byNormalizedUuid),
+                freeze(byLocalId),
                 freeze(byKillEntity));
         snapshot = built;
         return built;

@@ -44,6 +44,7 @@ public class SettingMarkCompletedScreen extends Screen {
         int startY = this.height / 2 - 40;
 
         this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 80, 20, Component.literal("questTarget"));
+        this.questTargetEditBox.setMaxLength(128);
         this.questTargetEditBox.setValue(this.questTarget);
         this.questTargetEditBox.setResponder(text -> this.questTarget = text);
         this.questTargetEditBox.setTooltip(Tooltip.create(Component.literal(TARGET_TOOLTIP)));
@@ -91,8 +92,8 @@ public class SettingMarkCompletedScreen extends Screen {
         int startY = this.height / 2 - 40;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Цель квеста:", centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, "Цель квеста:", centerX - 160, startY, 0xFFFFFF);
+        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 30, 0xFFFFFF);
     }
 
     @Override

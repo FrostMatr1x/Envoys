@@ -17,14 +17,14 @@ public class ModCreativeTabs {
             .icon(() -> ModItems.TAB_ICON.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(ModItems.NPC_TUNER.get());
-                output.accept(ModItems.SURVIVAL_NPC_TUNER.get());
+                //output.accept(ModItems.SURVIVAL_NPC_TUNER.get());
                 output.accept(ModItems.NPC_SPAWN_EGG.get());
             }).build());
     
     public static void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(ModItems.NPC_TUNER);
-            event.accept(ModItems.SURVIVAL_NPC_TUNER);
+            //event.accept(ModItems.SURVIVAL_NPC_TUNER);
         }
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS)
         {
