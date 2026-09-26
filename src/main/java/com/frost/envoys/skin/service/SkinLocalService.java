@@ -22,7 +22,7 @@ public class SkinLocalService {
             SkinIndexData data = EntityActionAdapter.GSON.fromJson(content, SkinIndexData.class);
             return data != null ? data : new SkinIndexData();
         } catch (Exception e) {
-            Envoys.LOGGER.error("Ошибка при чтении индекса скинов: {}", indexFile.getAbsolutePath(), e);
+            Envoys.LOGGER.error("Failed to read skin index: {}", indexFile.getAbsolutePath(), e);
             return new SkinIndexData();
         }
     }
@@ -35,7 +35,7 @@ public class SkinLocalService {
             String json = EntityActionAdapter.GSON.toJson(data);
             Files.writeString(indexFile.toPath(), json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
-            Envoys.LOGGER.error("Ошибка при сохранении индекса скинов: {}", indexFile.getAbsolutePath(), e);
+            Envoys.LOGGER.error("Failed to save skin index: {}", indexFile.getAbsolutePath(), e);
         }
     }
 
@@ -74,7 +74,7 @@ public class SkinLocalService {
                 }
             });
         } catch (IOException e) {
-            Envoys.LOGGER.error("Ошибка при сканировании директории скинов {}", rootDir, e);
+            Envoys.LOGGER.error("Failed to scan skin directory {}", rootDir, e);
         }
 
         return matches.stream().findFirst();

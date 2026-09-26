@@ -40,7 +40,7 @@ public class NPCDialogScreen extends Screen implements DialogGuiBridge {
     }
 
     public NPCDialogScreen(Component npcName, Component dialogText, List<DialogOption> options, UUID npcUuid) {
-        super(Component.literal("Диалог"));
+        super(Component.translatable("envoys.gui.dialog.title"));
         this.npcName = ColorUtils.parse(ColorUtils.toFormattedString(npcName));
         this.dialogText = ColorUtils.parse(ColorUtils.toFormattedString(dialogText));
         this.options = options;

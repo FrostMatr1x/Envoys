@@ -12,8 +12,6 @@ import net.minecraft.network.chat.Component;
 
 public class SettingMoveScreen extends Screen {
 
-    private static final String NEXT_TOOLTIP = "ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N";
-
     private final Screen parentScreen;
     private final ActionMove action;
 
@@ -28,7 +26,7 @@ public class SettingMoveScreen extends Screen {
     private String nextActionId = "";
 
     public SettingMoveScreen(Screen parentScreen, ActionMove action) {
-        super(Component.literal("Настройка передвижения"));
+        super(Component.translatable("envoys.setting.move.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.targetX = action.targetX;
@@ -59,11 +57,11 @@ public class SettingMoveScreen extends Screen {
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 90, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(NEXT_TOOLTIP)));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.move.next_tooltip")));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -105,10 +103,10 @@ public class SettingMoveScreen extends Screen {
         int startY = this.height / 2 - 55;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Цель X:", centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Цель Y:", centerX - 160, startY + 30, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Цель Z:", centerX - 160, startY + 60, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 90, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.move.target_x"), centerX - 160, startY, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.move.target_y"), centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.move.target_z"), centerX - 160, startY + 60, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.move.next_action"), centerX - 160, startY + 90, 0xA0A0A0);
     }
 
     @Override

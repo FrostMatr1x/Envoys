@@ -32,7 +32,7 @@ public class SettingQuestCheckScreen extends Screen {
     private String nextId;
 
     public SettingQuestCheckScreen(Screen parentScreen, GraphNode node) {
-        super(Component.literal("Настройка развилки"));
+        super(Component.translatable("envoys.setting.branch.title"));
         this.parentScreen = parentScreen;
         this.node = node;
         this.text = node.param("text", "");
@@ -44,8 +44,8 @@ public class SettingQuestCheckScreen extends Screen {
     private void ensureDefaultOptions() {
         if (ScriptNodeTypes.QUEST_CHECK.equals(node.type) && node.options.size() < 2) {
             node.options.clear();
-            node.options.add(new GraphNode.BranchOption("completed", "Выполнен", null));
-            node.options.add(new GraphNode.BranchOption("not_completed", "Не выполнен", null));
+            node.options.add(new GraphNode.BranchOption("completed", "Completed", null));
+            node.options.add(new GraphNode.BranchOption("not_completed", "Not completed", null));
         }
     }
 
@@ -89,16 +89,16 @@ public class SettingQuestCheckScreen extends Screen {
         }
 
         if (!ScriptNodeTypes.QUEST_CHECK.equals(node.type)) {
-            this.addRenderableWidget(Button.builder(Component.literal("+ Ветка"), button -> {
+            this.addRenderableWidget(Button.builder(Component.translatable("envoys.setting.branch.add_option"), button -> {
                 this.save();
                 int index = node.options.size() + 1;
                 String key = ScriptNodeTypes.RANDOM.equals(node.type) ? Integer.toString(index) : "opt" + index;
-                node.options.add(new GraphNode.BranchOption(key, "Вариант " + index, null));
+                node.options.add(new GraphNode.BranchOption(key, "Option " + index, null));
                 this.rebuildWidgets();
             }).bounds(labelX, top + node.options.size() * ROW_HEIGHT + 6, 90, 20).build());
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> {
             this.save();
             if (this.parentScreen != null) {
                 Minecraft.getInstance().setScreen(this.parentScreen);
@@ -123,11 +123,12 @@ public class SettingQuestCheckScreen extends Screen {
         }
     }
 
-    private String optionLabel(int index) {
+    private Component optionLabel(int index) {
         if (ScriptNodeTypes.QUEST_CHECK.equals(node.type)) {
-            return index == 0 ? "Выполнено:" : "НЕ выполнено:";
+            return Component.translatable(index == 0
+                    ? "envoys.setting.branch.completed" : "envoys.setting.branch.not_completed");
         }
-        return "Ветка #" + (index + 1) + ":";
+        return Component.translatable("envoys.setting.branch.option_n", index + 1);
     }
 
     @Override
@@ -139,17 +140,18 @@ public class SettingQuestCheckScreen extends Screen {
         int top = 40;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Тип: " + ScriptNodeTypes.displayName(node.type), labelX, 24, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.branch.type",
+                ScriptNodeTypes.displayName(node.type)), labelX, 24, 0xFFFF55);
 
         if (ScriptNodeTypes.DIALOGUE.equals(node.type)) {
-            guiGraphics.drawString(this.font, "Текст:", labelX, top + 6, 0xA0A0A0);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.setting.branch.text"), labelX, top + 6, 0xFFFF55);
             top += ROW_HEIGHT;
         }
         if (ScriptNodeTypes.QUEST_CHECK.equals(node.type)) {
-            guiGraphics.drawString(this.font, "Квест:", labelX, top + 6, 0xA0A0A0);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.setting.branch.quest"), labelX, top + 6, 0xFFFF55);
             top += ROW_HEIGHT;
         }
-        guiGraphics.drawString(this.font, "Далее:", labelX, top + 6, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.branch.next"), labelX, top + 6, 0xFFFF55);
         top += ROW_HEIGHT + 6;
 
         for (int i = 0; i < node.options.size(); i++) {

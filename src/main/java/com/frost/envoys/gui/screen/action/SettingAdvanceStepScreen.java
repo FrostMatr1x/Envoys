@@ -14,10 +14,6 @@ import net.minecraft.network.chat.Component;
 
 public class SettingAdvanceStepScreen extends Screen {
 
-    private static final String NEXT_TOOLTIP = "ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N";
-    private static final String TARGET_TOOLTIP = "local_id или quest_uuid; резолвится в текущем NPC, затем глобально по uuid";
-    private static final String COMPLETION_TOOLTIP = "ID этапа; для BOOLEAN уникальные ID накапливаются до required_completions";
-
     private final Screen parentScreen;
     private final ActionQuestAdvanceStep action;
     private final NPCInteractManager manager;
@@ -31,7 +27,7 @@ public class SettingAdvanceStepScreen extends Screen {
     private String nextActionId = "";
 
     public SettingAdvanceStepScreen(Screen parentScreen, ActionQuestAdvanceStep action, NPCInteractManager manager) {
-        super(Component.literal("Настройка продвижения этапа"));
+        super(Component.translatable("envoys.setting.advance_step.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.manager = manager;
@@ -51,11 +47,11 @@ public class SettingAdvanceStepScreen extends Screen {
         this.questTargetEditBox.setMaxLength(128);
         this.questTargetEditBox.setValue(this.questTarget);
         this.questTargetEditBox.setResponder(text -> this.questTarget = text);
-        this.questTargetEditBox.setTooltip(Tooltip.create(Component.literal(TARGET_TOOLTIP)));
+        this.questTargetEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.advance_step.target_tooltip")));
         this.addRenderableWidget(this.questTargetEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Выбрать"),
+            Component.translatable("envoys.setting.advance_step.select"),
             button -> Minecraft.getInstance().setScreen(new QuestPickerScreen(this, this.manager, selected -> {
                 this.questTarget = selected;
                 if (this.questTargetEditBox != null) {
@@ -67,17 +63,17 @@ public class SettingAdvanceStepScreen extends Screen {
         this.completionIdEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("completionId"));
         this.completionIdEditBox.setValue(this.completionId);
         this.completionIdEditBox.setResponder(text -> this.completionId = text);
-        this.completionIdEditBox.setTooltip(Tooltip.create(Component.literal(COMPLETION_TOOLTIP)));
+        this.completionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.advance_step.completion_tooltip")));
         this.addRenderableWidget(this.completionIdEditBox);
 
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 58, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(NEXT_TOOLTIP)));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.advance_step.next_tooltip")));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -103,9 +99,9 @@ public class SettingAdvanceStepScreen extends Screen {
         int startY = this.height / 2 - 55;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Цель квеста:", centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "ID этапа:", centerX - 160, startY + 30, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 60, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.advance_step.quest_target"), centerX - 160, startY, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.advance_step.completion_id"), centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.advance_step.next_action"), centerX - 160, startY + 60, 0xA0A0A0);
     }
 
     @Override

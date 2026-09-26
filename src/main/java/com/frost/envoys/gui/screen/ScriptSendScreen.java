@@ -22,7 +22,7 @@ public class ScriptSendScreen extends Screen {
     private final Runnable onSent;
 
     public ScriptSendScreen(Screen parentScreen, UUID npcUuid, String source, String localFileName, Runnable onSent) {
-        super(Component.literal("Отправка сценария"));
+        super(Component.translatable("envoys.gui.script_send.title"));
         this.parentScreen = parentScreen;
         this.npcUuid = npcUuid;
         this.source = source;
@@ -38,20 +38,17 @@ public class ScriptSendScreen extends Screen {
 
         this.addRenderableWidget(new MultiLineTextWidget(
                 centerX - 150, 45,
-                Component.literal("Выберите способ сохранения:\n"
-                        + "• Отправить и перезапустить — записать main.lua и перезагрузить NPC.\n"
-                        + "• Только отправить — записать main.lua без перезапуска.\n"
-                        + "• Только локально — сохранить файл на клиенте (без отправки)."),
+                Component.translatable("envoys.gui.script_send.info"),
                 this.font).setMaxWidth(300));
 
         int y = this.height / 2;
-        this.addRenderableWidget(Button.builder(Component.literal("Отправить и перезапустить"),
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.script_send.send_restart"),
                 button -> send(true)).bounds(centerX - 150, y - 30, 300, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Только отправить"),
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.script_send.send_only"),
                 button -> send(false)).bounds(centerX - 150, y, 300, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Только локально"),
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.script_send.local_only"),
                 button -> saveLocal()).bounds(centerX - 150, y + 30, 300, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal("Отмена"),
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.cancel"),
                 button -> back()).bounds(centerX - 150, y + 70, 300, 20).build());
     }
 
@@ -67,15 +64,15 @@ public class ScriptSendScreen extends Screen {
         boolean ok = ClientLocalScriptStore.writeScript(this.localFileName, this.source);
         if (ok) {
             if (Minecraft.getInstance().player != null) {
-                Minecraft.getInstance().player.sendSystemMessage(Component.literal(
-                        "§a[Envoys] Сценарий сохранён локально: envoys/local/" + this.localFileName));
+                Minecraft.getInstance().player.sendSystemMessage(
+                        Component.translatable("envoys.cmd.lua.saved_local", this.localFileName));
             }
             if (this.onSent != null) {
                 this.onSent.run();
             }
         } else if (Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.sendSystemMessage(Component.literal(
-                    "§c[Envoys] Не удалось сохранить файл " + this.localFileName));
+            Minecraft.getInstance().player.sendSystemMessage(
+                    Component.translatable("envoys.cmd.lua.write_failed", this.localFileName));
         }
         back();
     }

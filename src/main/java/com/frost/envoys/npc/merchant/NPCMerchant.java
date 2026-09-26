@@ -178,7 +178,7 @@ public class NPCMerchant implements Merchant, TradeGuiBridge {
     public void open(Player player, UUID npcUuid, ActionTrade action, Runnable onClose) {
         this.currentAction = action;
         this.offers = buildOffers(action, player);
-        openTradingScreen(player, Component.literal("Торговля"), 0, onClose);
+        openTradingScreen(player, Component.translatable("envoys.gui.trade_title"), 0, onClose);
     }
 
     private static boolean isValidTrade(NPCTrade trade) {

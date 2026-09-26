@@ -22,7 +22,7 @@ public class SettingLoadPointScreen extends Screen {
     private String nextActionId = "";
 
     public SettingLoadPointScreen(Screen parentScreen, ActionLoadPoint action) {
-        super(Component.literal("Загрузить точку"));
+        super(Component.translatable("envoys.setting.load_point.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.target = action.saveId != null ? action.saveId : "";
@@ -39,18 +39,17 @@ public class SettingLoadPointScreen extends Screen {
         this.targetEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("target"));
         this.targetEditBox.setValue(this.target);
         this.targetEditBox.setResponder(text -> this.target = text);
-        this.targetEditBox.setTooltip(Tooltip.create(Component.literal("Ключ точки сохранения, к которой нужно вернуться")));
+        this.targetEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.load_point.target_tooltip")));
         this.addRenderableWidget(this.targetEditBox);
 
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 30, 200, 20,
                 Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(
-                "Следующий ID")));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.load_point.next_id_tooltip")));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> {
             this.save();
             if (this.parentScreen != null) {
                 Minecraft.getInstance().setScreen(this.parentScreen);
@@ -73,8 +72,8 @@ public class SettingLoadPointScreen extends Screen {
         int startY = this.height / 2 - 35;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Ключ точки:", centerX - 160, startY + 6, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующий ID:",
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.load_point.name"), centerX - 160, startY + 6, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.load_point.next_id"),
                 centerX - 160, startY + 36, 0xA0A0A0);
     }
 

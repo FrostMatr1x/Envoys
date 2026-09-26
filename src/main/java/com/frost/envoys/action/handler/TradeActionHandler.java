@@ -27,6 +27,6 @@ public final class TradeActionHandler implements NpcActionHandler<ActionTrade> {
 
         NPCMerchant merchant = new NPCMerchant(baseNpc, action, serverPlayer);
         context.waitForTrade();
-        merchant.openTradingScreen(serverPlayer, Component.literal("Торговля"), 0, context::onTradeClose);
+        merchant.openTradingScreen(serverPlayer, Component.translatable("envoys.gui.trade_title"), 0, context::onTradeClose);
     }
 }

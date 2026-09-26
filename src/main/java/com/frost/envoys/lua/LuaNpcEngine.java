@@ -462,7 +462,7 @@ public final class LuaNpcEngine {
 
         Script script = current;
         NPCMerchant merchant = new NPCMerchant(npc, action, serverPlayer);
-        merchant.openTradingScreen(serverPlayer, Component.literal("Торговля"), 0, () -> onTradeClosed(script));
+        merchant.openTradingScreen(serverPlayer, Component.translatable("envoys.gui.trade_title"), 0, () -> onTradeClosed(script));
 
         if (!(serverPlayer.containerMenu instanceof NPCMerchantMenu menu) || menu.getMerchant() != merchant) {
             return false;

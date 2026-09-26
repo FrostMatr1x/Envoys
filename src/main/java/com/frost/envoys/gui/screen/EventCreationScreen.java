@@ -44,13 +44,13 @@ public class EventCreationScreen extends Screen {
     private String lastCompiledSource = "";
     private boolean fetchRequested;
     private boolean loading;
-    private String errorText = "";
+    private Component errorText;
     private int loadingTicks;
 
     private EventList eventList;
 
     public EventCreationScreen(Screen parentScreen, NPCInteractManager manager, boolean isCreativeTuner) {
-        super(Component.literal("Сценарий NPC"));
+        super(Component.translatable("envoys.gui.event_creation.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.isCreativeTuner = isCreativeTuner;
@@ -84,7 +84,7 @@ public class EventCreationScreen extends Screen {
         int centerX = this.width / 2;
 
         if (loading) {
-            this.addRenderableWidget(Button.builder(Component.literal("Отмена"), button -> this.onClose())
+            this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.cancel"), button -> this.onClose())
                     .bounds(centerX - 100, this.height - 35, 200, 20).build());
             return;
         }
@@ -99,17 +99,17 @@ public class EventCreationScreen extends Screen {
 
         int navY = this.height - 60;
         int rowStart = centerX - 150;
-        this.addRenderableWidget(Button.builder(Component.literal("Квесты"), button ->
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.event_creation.quests"), button ->
                 Minecraft.getInstance().setScreen(new QuestManagementScreen(this, this.manager, this.isCreativeTuner)))
                 .bounds(rowStart, navY, 90, 20).build());
 
-        Button process = Button.builder(Component.literal("Обработать"), button -> processScenario())
+        Button process = Button.builder(Component.translatable("envoys.gui.event_creation.process"), button -> processScenario())
                 .bounds(rowStart + 95, navY, 110, 20).build();
-        process.setTooltip(Tooltip.create(Component.literal("Собрать Lua-сценарий и сохранить/отправить")));
+        process.setTooltip(Tooltip.create(Component.translatable("envoys.gui.event_creation.process_tooltip")));
         process.active = project != null && hasModified();
         this.addRenderableWidget(process);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> this.onClose())
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> this.onClose())
                 .bounds(rowStart + 210, navY, 90, 20).build());
 
     }
@@ -123,10 +123,10 @@ public class EventCreationScreen extends Screen {
             this.project = emptyProject();
         }
         this.loading = false;
-        this.errorText = "";
-        if (!payload.exists() && payload.message() != null && !payload.message().isBlank()
+        this.errorText = null;
+        if (!payload.exists() && payload.message() != null && !payload.message().getString().isBlank()
                 && Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.sendSystemMessage(Component.literal(payload.message()));
+            Minecraft.getInstance().player.sendSystemMessage(payload.message());
         }
         this.baselineSource = this.serverSource;
         this.project.dirty = false;
@@ -200,13 +200,13 @@ public class EventCreationScreen extends Screen {
             String localFileName = ScriptNames.fileName(npcName, manager.npcUUID);
             Minecraft.getInstance().setScreen(new ScriptSendScreen(this, manager.npcUUID, source, localFileName, this::onSent));
         } catch (ScenarioCompileException e) {
-            showError("Ошибка сборки: " + e.getMessage());
+            showError(e.component());
         } catch (CompileException e) {
-            showError("Ошибка компиляции Lua: " + e.getMessage());
+            showError(Component.translatable("envoys.gui.event_creation.compile_error", String.valueOf(e.getMessage())));
         } catch (LuaError e) {
-            showError("Ошибка Lua: " + e.getMessage());
+            showError(Component.translatable("envoys.gui.event_creation.lua_error", String.valueOf(e.getMessage())));
         } catch (RuntimeException e) {
-            showError("Внутренняя ошибка: " + e);
+            showError(Component.translatable("envoys.gui.event_creation.internal_error", String.valueOf(e)));
         }
     }
 
@@ -224,10 +224,10 @@ public class EventCreationScreen extends Screen {
         }
     }
 
-    private void showError(String message) {
+    private void showError(Component message) {
         this.errorText = message;
         if (Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.sendSystemMessage(Component.literal("§c[Envoys] " + message));
+            Minecraft.getInstance().player.sendSystemMessage(Component.translatable("envoys.gui.error", message));
         }
         this.rebuildWidgets();
     }
@@ -237,7 +237,7 @@ public class EventCreationScreen extends Screen {
         super.tick();
         if (loading && ++loadingTicks > LOAD_TIMEOUT_TICKS) {
             this.loading = false;
-            this.errorText = "Не удалось получить сценарий с сервера (таймаут).";
+            this.errorText = Component.translatable("envoys.gui.event_creation.fetch_timeout");
             this.rebuildWidgets();
         }
     }
@@ -261,8 +261,8 @@ public class EventCreationScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFF);
 
         if (loading) {
-            guiGraphics.drawCenteredString(this.font, "Загрузка сценария…", this.width / 2, this.height / 2 - 10, 0xFFFF55);
-        } else if (!errorText.isEmpty()) {
+            guiGraphics.drawCenteredString(this.font, Component.translatable("envoys.gui.event_creation.loading"), this.width / 2, this.height / 2 - 10, 0xFFFF55);
+        } else if (errorText != null) {
             guiGraphics.drawCenteredString(this.font, errorText, this.width / 2, this.height / 2 - 10, 0xFF5555);
         }
     }
@@ -272,13 +272,8 @@ public class EventCreationScreen extends Screen {
         return false;
     }
 
-    static String eventDisplayName(EventType type) {
-        return switch (type) {
-            case UPDATE -> "Цикл";
-            case CLICK -> "Клик";
-            case KICK -> "Удар";
-            case RANGE -> "Радиус";
-        };
+    static Component eventDisplayName(EventType type) {
+        return Component.translatable("envoys.event." + type.jsonKey());
     }
 
     class EventList extends ContainerObjectSelectionList<EventEntry> {
@@ -312,7 +307,7 @@ public class EventCreationScreen extends Screen {
             this.script = script;
             boolean locked = script == null || script.locked();
 
-            this.configureButton = Button.builder(Component.literal("Настроить"), button ->
+            this.configureButton = Button.builder(Component.translatable("envoys.gui.common.configure"), button ->
                     Minecraft.getInstance().setScreen(new EventConfigScreen(EventCreationScreen.this,
                             EventCreationScreen.this.manager, this.type, this.script,
                             EventCreationScreen.this.isCreativeTuner,
@@ -320,8 +315,8 @@ public class EventCreationScreen extends Screen {
                     .bounds(0, 0, 75, 20).build();
             this.configureButton.active = !locked;
             if (locked) {
-                this.configureButton.setTooltip(Tooltip.create(Component.literal(
-                        "Обнаружен внешний код Lua. Визуальный редактор отключён во избежание потери данных.")));
+                this.configureButton.setTooltip(Tooltip.create(
+                        Component.translatable("envoys.gui.event_creation.locked_tooltip")));
             }
             this.children.add(this.configureButton);
         }
@@ -345,19 +340,21 @@ public class EventCreationScreen extends Screen {
                 case YELLOW_MODIFIED -> 0xFFFF55;
                 case GREY_LOCKED_CUSTOM -> 0xAAAAAA;
             };
-            String status = switch (state) {
-                case GREEN_SYNCED -> "";
-                case YELLOW_MODIFIED -> " (изменено)";
-                case GREY_LOCKED_CUSTOM -> " (внешний код)";
+            Component status = switch (state) {
+                case GREEN_SYNCED -> Component.empty();
+                case YELLOW_MODIFIED -> Component.translatable("envoys.gui.event_creation.status_modified");
+                case GREY_LOCKED_CUSTOM -> Component.translatable("envoys.gui.event_creation.status_custom");
             };
             int nodeCount = script != null && script.graph != null && !script.locked() ? script.graph.nodes.size() : 0;
-            String label = eventDisplayName(this.type) + " (" + this.type.jsonKey() + ")" + status;
+            Component label = Component.translatable("envoys.gui.event_creation.entry",
+                    eventDisplayName(this.type), this.type.jsonKey(), status);
 
             guiGraphics.drawString(Minecraft.getInstance().font, "●", left + 5, top + (height - 8) / 2, color, false);
             guiGraphics.drawString(Minecraft.getInstance().font, label, left + 20, top + (height - 8) / 2, 0xFFFFFF, false);
             if (nodeCount > 0) {
-                guiGraphics.drawString(Minecraft.getInstance().font, "узлов: " + nodeCount,
-                        left + 210, top + (height - 8) / 2, 0xA0A0A0, false);
+                guiGraphics.drawString(Minecraft.getInstance().font,
+                        Component.translatable("envoys.gui.event_creation.nodes", nodeCount),
+                        left + 210, top + (height - 8) / 2, 0xFFFF55, false);
             }
 
             this.configureButton.setX(left + width - 80);

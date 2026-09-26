@@ -66,7 +66,7 @@ public class NPCScriptScreen extends Screen {
 
     public NPCScriptScreen(Screen parentScreen, NPCInteractManager manager, ActionGraph graph,
                            boolean isCreativeTuner, Runnable onModified) {
-        super(Component.literal("Визуальный сценарий"));
+        super(Component.translatable("envoys.gui.script.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.graph = graph;
@@ -99,19 +99,19 @@ public class NPCScriptScreen extends Screen {
             this.nodeList.addNode(node);
         }
 
-        this.typeButton = Button.builder(Component.literal("Тип: " + this.selectedTypeToAdd.display), button ->
+        this.typeButton = Button.builder(Component.translatable("envoys.gui.script.type", this.selectedTypeToAdd.display()), button ->
                 Minecraft.getInstance().setScreen(new NodeTypeSelectScreen(this, this.selectedTypeToAdd, selected -> {
                     this.selectedTypeToAdd = selected;
-                    this.typeButton.setMessage(Component.literal("Тип: " + selected.display));
+                    this.typeButton.setMessage(Component.translatable("envoys.gui.script.type", selected.display()));
                 }))).bounds(centerX - 195, this.height - 35, 120, 20).build();
         this.addRenderableWidget(this.typeButton);
 
         this.idInputField = new EditBox(this.font, centerX - 60, this.height - 35, 60, 20, Component.literal("ID"));
         this.idInputField.setValue(graph.nextId());
-        this.idInputField.setTooltip(Tooltip.create(Component.literal("Уникальный ID узла.")));
+        this.idInputField.setTooltip(Tooltip.create(Component.translatable("envoys.gui.script.id_tooltip")));
         this.addRenderableWidget(this.idInputField);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Добавить"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.add"), button -> {
             String id = this.idInputField.getValue().trim();
             if (id.isEmpty() || graph.node(id) != null) {
                 id = graph.nextId();
@@ -123,7 +123,7 @@ public class NPCScriptScreen extends Screen {
             markModified();
         }).bounds(centerX - 5, this.height - 35, 90, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> {
             if (this.parentScreen != null) {
                 Minecraft.getInstance().setScreen(this.parentScreen);
             } else {
@@ -163,17 +163,17 @@ public class NPCScriptScreen extends Screen {
             case ScriptNodeTypes.LOOK_AT -> node.params.put("mode", "player");
             case ScriptNodeTypes.DIALOGUE -> {
                 node.params.put("text", "");
-                node.options.add(new GraphNode.BranchOption("1", "Вариант 1", null));
-                node.options.add(new GraphNode.BranchOption("2", "Вариант 2", null));
+                node.options.add(new GraphNode.BranchOption("1", "Option 1", null));
+                node.options.add(new GraphNode.BranchOption("2", "Option 2", null));
             }
             case ScriptNodeTypes.RANDOM -> {
-                node.options.add(new GraphNode.BranchOption("1", "Вариант 1", null));
-                node.options.add(new GraphNode.BranchOption("2", "Вариант 2", null));
+                node.options.add(new GraphNode.BranchOption("1", "Option 1", null));
+                node.options.add(new GraphNode.BranchOption("2", "Option 2", null));
             }
             case ScriptNodeTypes.QUEST_CHECK -> {
                 node.params.put("quest", "");
-                node.options.add(new GraphNode.BranchOption("completed", "Выполнен", null));
-                node.options.add(new GraphNode.BranchOption("not_completed", "Не выполнен", null));
+                node.options.add(new GraphNode.BranchOption("completed", "Completed", null));
+                node.options.add(new GraphNode.BranchOption("not_completed", "Not completed", null));
             }
             default -> {
             }
@@ -248,28 +248,30 @@ public class NPCScriptScreen extends Screen {
     }
 
     public enum NodeType {
-        START(ScriptNodeTypes.START, "Старт"),
-        SAY(ScriptNodeTypes.SAY, "Сообщение"),
-        WAIT(ScriptNodeTypes.WAIT, "Ожидание"),
-        MOVE(ScriptNodeTypes.MOVE, "Движение"),
-        COMMAND(ScriptNodeTypes.COMMAND, "Команда"),
-        TRADE(ScriptNodeTypes.TRADE, "Трейд"),
-        DIALOGUE(ScriptNodeTypes.DIALOGUE, "Диалог"),
-        RANDOM(ScriptNodeTypes.RANDOM, "Рандом"),
-        QUEST_CHECK(ScriptNodeTypes.QUEST_CHECK, "Проверка квеста"),
-        QUEST_START(ScriptNodeTypes.QUEST_START, "Выдать квест"),
-        QUEST_ADVANCE(ScriptNodeTypes.QUEST_ADVANCE, "Продвинуть этап"),
-        QUEST_COMPLETE(ScriptNodeTypes.QUEST_COMPLETE, "Завершить квест"),
-        LOOK_AT(ScriptNodeTypes.LOOK_AT, "Поворот к цели"),
-        SAVE_POINT(ScriptNodeTypes.SAVE_POINT, "Метка"),
-        LOAD_POINT(ScriptNodeTypes.LOAD_POINT, "Переход");
+        START(ScriptNodeTypes.START),
+        SAY(ScriptNodeTypes.SAY),
+        WAIT(ScriptNodeTypes.WAIT),
+        MOVE(ScriptNodeTypes.MOVE),
+        COMMAND(ScriptNodeTypes.COMMAND),
+        TRADE(ScriptNodeTypes.TRADE),
+        DIALOGUE(ScriptNodeTypes.DIALOGUE),
+        RANDOM(ScriptNodeTypes.RANDOM),
+        QUEST_CHECK(ScriptNodeTypes.QUEST_CHECK),
+        QUEST_START(ScriptNodeTypes.QUEST_START),
+        QUEST_ADVANCE(ScriptNodeTypes.QUEST_ADVANCE),
+        QUEST_COMPLETE(ScriptNodeTypes.QUEST_COMPLETE),
+        LOOK_AT(ScriptNodeTypes.LOOK_AT),
+        SAVE_POINT(ScriptNodeTypes.SAVE_POINT),
+        LOAD_POINT(ScriptNodeTypes.LOAD_POINT);
 
         public final String type;
-        public final String display;
 
-        NodeType(String type, String display) {
+        NodeType(String type) {
             this.type = type;
-            this.display = display;
+        }
+
+        public Component display() {
+            return Component.translatable("envoys.node." + this.type);
         }
     }
 
@@ -306,9 +308,9 @@ public class NPCScriptScreen extends Screen {
         public NodeEntry(GraphNode node) {
             this.node = node;
 
-            this.configureButton = Button.builder(Component.literal("Настроить"), button -> openSettings(this.node))
+            this.configureButton = Button.builder(Component.translatable("envoys.gui.common.configure"), button -> openSettings(this.node))
                     .bounds(0, 0, 75, 20).build();
-            this.deleteButton = Button.builder(Component.literal("Удалить"), button -> deleteNode(this.node))
+            this.deleteButton = Button.builder(Component.translatable("envoys.gui.common.delete"), button -> deleteNode(this.node))
                     .bounds(0, 0, 60, 20).build();
             this.deleteButton.active = !ScriptNodeTypes.START.equals(this.node.type);
 
@@ -330,14 +332,18 @@ public class NPCScriptScreen extends Screen {
         public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height,
                            int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
             String next = node.nextId == null ? "-" : node.nextId;
-            String label;
+            Component label;
             if (ScriptNodeTypes.isSavePoint(node.type)) {
-                String exit = node.boolParam("exit", false) ? " (прервать)" : "";
-                label = "[" + node.id + "] Точка сохранения \"" + node.param("name", "") + "\"" + exit + " → " + next;
+                Component exit = node.boolParam("exit", false)
+                        ? Component.translatable("envoys.gui.script.savepoint_exit") : Component.empty();
+                label = Component.translatable("envoys.gui.script.entry_savepoint",
+                        node.id, node.param("name", ""), exit, next);
             } else if (ScriptNodeTypes.isLoadPoint(node.type)) {
-                label = "[" + node.id + "] Загрузить точку \"" + node.param("target", "") + "\" → " + next;
+                label = Component.translatable("envoys.gui.script.entry_loadpoint",
+                        node.id, node.param("target", ""), next);
             } else {
-                label = "[" + node.id + "] " + ScriptNodeTypes.displayName(node.type) + " → " + next;
+                label = Component.translatable("envoys.gui.script.entry",
+                        node.id, ScriptNodeTypes.displayName(node.type), next);
             }
             guiGraphics.drawString(Minecraft.getInstance().font, label, left + 5, top + (height - 8) / 2, 0xFFFFFF, false);
 

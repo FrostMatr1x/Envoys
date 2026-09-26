@@ -17,13 +17,13 @@ import com.frost.envoys.npc.NPCTrade;
 
 public class SettingTradeScreen extends Screen {
 
-    private static final Component TITLE_TEXT = Component.literal("Редактор сделок");
-    private static final Component SUBTITLE_TEXT = Component.literal("Список сделок (прокрутка колесиком):");
-    private static final Component CONTROLS_INFO_1 = Component.literal("ЛКМ — меню поиска и NBT | ПКМ — очистить слот");
-    private static final Component ID_LABEL = Component.literal("ID следующего действия:");
-    private static final Component ADD_BUTTON_TEXT = Component.literal("Добавить");
-    private static final Component BACK_BUTTON_TEXT = Component.literal("Назад");
-    private static final Component SETTINGS_BUTTON_TEXT = Component.literal("Настройки");
+    private static final Component TITLE_TEXT = Component.translatable("envoys.setting.trade.title");
+    private static final Component SUBTITLE_TEXT = Component.translatable("envoys.setting.trade.subtitle");
+    private static final Component CONTROLS_INFO_1 = Component.translatable("envoys.setting.trade.controls_info");
+    private static final Component ID_LABEL = Component.translatable("envoys.setting.trade.next_id_label");
+    private static final Component ADD_BUTTON_TEXT = Component.translatable("envoys.gui.common.add");
+    private static final Component BACK_BUTTON_TEXT = Component.translatable("envoys.gui.common.back");
+    private static final Component SETTINGS_BUTTON_TEXT = Component.translatable("envoys.setting.trade.settings");
     private static final Component ID_BOX_LABEL = Component.literal("ID");
 
     private static final int START_Y = 35;
@@ -91,7 +91,7 @@ public class SettingTradeScreen extends Screen {
 
         this.idEditBox = new EditBox(this.font, centerX + 40, this.height - 65, 70, 20, ID_BOX_LABEL);
         this.idEditBox.setValue(this.nextId);
-        this.idEditBox.setTooltip(Tooltip.create(Component.literal("ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N")));
+        this.idEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.trade.next_id_tooltip")));
         this.idEditBox.setResponder(text -> this.nextId = text);
         this.addRenderableWidget(this.idEditBox);
 
@@ -99,7 +99,7 @@ public class SettingTradeScreen extends Screen {
         this.baseSlotsEditBox.setFilter(text -> text.matches("\\d*"));
         this.baseSlotsEditBox.setValue(this.baseSlotsText);
         this.baseSlotsEditBox.setResponder(text -> this.baseSlotsText = text);
-        this.baseSlotsEditBox.setTooltip(Tooltip.create(Component.literal("Сколько первых сделок показывать. Пусто — все. Значение >= 0; merchant_level_up увеличивает лимит на 1 за срабатывание")));
+        this.baseSlotsEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.trade.base_slots_tooltip")));
         this.addRenderableWidget(this.baseSlotsEditBox);
     }
 
@@ -190,7 +190,7 @@ public class SettingTradeScreen extends Screen {
         int infoY = START_Y + MAX_ROWS * ROW_HEIGHT + 2;
         guiGraphics.drawCenteredString(this.font, CONTROLS_INFO_1, centerX, infoY, 0x808080);
         guiGraphics.drawString(this.font, ID_LABEL, centerX - 110, this.height - 60, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Слотов:", centerX - 175, this.height - 77, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.trade.slots_label"), centerX - 175, this.height - 77, 0xA0A0A0);
 
         if (!hoveredStack.isEmpty()) {
             guiGraphics.renderTooltip(this.font, hoveredStack, mouseX, mouseY);

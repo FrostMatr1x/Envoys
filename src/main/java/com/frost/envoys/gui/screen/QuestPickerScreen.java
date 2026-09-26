@@ -25,7 +25,7 @@ public class QuestPickerScreen extends Screen {
     private QuestList questList;
 
     public QuestPickerScreen(Screen parentScreen, NPCInteractManager manager, Consumer<String> onSelect) {
-        super(Component.literal("Выбор квеста"));
+        super(Component.translatable("envoys.gui.quest_picker.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.onSelect = onSelect;
@@ -50,7 +50,7 @@ public class QuestPickerScreen extends Screen {
         }
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Отмена"),
+            Component.translatable("envoys.gui.common.cancel"),
             button -> {
                 if (this.parentScreen != null) {
                     Minecraft.getInstance().setScreen(this.parentScreen);
@@ -68,7 +68,7 @@ public class QuestPickerScreen extends Screen {
 
         boolean empty = this.manager == null || this.manager.quests == null || this.manager.quests.isEmpty();
         if (empty) {
-            guiGraphics.drawCenteredString(this.font, Component.literal("У квестов NPC ничего нет"), this.width / 2, this.height / 2, 0xFFFF5555);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("envoys.gui.quest_picker.empty"), this.width / 2, this.height / 2, 0xFFFF5555);
         }
     }
 

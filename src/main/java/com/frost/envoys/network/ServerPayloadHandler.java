@@ -28,6 +28,7 @@ import com.frost.envoys.network.payload.SelectDialogAnswerPayload;
 import com.frost.envoys.network.payload.TradeAllPayload;
 import com.frost.envoys.npc.entity.BaseNPC;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -114,23 +115,23 @@ public class ServerPayloadHandler {
                 if (!player.hasPermissions(4)) {
                     Envoys.LOGGER.warn("[Envoys] Player {} tried to upload a Lua script without OP-4",
                             player.getName().getString());
-                    replyLua(player, false, "§cТолько OP-4 может загружать Lua-скрипты.");
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.upload_op_only"));
                     return;
                 }
 
                 if (!Config.LUA_ENABLED.get()) {
-                    replyLua(player, false, "§cLua-движок выключен в конфиге сервера.");
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.disabled"));
                     return;
                 }
 
                 MinecraftServer server = player.getServer();
                 if (server == null) {
-                    replyLua(player, false, "§cСервер недоступен.");
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.server_unavailable"));
                     return;
                 }
 
                 if (findLuaNpc(server, payload.npcId()) == null) {
-                    replyLua(player, false, "§cNPC " + payload.npcId() + " не найден ни в одном измерении.");
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.npc_not_found", payload.npcId().toString()));
                     return;
                 }
 
@@ -138,14 +139,14 @@ public class ServerPayloadHandler {
                 if (fileName == null || !LUA_FILE_NAME.matcher(fileName).matches()) {
                     Envoys.LOGGER.warn("[Envoys] Player {} tried to upload Lua script with invalid name '{}'",
                             player.getName().getString(), fileName);
-                    replyLua(player, false, "§cНедопустимое имя файла (ожидается [a-zA-Z0-9_-]+.lua).");
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.bad_name"));
                     return;
                 }
 
                 String source = payload.source() == null ? "" : payload.source();
                 int byteLength = source.getBytes(StandardCharsets.UTF_8).length;
                 if (byteLength > MAX_LUA_SOURCE_BYTES) {
-                    replyLua(player, false, "§cСкрипт слишком большой: " + byteLength + " байт (лимит 1 МБ).");
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.too_big", byteLength));
                     return;
                 }
 
@@ -154,42 +155,42 @@ public class ServerPayloadHandler {
                 } catch (CompileException e) {
                     Envoys.LOGGER.warn("[Envoys] Lua compile error for NPC {} uploaded by {}: {}",
                             payload.npcId(), player.getName().getString(), e.getMessage());
-                    replyLua(player, false, "§cОшибка компиляции: " + e.getMessage());
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.compile_error", String.valueOf(e.getMessage())));
                     return;
                 } catch (LuaError e) {
                     Envoys.LOGGER.warn("[Envoys] Lua setup error for NPC {} uploaded by {}",
                             payload.npcId(), player.getName().getString(), e);
-                    replyLua(player, false, "§cОшибка подготовки Lua: " + e.getMessage());
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.setup_error", String.valueOf(e.getMessage())));
                     return;
                 }
 
                 if (!LuaScriptStore.writeScript(payload.npcId(), source)) {
-                    replyLua(player, false, "§cНе удалось сохранить скрипт на диск.");
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.save_failed"));
                     return;
                 }
 
                 if (payload.restartEngine()) {
                     LuaNpcEngine engine = LuaEngineManager.createOrRestart(payload.npcId());
                     if (engine != null && engine.isErrored()) {
-                        replyLua(player, true, "§eСкрипт сохранён, но движок упал при запуске: " + engine.errorText());
+                        replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_engine_error", engine.errorText()));
                     } else {
-                        replyLua(player, true, "§aСкрипт '" + fileName + "' сохранён, движок перезапущен.");
+                        replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_restart", fileName));
                     }
                 } else {
-                    replyLua(player, true, "§aСкрипт '" + fileName + "' сохранён (без перезапуска движка).");
+                    replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_no_restart", fileName));
                 }
 
                 Envoys.LOGGER.info("[Envoys] Lua script '{}' saved for NPC {} by {} (restart={})",
                         fileName, payload.npcId(), player.getName().getString(), payload.restartEngine());
             } catch (Exception e) {
                 Envoys.LOGGER.error("[Envoys] Failed to process Lua script upload for NPC {}", payload.npcId(), e);
-                replyLua(player, false, "§cВнутренняя ошибка при сохранении скрипта.");
+                replyLua(player, false, Component.translatable("envoys.cmd.lua.internal_error"));
             }
         }).exceptionally(e -> {
             Envoys.LOGGER.error("[Envoys] Unhandled error during Lua script upload for NPC {}", payload.npcId(), e);
             ServerPlayer player = playerRef[0];
             if (player != null) {
-                replyLua(player, false, "§cВнутренняя ошибка при сохранении скрипта.");
+                replyLua(player, false, Component.translatable("envoys.cmd.lua.internal_error"));
             }
             return null;
         });
@@ -202,26 +203,26 @@ public class ServerPayloadHandler {
             }
             if (!player.hasPermissions(4)) {
                 player.connection.send(new NpcLuaScriptResponsePayload(
-                        payload.npcUuid(), "main.lua", "", false, "§cТолько OP-4 может выгружать Lua-скрипты."));
+                        payload.npcUuid(), "main.lua", "", false, Component.translatable("envoys.cmd.lua.fetch_op_only")));
                 return;
             }
 
             String source = LuaScriptStore.readScript(payload.npcUuid());
             if (source == null) {
                 player.connection.send(new NpcLuaScriptResponsePayload(
-                        payload.npcUuid(), "main.lua", "", false, "§eСкрипт не найден (main.lua отсутствует)."));
+                        payload.npcUuid(), "main.lua", "", false, Component.translatable("envoys.cmd.lua.fetch_not_found")));
                 return;
             }
 
             player.connection.send(new NpcLuaScriptResponsePayload(
-                    payload.npcUuid(), "main.lua", source, true, "§aСкрипт получен."));
+                    payload.npcUuid(), "main.lua", source, true, Component.translatable("envoys.cmd.lua.fetch_ok")));
         }).exceptionally(e -> {
             Envoys.LOGGER.error("[Envoys] Failed to fetch Lua script for NPC {}", payload.npcUuid(), e);
             return null;
         });
     }
 
-    private static void replyLua(ServerPlayer player, boolean success, String message) {
+    private static void replyLua(ServerPlayer player, boolean success, net.minecraft.network.chat.Component message) {
         player.connection.send(new LuaScriptUploadResultPayload(success, message));
     }
 

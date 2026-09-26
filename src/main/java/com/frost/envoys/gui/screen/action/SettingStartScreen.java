@@ -12,8 +12,6 @@ import net.minecraft.network.chat.Component;
 
 public class SettingStartScreen extends Screen {
 
-    private static final String NEXT_TOOLTIP = "ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N";
-
     private final Screen parentScreen;
     private final ActionStart action;
 
@@ -22,7 +20,7 @@ public class SettingStartScreen extends Screen {
     private String nextActionId = "";
 
     public SettingStartScreen(Screen parentScreen, ActionStart action) {
-        super(Component.literal("Настройка старта"));
+        super(Component.translatable("envoys.setting.start.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.nextActionId = action.nextActionId != null ? action.nextActionId : "";
@@ -38,11 +36,11 @@ public class SettingStartScreen extends Screen {
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(NEXT_TOOLTIP)));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.start.next_tooltip")));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -66,7 +64,7 @@ public class SettingStartScreen extends Screen {
         int startY = this.height / 2 - 20;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 6, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.start.next_action"), centerX - 160, startY + 6, 0xA0A0A0);
     }
 
     @Override

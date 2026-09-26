@@ -39,10 +39,10 @@ public class ClientSkinPayloadHandler {
                         if (Minecraft.getInstance().screen instanceof NPCSkinScreen skinScreen) {
                             skinScreen.onSkinDataReceived(localBytes);
                         }
-                        Envoys.LOGGER.info("[Envoys] Скин {} загружен из локального кэша клиента (хэш совпал)", uuidStr);
+                        Envoys.LOGGER.info("[Envoys] Skin {} loaded from the client local cache (hash matched)", uuidStr);
                         return;
                     } catch (Exception e) {
-                        Envoys.LOGGER.error("Ошибка чтения кэшированного скина", e);
+                        Envoys.LOGGER.error("Failed to read cached skin", e);
                     }
                 }
             }
@@ -71,10 +71,10 @@ public class ClientSkinPayloadHandler {
                     skinScreen.onSkinDataReceived(pngData);
                 }
 
-                Envoys.LOGGER.info("[Envoys] Скин {} получен от сервера и обновлен в кэше", uuidStr);
+                Envoys.LOGGER.info("[Envoys] Skin {} received from the server and updated in the cache", uuidStr);
 
             } catch (Exception e) {
-                Envoys.LOGGER.error("[Envoys] Ошибка сохранения полученного скина с сервера", e);
+                Envoys.LOGGER.error("[Envoys] Failed to save the skin received from the server", e);
             }
         });
     }

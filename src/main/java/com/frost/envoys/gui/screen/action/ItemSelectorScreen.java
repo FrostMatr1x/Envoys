@@ -31,12 +31,12 @@ import java.util.function.Consumer;
 
 public class ItemSelectorScreen extends Screen {
 
-    private static final Component TITLE = Component.literal("Выбор и настройка предмета");
-    private static final Component SEARCH_HINT = Component.literal("Поиск...");
-    private static final Component NBT_HINT = Component.literal("Компоненты [...] или NBT {...}");
-    private static final Component SELECT_BTN = Component.literal("Выбрать");
-    private static final Component CANCEL_BTN = Component.literal("Отмена");
-    private static final Component FROM_HAND_BTN = Component.literal("Из руки");
+    private static final Component TITLE = Component.translatable("envoys.setting.item_selector.title");
+    private static final Component SEARCH_HINT = Component.translatable("envoys.setting.item_selector.search_hint");
+    private static final Component NBT_HINT = Component.translatable("envoys.setting.item_selector.nbt_hint");
+    private static final Component SELECT_BTN = Component.translatable("envoys.setting.item_selector.select");
+    private static final Component CANCEL_BTN = Component.translatable("envoys.gui.common.cancel");
+    private static final Component FROM_HAND_BTN = Component.translatable("envoys.setting.item_selector.from_hand");
 
     private final Screen parentScreen;
     private final Consumer<ItemStack> onSelect;
@@ -51,7 +51,7 @@ public class ItemSelectorScreen extends Screen {
     private ItemStack selectedStack = ItemStack.EMPTY;
     private int count = 1;
     private int gridScrollOffset = 0;
-    private String errorMessage = "";
+    private Component errorMessage = Component.empty();
 
     public ItemSelectorScreen(Screen parentScreen, ItemStack currentStack, Consumer<ItemStack> onSelect) {
         super(TITLE);
@@ -186,7 +186,7 @@ public class ItemSelectorScreen extends Screen {
     }
 
     private void updateSelectedStack() {
-        this.errorMessage = "";
+        this.errorMessage = Component.empty();
         if (this.selectedItem == null || this.selectedItem == Items.AIR) {
             this.selectedStack = ItemStack.EMPTY;
             return;
@@ -197,7 +197,7 @@ public class ItemSelectorScreen extends Screen {
 
         if (!input.isEmpty()) {
             if (this.minecraft == null || this.minecraft.level == null) {
-                this.errorMessage = "Мир не загружен!";
+                this.errorMessage = Component.translatable("envoys.setting.item_selector.error_world_not_loaded");
                 this.selectedStack = stack;
                 return;
             }
@@ -217,7 +217,7 @@ public class ItemSelectorScreen extends Screen {
                     stack = new ItemStack(result.item().value(), this.count);
                     stack.applyComponents(result.components());
                 } catch (CommandSyntaxException e) {
-                    this.errorMessage = e.getMessage();
+                    this.errorMessage = Component.literal(e.getMessage());
                     parseFailed = true;
                 }
             } else if (input.startsWith("{")) {
@@ -232,7 +232,7 @@ public class ItemSelectorScreen extends Screen {
                             stack.setCount(this.count);
                             this.selectedItem = stack.getItem();
                         } else {
-                            this.errorMessage = "Не удалось распарсить предмет";
+                            this.errorMessage = Component.translatable("envoys.setting.item_selector.error_parse_item");
                             parseFailed = true;
                         }
                     }
@@ -247,7 +247,7 @@ public class ItemSelectorScreen extends Screen {
                             stack = parsedComp.get();
                             stack.setCount(this.count);
                         } else {
-                            this.errorMessage = "Не удалось распарсить компоненты";
+                            this.errorMessage = Component.translatable("envoys.setting.item_selector.error_parse_components");
                             parseFailed = true;
                         }
                     } 
@@ -255,10 +255,10 @@ public class ItemSelectorScreen extends Screen {
                         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
                     }
                 } catch (CommandSyntaxException e) {
-                    this.errorMessage = e.getMessage();
+                    this.errorMessage = Component.literal(e.getMessage());
                     parseFailed = true;
                 } catch (Exception e) {
-                    this.errorMessage = "Ошибка NBT: " + e.getMessage();
+                    this.errorMessage = Component.translatable("envoys.setting.item_selector.error_nbt", e.getMessage());
                     parseFailed = true;
                 }
             } else if (input.contains("[")) {
@@ -269,11 +269,11 @@ public class ItemSelectorScreen extends Screen {
                     stack = new ItemStack(result.item().value(), this.count);
                     stack.applyComponents(result.components());
                 } catch (CommandSyntaxException e) {
-                    this.errorMessage = e.getMessage();
+                    this.errorMessage = Component.literal(e.getMessage());
                     parseFailed = true;
                 }
             } else {
-                this.errorMessage = "Формат: '[...]', '{...}' или 'item_id[...]'";
+                this.errorMessage = Component.translatable("envoys.setting.item_selector.error_format");
                 parseFailed = true;
             }
 
@@ -390,7 +390,7 @@ public class ItemSelectorScreen extends Screen {
         }
 
         if (matchingItems.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, Component.literal("Ничего не найдено"), centerX, gridY + 30, 0xFFFF5555);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("envoys.setting.item_selector.nothing_found"), centerX, gridY + 30, 0xFFFF5555);
         }
 
         int slotX = centerX - 95;
@@ -406,11 +406,11 @@ public class ItemSelectorScreen extends Screen {
         }
 
         guiGraphics.drawCenteredString(this.font,
-                Component.literal("Колесико на слоте — количество (" + this.count + ") | Shift = x10"),
+                Component.translatable("envoys.setting.item_selector.scroll_hint", this.count),
                 centerX, 152, 0xA0A0A0);
 
-        if (!this.errorMessage.isEmpty()) {
-            guiGraphics.drawWordWrap(this.font, Component.literal(this.errorMessage), centerX - 95, 106, 190, 0xFFFF5555);
+        if (!this.errorMessage.getString().isEmpty()) {
+            guiGraphics.drawWordWrap(this.font, this.errorMessage, centerX - 95, 106, 190, 0xFFFF5555);
         }
 
         if (mouseX >= slotX && mouseX < slotX + 18 && mouseY >= slotY && mouseY < slotY + 18 && !this.selectedStack.isEmpty()) {

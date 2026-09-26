@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class QuestEditScreen extends Screen {
 
-    private static final String ENTITY_TOOLTIP = "Реестровый ID сущности, напр. minecraft:zombie";
+    private static final Component ENTITY_TOOLTIP = Component.translatable("envoys.gui.quest_edit.entity_tooltip");
 
     private final Screen parentScreen;
     private final NPCInteractManager manager;
@@ -60,7 +60,7 @@ public class QuestEditScreen extends Screen {
     private Button saveButton;
 
     public QuestEditScreen(Screen parentScreen, NPCInteractManager manager, QuestDefinition original, boolean isNew) {
-        super(Component.literal(isNew ? "Новый квест" : "Редактирование квеста"));
+        super(Component.translatable(isNew ? "envoys.gui.quest_edit.title_new" : "envoys.gui.quest_edit.title_edit"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.original = original;
@@ -117,7 +117,7 @@ public class QuestEditScreen extends Screen {
         this.uuidEditBox.setResponder(text -> this.questUuid = text);
         this.addRenderableWidget(this.uuidEditBox);
 
-        this.visibleCheckbox = Checkbox.builder(Component.literal("Показывать в GUI"), this.font)
+        this.visibleCheckbox = Checkbox.builder(Component.translatable("envoys.gui.quest_edit.visible_in_gui"), this.font)
             .pos(labelX, startY + 78)
             .selected(this.visibleInGui)
             .onValueChange((checkbox, selected) -> this.visibleInGui = selected)
@@ -125,14 +125,14 @@ public class QuestEditScreen extends Screen {
         this.addRenderableWidget(this.visibleCheckbox);
 
         this.typeButton = Button.builder(
-            Component.literal("Тип: " + this.type),
+            Component.translatable("envoys.gui.quest_edit.type_label", this.type),
             button -> {
                 this.type = switch (this.type) {
                     case ITEM -> QuestType.BOOLEAN;
                     case BOOLEAN -> QuestType.KILL;
                     case KILL -> QuestType.ITEM;
                 };
-                button.setMessage(Component.literal("Тип: " + this.type));
+                button.setMessage(Component.translatable("envoys.gui.quest_edit.type_label", this.type));
                 this.applyTypeVisibility();
             }
         ).bounds(labelX, startY + 104, 140, 20).build();
@@ -141,7 +141,7 @@ public class QuestEditScreen extends Screen {
         int typeRow = startY + 134;
 
         this.itemButton = Button.builder(
-            Component.literal("Выбрать предмет"),
+            Component.translatable("envoys.gui.quest_edit.select_item"),
             button -> Minecraft.getInstance().setScreen(new ItemSelectorScreen(this, this.currentItemStack(), stack -> {
                 Item item = stack.getItem();
                 this.itemId = BuiltInRegistries.ITEM.getKey(item).toString();
@@ -159,7 +159,7 @@ public class QuestEditScreen extends Screen {
         this.itemCountEditBox.setResponder(text -> this.itemCount = parseIntOr(text, 1));
         this.addRenderableWidget(this.itemCountEditBox);
 
-        this.consumeCheckbox = Checkbox.builder(Component.literal("Забирать предметы"), this.font)
+        this.consumeCheckbox = Checkbox.builder(Component.translatable("envoys.gui.quest_edit.consume_items"), this.font)
             .pos(labelX, typeRow + 52)
             .selected(this.consumeItems)
             .onValueChange((checkbox, selected) -> this.consumeItems = selected)
@@ -175,7 +175,7 @@ public class QuestEditScreen extends Screen {
         this.entityIdEditBox = new EditBox(this.font, controlX, typeRow, controlWidth, 20, Component.literal("entity_id"));
         this.entityIdEditBox.setValue(this.entityId);
         this.entityIdEditBox.setResponder(text -> this.entityId = text);
-        this.entityIdEditBox.setTooltip(Tooltip.create(Component.literal(ENTITY_TOOLTIP)));
+        this.entityIdEditBox.setTooltip(Tooltip.create(ENTITY_TOOLTIP));
         this.addRenderableWidget(this.entityIdEditBox);
 
         this.killCountEditBox = new EditBox(this.font, controlX, typeRow + 26, 80, 20, Component.literal("kill_count"));
@@ -185,13 +185,13 @@ public class QuestEditScreen extends Screen {
         this.addRenderableWidget(this.killCountEditBox);
 
         this.saveButton = Button.builder(
-            Component.literal("Сохранить"),
+            Component.translatable("envoys.gui.common.save"),
             button -> this.save()
         ).bounds(centerX - 100, this.height - 35, 95, 20).build();
         this.addRenderableWidget(this.saveButton);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Отмена"),
+            Component.translatable("envoys.gui.common.cancel"),
             button -> this.cancel()
         ).bounds(centerX + 5, this.height - 35, 95, 20).build());
 
@@ -234,14 +234,14 @@ public class QuestEditScreen extends Screen {
         }
     }
 
-    private String validate() {
+    private Component validate() {
         String lid = this.localId.trim();
         if (lid.isEmpty()) {
-            return "Укажите local_id";
+            return Component.translatable("envoys.gui.quest_edit.error_local_id_required");
         }
         String uuid = this.questUuid.trim();
         if (uuid.isEmpty()) {
-            return "Укажите quest_uuid";
+            return Component.translatable("envoys.gui.quest_edit.error_uuid_required");
         }
         if (this.manager != null && this.manager.quests != null) {
             for (QuestDefinition quest : this.manager.quests) {
@@ -249,30 +249,30 @@ public class QuestEditScreen extends Screen {
                     continue;
                 }
                 if (lid.equals(quest.localId)) {
-                    return "local_id уже используется";
+                    return Component.translatable("envoys.gui.quest_edit.error_local_id_used");
                 }
                 if (uuid.equals(quest.questUuid)) {
-                    return "quest_uuid уже используется";
+                    return Component.translatable("envoys.gui.quest_edit.error_uuid_used");
                 }
             }
         }
         if (this.type == QuestType.ITEM) {
             if (this.itemId.trim().isEmpty()) {
-                return "Укажите предмет";
+                return Component.translatable("envoys.gui.quest_edit.error_item_required");
             }
             if (this.itemCount < 1) {
-                return "Количество должно быть >= 1";
+                return Component.translatable("envoys.gui.quest_edit.error_count");
             }
         } else if (this.type == QuestType.BOOLEAN) {
             if (this.requiredCompletions < 1) {
-                return "Число выполнений должно быть >= 1";
+                return Component.translatable("envoys.gui.quest_edit.error_completions");
             }
         } else if (this.type == QuestType.KILL) {
             if (this.entityId.trim().isEmpty()) {
-                return "Укажите entity_id";
+                return Component.translatable("envoys.gui.quest_edit.error_entity_required");
             }
             if (this.killCount < 1) {
-                return "Количество убийств должно быть >= 1";
+                return Component.translatable("envoys.gui.quest_edit.error_kills");
             }
         }
         return null;
@@ -330,7 +330,7 @@ public class QuestEditScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        String error = this.validate();
+        Component error = this.validate();
         if (this.saveButton != null) {
             this.saveButton.active = error == null;
         }
@@ -343,28 +343,28 @@ public class QuestEditScreen extends Screen {
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
         guiGraphics.drawString(this.font, "local_id:", labelX, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Название:", labelX, startY + 26, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.gui.quest_edit.label_title"), labelX, startY + 26, 0xA0A0A0);
         guiGraphics.drawString(this.font, "quest_uuid:", labelX, startY + 52, 0xA0A0A0);
 
         int typeRow = startY + 134;
         if (this.type == QuestType.ITEM) {
-            guiGraphics.drawString(this.font, "Предмет:", labelX, typeRow + 6, 0xA0A0A0);
-            String shown = this.itemId.isEmpty() ? "не выбран" : this.itemId;
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.quest_edit.label_item"), labelX, typeRow + 6, 0xA0A0A0);
+            Component shown = this.itemId.isEmpty() ? Component.translatable("envoys.gui.quest_edit.not_selected") : Component.literal(this.itemId);
             guiGraphics.drawString(this.font, shown, labelX + 60, typeRow + 6, 0xFFFFFF);
             Item item = QuestInventoryUtil.resolveItem(this.itemId);
             if (item != null) {
                 guiGraphics.renderFakeItem(new ItemStack(item), centerX + 10 - 22, typeRow + 1);
             }
-            guiGraphics.drawString(this.font, "Количество:", labelX, typeRow + 32, 0xA0A0A0);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.quest_edit.label_count"), labelX, typeRow + 32, 0xA0A0A0);
         } else if (this.type == QuestType.BOOLEAN) {
-            guiGraphics.drawString(this.font, "Выполнений до зачёта:", labelX, typeRow + 6, 0xA0A0A0);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.quest_edit.label_completions"), labelX, typeRow + 6, 0xA0A0A0);
         } else if (this.type == QuestType.KILL) {
             guiGraphics.drawString(this.font, "entity_id:", labelX, typeRow + 6, 0xA0A0A0);
-            guiGraphics.drawString(this.font, "Убийств:", labelX, typeRow + 32, 0xA0A0A0);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.quest_edit.label_kills"), labelX, typeRow + 32, 0xA0A0A0);
         }
 
         if (error != null) {
-            guiGraphics.drawCenteredString(this.font, Component.literal(error), centerX, this.height - 50, 0xFFFF5555);
+            guiGraphics.drawCenteredString(this.font, error, centerX, this.height - 50, 0xFFFF5555);
         }
     }
 

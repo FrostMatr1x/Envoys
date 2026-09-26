@@ -31,7 +31,7 @@ public class SkinRemoteService {
     private static void validateUriForSSRF(URI uri) throws Exception {
         String host = uri.getHost();
         if (host == null || host.isBlank()) {
-            throw new IllegalArgumentException("Некорректный хост в URL!");
+            throw new IllegalArgumentException("Invalid host in URL!");
         }
 
         InetAddress[] addresses = InetAddress.getAllByName(host);
@@ -39,7 +39,7 @@ public class SkinRemoteService {
             if (addr.isLoopbackAddress() || addr.isAnyLocalAddress() || 
                 addr.isSiteLocalAddress() || addr.isLinkLocalAddress() || 
                 addr.isMulticastAddress()) {
-                throw new IllegalArgumentException("Запрещен доступ к локальным и приватным адресам!");
+                throw new IllegalArgumentException("Access to local and private addresses is forbidden!");
             }
         }
     }
@@ -50,7 +50,7 @@ public class SkinRemoteService {
 
         for (int i = 0; i < maxRedirects; i++) {
             if (!url.toLowerCase().startsWith("https://") && !url.toLowerCase().startsWith("http://")) {
-                throw new IllegalArgumentException("Разрешены только HTTP/HTTPS URL!");
+                throw new IllegalArgumentException("Only HTTP/HTTPS URLs are allowed!");
             }
 
             URI uri = URI.create(url);
@@ -84,7 +84,7 @@ public class SkinRemoteService {
 
             return response;
         }
-        throw new RuntimeException("Превышено максимальное количество редиректов (5)");
+        throw new RuntimeException("Maximum number of redirects exceeded (5)");
     }
 
     public static byte[] downloadSkinFromUrl(String urlString) throws Exception {
@@ -99,7 +99,7 @@ public class SkinRemoteService {
         HttpResponse<InputStream> response = sendWithSSRFAndRedirects(url);
 
         if (response.statusCode() != 200) {
-            throw new RuntimeException("HTTP Ошибка: " + response.statusCode());
+            throw new RuntimeException("HTTP error: " + response.statusCode());
         }
 
         int maxSizeBytes = 2 * 1024 * 1024;
@@ -111,7 +111,7 @@ public class SkinRemoteService {
             while ((bytesRead = in.read(buffer)) != -1) {
                 totalRead += bytesRead;
                 if (totalRead > maxSizeBytes) {
-                    throw new IllegalArgumentException("Скин слишком большой! (Максимум 2MB)");
+                    throw new IllegalArgumentException("Skin is too large! (max 2MB)");
                 }
                 out.write(buffer, 0, bytesRead);
             }
@@ -119,7 +119,7 @@ public class SkinRemoteService {
             byte[] data = out.toByteArray();
 
             if (data.length < 8 || (data[0] & 0xFF) != 0x89 || data[1] != 'P' || data[2] != 'N' || data[3] != 'G') {
-                throw new IllegalArgumentException("Файл не является валидным PNG!");
+                throw new IllegalArgumentException("File is not a valid PNG!");
             }
 
             return data;
@@ -173,7 +173,7 @@ public class SkinRemoteService {
                 }
             }
         } catch (Exception e) {
-            Envoys.LOGGER.warn("Не удалось загрузить скин Mojang для {}: {}", username, e.getMessage());
+            Envoys.LOGGER.warn("Failed to load Mojang skin for {}: {}", username, e.getMessage());
         }
         return Optional.empty();
     }

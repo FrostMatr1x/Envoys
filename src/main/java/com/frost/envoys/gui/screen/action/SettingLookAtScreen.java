@@ -28,7 +28,7 @@ public class SettingLookAtScreen extends Screen {
     private String nextId;
 
     public SettingLookAtScreen(Screen parentScreen, GraphNode node) {
-        super(Component.literal("Настройка поворота"));
+        super(Component.translatable("envoys.setting.lookat.title"));
         this.parentScreen = parentScreen;
         this.node = node;
         this.coordsMode = "coords".equals(node.param("mode", "player"));
@@ -71,7 +71,7 @@ public class SettingLookAtScreen extends Screen {
 
         updateVisibility();
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> {
             this.save();
             if (this.parentScreen != null) {
                 Minecraft.getInstance().setScreen(this.parentScreen);
@@ -82,7 +82,9 @@ public class SettingLookAtScreen extends Screen {
     }
 
     private Component modeLabel() {
-        return Component.literal("Цель: " + (this.coordsMode ? "координаты" : "игрок события"));
+        return Component.translatable("envoys.setting.lookat.mode",
+                Component.translatable(this.coordsMode
+                        ? "envoys.setting.lookat.mode_coords" : "envoys.setting.lookat.mode_player"));
     }
 
     private void updateVisibility() {
@@ -127,14 +129,14 @@ public class SettingLookAtScreen extends Screen {
         int centerX = this.width / 2;
         int startY = this.height / 2 - 55;
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Тип: " + ScriptNodeTypes.displayName(this.node.type),
-                centerX - 160, startY - 45, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.lookat.type",
+                ScriptNodeTypes.displayName(this.node.type)), centerX - 160, startY - 45, 0xFFFF55);
         if (this.coordsMode) {
             guiGraphics.drawString(this.font, "X:", centerX - 160, startY + 4, 0xA0A0A0);
             guiGraphics.drawString(this.font, "Y:", centerX - 160, startY + 32, 0xA0A0A0);
             guiGraphics.drawString(this.font, "Z:", centerX - 160, startY + 60, 0xA0A0A0);
         }
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 92, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.lookat.next"), centerX - 160, startY + 92, 0xFFFF55);
     }
 
     @Override

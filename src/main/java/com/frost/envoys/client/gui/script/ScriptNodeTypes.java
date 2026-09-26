@@ -1,5 +1,7 @@
 package com.frost.envoys.client.gui.script;
 
+import net.minecraft.network.chat.Component;
+
 import java.util.List;
 import java.util.Set;
 
@@ -58,24 +60,16 @@ public final class ScriptNodeTypes {
         return PLAYER_REQUIRED.contains(type);
     }
 
-    public static String displayName(String type) {
-        return switch (type) {
-            case START -> "Старт";
-            case SAY -> "Сообщение в чат";
-            case WAIT -> "Ожидание";
-            case MOVE -> "Передвижение";
-            case COMMAND -> "Команда";
-            case DIALOGUE -> "Диалог";
-            case TRADE -> "Трейд";
-            case QUEST_START -> "Выдача квеста";
-            case QUEST_CHECK -> "Проверка квеста";
-            case QUEST_ADVANCE -> "Продвинуть этап";
-            case QUEST_COMPLETE -> "Отметить выполненным";
-            case LOOK_AT -> "Повернуть к цели";
-            case RANDOM -> "Рандомайзер";
-            case SAVE_POINT -> "Точка сохранения";
-            case LOAD_POINT -> "Загрузить точку";
-            default -> type;
+    public static Component displayName(String type) {
+        if (type == null) {
+            return Component.empty();
+        }
+        String key = switch (type) {
+            case START, SAY, WAIT, MOVE, COMMAND, DIALOGUE, TRADE, QUEST_START, QUEST_CHECK,
+                 QUEST_ADVANCE, QUEST_COMPLETE, LOOK_AT, RANDOM, SAVE_POINT, LOAD_POINT ->
+                    "envoys.node." + type;
+            default -> null;
         };
+        return key == null ? Component.literal(type) : Component.translatable(key);
     }
 }

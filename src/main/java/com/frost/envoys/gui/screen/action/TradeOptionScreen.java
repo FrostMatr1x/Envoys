@@ -8,14 +8,14 @@ import net.minecraft.network.chat.Component;
 
 public class TradeOptionScreen extends Screen {
 
-    private static final Component TITLE = Component.literal("Настройки сделки");
-    private static final Component PRICE_LABEL = Component.literal("Множитель цены (x):");
-    private static final Component MAX_TRADES_LABEL = Component.literal("maxTrades (лимит сделок):");
-    private static final Component RESET_TIME_LABEL = Component.literal("resetTime (секунд):");
-    private static final Component HINT_1 = Component.literal("maxTrades: -1 или 0 = без лимита; N = максимум N сделок на игрока.");
-    private static final Component HINT_2 = Component.literal("resetTime: -1 = никогда не сбрасывать; N = секунд после последней сделки.");
-    private static final Component SAVE_BTN = Component.literal("Сохранить");
-    private static final Component BACK_BTN = Component.literal("Назад");
+    private static final Component TITLE = Component.translatable("envoys.setting.trade_option.title");
+    private static final Component PRICE_LABEL = Component.translatable("envoys.setting.trade_option.price_label");
+    private static final Component MAX_TRADES_LABEL = Component.translatable("envoys.setting.trade_option.max_trades_label");
+    private static final Component RESET_TIME_LABEL = Component.translatable("envoys.setting.trade_option.reset_time_label");
+    private static final Component HINT_1 = Component.translatable("envoys.setting.trade_option.max_trades_hint");
+    private static final Component HINT_2 = Component.translatable("envoys.setting.trade_option.reset_time_hint");
+    private static final Component SAVE_BTN = Component.translatable("envoys.gui.common.save");
+    private static final Component BACK_BTN = Component.translatable("envoys.gui.common.back");
 
     private final Screen parentScreen;
     private final SettingTradeScreen.Trade trade;

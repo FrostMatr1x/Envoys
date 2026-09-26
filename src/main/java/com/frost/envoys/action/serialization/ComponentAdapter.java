@@ -39,11 +39,11 @@ public class ComponentAdapter extends TypeAdapter<Component> {
                 TypeAdapters.JSON_ELEMENT.write(out, result.result().get());
                 return;
             } else {
-                Envoys.LOGGER.error("Ошибка сериализации Component: {}", 
-                    result.error().map(DataResult.Error::message).orElse("Неизвестная ошибка"));
+                Envoys.LOGGER.error("Failed to serialize Component: {}", 
+                    result.error().map(DataResult.Error::message).orElse("Unknown error"));
             }
         } catch (Exception e) {
-            Envoys.LOGGER.error("Исключение при сериализации Component: ", e);
+            Envoys.LOGGER.error("Exception while serializing Component: ", e);
         }
 
         out.nullValue();
@@ -78,7 +78,7 @@ public class ComponentAdapter extends TypeAdapter<Component> {
 
             return component;
         } catch (Exception e) {
-            Envoys.LOGGER.error("Ошибка десериализации Component: ", e);
+            Envoys.LOGGER.error("Failed to deserialize Component: ", e);
             return null;
         }
     }

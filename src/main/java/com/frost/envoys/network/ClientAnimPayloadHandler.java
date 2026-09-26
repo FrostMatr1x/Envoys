@@ -56,7 +56,7 @@ public class ClientAnimPayloadHandler {
                 }
             } catch (Exception e) {
                 EmoteIntegration.finishRequest(payload.name());
-                Envoys.LOGGER.error("[Envoys] Ошибка сохранения анимации с сервера", e);
+                Envoys.LOGGER.error("[Envoys] Failed to save the animation from the server", e);
             }
         });
     }
@@ -86,7 +86,7 @@ public class ClientAnimPayloadHandler {
             EmoteIntegration.registerAnim(name, chosen);
         } catch (Throwable t) {
             EmoteIntegration.finishRequest(name);
-            Envoys.LOGGER.error("[Envoys] Ошибка парсинга анимации '{}'", name, t);
+            Envoys.LOGGER.error("[Envoys] Failed to parse animation '{}'", name, t);
         }
     }
 }

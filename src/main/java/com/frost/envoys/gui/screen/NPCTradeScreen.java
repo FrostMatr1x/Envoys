@@ -86,7 +86,7 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
         
         this.tradeAllButton = this.addRenderableWidget(new CustomTradeAllButton(
                 i + 113, j + 12, 80, 16,
-                Component.literal("Обменять всё"),
+                Component.translatable("envoys.gui.trade.trade_all"),
                 b -> this.tradeAll()
         ));
     }

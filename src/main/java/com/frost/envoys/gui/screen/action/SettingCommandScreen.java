@@ -26,7 +26,7 @@ public class SettingCommandScreen extends Screen {
     private Button addCommandButton;
 
     public SettingCommandScreen(Screen parentScreen, ActionCommand action) {
-        super(Component.literal("Редактор команд"));
+        super(Component.translatable("envoys.setting.command.title"));
         this.parentScreen = parentScreen;
         this.action = action;
     }
@@ -48,18 +48,18 @@ public class SettingCommandScreen extends Screen {
         }
 
         this.addCommandButton = Button.builder(
-            Component.literal("Добавить команду"), 
+            Component.translatable("envoys.setting.command.add_command"), 
             button -> this.commandList.addCommand("")
         ).bounds(centerX - 100, this.height - 85, buttonWidth, buttonHeight).build();
         this.addRenderableWidget(this.addCommandButton);
 
         this.nextIdEditBox = new EditBox(this.font, centerX + 40, this.height - 60, 60, 20, Component.literal("ID"));
         this.nextIdEditBox.setValue(this.action.nextActionId != null ? this.action.nextActionId : "");
-        this.nextIdEditBox.setTooltip(Tooltip.create(Component.literal("ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N")));
+        this.nextIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.command.next_tooltip")));
         this.addRenderableWidget(this.nextIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"), 
+            Component.translatable("envoys.gui.common.back"), 
             button -> {
                 this.saveData();
                 this.onClose();
@@ -85,7 +85,7 @@ public class SettingCommandScreen extends Screen {
 
         int centerX = this.width / 2;
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 10, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "ID следующего действия:", centerX - 100, this.height - 55, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.command.next_id"), centerX - 100, this.height - 55, 0xA0A0A0);
     }
 
     @Override
@@ -134,7 +134,7 @@ public class SettingCommandScreen extends Screen {
         private final List<GuiEventListener> children = new ArrayList<>();
 
         public CommandEntry() {
-            this.commandField = new EditBox(Minecraft.getInstance().font, 0, 0, 220, 20, Component.literal("Команда"));
+            this.commandField = new EditBox(Minecraft.getInstance().font, 0, 0, 220, 20, Component.translatable("envoys.setting.command.command_hint"));
             this.commandField.setMaxLength(256);
 
             this.deleteButton = Button.builder(Component.literal("✖"), button -> {

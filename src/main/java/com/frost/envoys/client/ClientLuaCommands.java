@@ -53,12 +53,12 @@ public final class ClientLuaCommands {
     private static int list() {
         List<String> scripts = ClientLocalScriptStore.listScripts();
         if (scripts.isEmpty()) {
-            message("§e[Envoys] В папке envoys/local нет .lua файлов.");
+            message(Component.translatable("envoys.cmd.lua.list_empty"));
             return 0;
         }
-        message("§a[Envoys] Локальные Lua-скрипты (" + scripts.size() + "):");
+        message(Component.translatable("envoys.cmd.lua.list_header", scripts.size()));
         for (String name : scripts) {
-            message("§7 - " + name);
+            message(Component.literal("§7 - " + name));
         }
         return scripts.size();
     }
@@ -71,12 +71,12 @@ public final class ClientLuaCommands {
 
         String source = ClientLocalScriptStore.readScript(fileName);
         if (source == null) {
-            message("§c[Envoys] Не удалось прочитать локальный файл: " + fileName);
+            message(Component.translatable("envoys.cmd.lua.read_failed", fileName));
             return 0;
         }
 
         PacketDistributor.sendToServer(new SaveNpcLuaScriptPayload(npcId, fileName, source, true));
-        message("§7[Envoys] Отправка " + fileName + " для NPC " + npcId + "...");
+        message(Component.translatable("envoys.cmd.lua.sending", fileName, npcId.toString()));
         return 1;
     }
 
@@ -89,17 +89,17 @@ public final class ClientLuaCommands {
         String npcName = resolveNpcName(target, npcId);
         ClientLuaScriptBridge.requestPull(npcId, payload -> {
             if (!payload.exists()) {
-                message("§c[Envoys] Не удалось выгрузить скрипт: " + payload.message());
+                message(Component.translatable("envoys.cmd.lua.pull_failed", payload.message()));
                 return;
             }
             String fileName = ScriptNames.fileName(npcName, npcId);
             if (ClientLocalScriptStore.writeScript(fileName, payload.source())) {
-                message("§a[Envoys] Скрипт сохранён: envoys/local/" + fileName);
+                message(Component.translatable("envoys.cmd.lua.saved", fileName));
             } else {
-                message("§c[Envoys] Не удалось записать файл " + fileName);
+                message(Component.translatable("envoys.cmd.lua.write_failed", fileName));
             }
         });
-        message("§7[Envoys] Запрос скрипта для NPC " + npcId + "...");
+        message(Component.translatable("envoys.cmd.lua.requesting", npcId.toString()));
         return 1;
     }
 
@@ -179,22 +179,22 @@ public final class ClientLuaCommands {
             if (crosshair != null) {
                 return crosshair.getUUID();
             }
-            message("§c[Envoys] Наведитесь на NPC (или укажите UUID).");
+            message(Component.translatable("envoys.cmd.lua.aim_required"));
             return null;
         }
 
         try {
             return UUID.fromString(target);
         } catch (IllegalArgumentException e) {
-            message("§c[Envoys] Некорректный UUID: " + target);
+            message(Component.translatable("envoys.cmd.lua.invalid_uuid", target));
             return null;
         }
     }
 
-    private static void message(String text) {
+    private static void message(Component text) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player != null) {
-            minecraft.player.sendSystemMessage(Component.literal(text));
+            minecraft.player.sendSystemMessage(text);
         }
     }
 }

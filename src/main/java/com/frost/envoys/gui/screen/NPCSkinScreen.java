@@ -36,13 +36,13 @@ import java.util.UUID;
 public class NPCSkinScreen extends Screen {
 
     public enum SkinType {
-        NICKNAME("По нику игрока"),
-        URL("По ссылке (URL)"),
-        FILE("Из файла (.png)");
+        NICKNAME("envoys.gui.skin.skin_type_nickname"),
+        URL("envoys.gui.skin.skin_type_url"),
+        FILE("envoys.gui.skin.skin_type_file");
 
-        private final String displayName;
-        SkinType(String displayName) { this.displayName = displayName; }
-        public String getDisplayName() { return displayName; }
+        private final String translationKey;
+        SkinType(String translationKey) { this.translationKey = translationKey; }
+        public Component getDisplayName() { return Component.translatable(translationKey); }
         public SkinType next() {
             SkinType[] values = values();
             return values[(this.ordinal() + 1) % values.length];
@@ -72,11 +72,11 @@ public class NPCSkinScreen extends Screen {
     private String currentModel = "classic";
 
     private boolean isLoading = false;
-    private String errorMessage = null;
+    private Component errorMessage = null;
     private String confirmedHash = null;
 
     public NPCSkinScreen(Screen parentScreen, UUID npcUuid) {
-        super(Component.literal("Редактор скина NPC"));
+        super(Component.translatable("envoys.gui.skin.title"));
         this.parentScreen = parentScreen;
         this.npcUuid = npcUuid;
 
@@ -115,10 +115,10 @@ public class NPCSkinScreen extends Screen {
         int fieldWidth = 200;
 
         this.typeToggleButton = Button.builder(
-                Component.literal("Тип: " + currentSkinType.getDisplayName()),
+                Component.translatable("envoys.gui.skin.type_label", currentSkinType.getDisplayName()),
                 button -> {
                     this.currentSkinType = this.currentSkinType.next();
-                    this.typeToggleButton.setMessage(Component.literal("Тип: " + currentSkinType.getDisplayName()));
+                    this.typeToggleButton.setMessage(Component.translatable("envoys.gui.skin.type_label", currentSkinType.getDisplayName()));
                     updateVisibility();
                 }
         ).bounds(rightColumnX, startY - 5, fieldWidth, 20).build();
@@ -141,22 +141,22 @@ public class NPCSkinScreen extends Screen {
         startY -= 25;
 
         this.modelToggleButton = Button.builder(
-                Component.literal("Модель: " + currentModel.toUpperCase()),
+                Component.translatable("envoys.gui.skin.model_label", currentModel.toUpperCase()),
                 button -> {
                     this.currentModel = this.currentModel.equals("classic") ? "slim" : "classic";
-                    this.modelToggleButton.setMessage(Component.literal("Модель: " + currentModel.toUpperCase()));
+                    this.modelToggleButton.setMessage(Component.translatable("envoys.gui.skin.model_label", currentModel.toUpperCase()));
                     if (mannequin != null) mannequin.setSlim(this.currentModel.equals("slim"));
                 }
         ).bounds(rightColumnX, startY + 125, fieldWidth, 20).build();
         this.addRenderableWidget(this.modelToggleButton);
 
         this.emoteButton = Button.builder(
-                Component.literal("Анимация: " + (this.currentEmote.isBlank() ? "не выбрана" : this.currentEmote)),
+                Component.translatable("envoys.gui.skin.emote_label", this.currentEmote.isBlank() ? Component.translatable("envoys.gui.skin.emote_none") : Component.literal(this.currentEmote)),
                 button -> {
                     if (this.minecraft != null) {
                         this.minecraft.setScreen(new NPCEmoteScreen(this, this.mannequin, name -> {
                             this.currentEmote = name;
-                            this.emoteButton.setMessage(Component.literal("Анимация: " + (name.isBlank() ? "не выбрана" : name)));
+                            this.emoteButton.setMessage(Component.translatable("envoys.gui.skin.emote_label", name.isBlank() ? Component.translatable("envoys.gui.skin.emote_none") : Component.literal(name)));
                         }));
                     }
                 }
@@ -164,7 +164,7 @@ public class NPCSkinScreen extends Screen {
         this.addRenderableWidget(this.emoteButton);
 
         this.updateButton = Button.builder(
-                Component.literal("Обновить"),
+                Component.translatable("envoys.gui.skin.refresh"),
                 button -> onRefreshSkin()
         ).bounds(rightColumnX, startY + 175, fieldWidth, 20).build();
         this.addRenderableWidget(this.updateButton);
@@ -172,7 +172,7 @@ public class NPCSkinScreen extends Screen {
         int bottomY = this.height - 30;
 
         this.addRenderableWidget(Button.builder(
-                Component.literal("Сохранить"),
+                Component.translatable("envoys.gui.common.save"),
                 button -> {
                     saveSkinData();
                     this.onClose();
@@ -180,7 +180,7 @@ public class NPCSkinScreen extends Screen {
         ).bounds(centerX - 105, bottomY, 100, 20).build());
 
         this.addRenderableWidget(Button.builder(
-                Component.literal("Назад"),
+                Component.translatable("envoys.gui.common.back"),
                 button -> {
                     if (this.parentScreen != null) {
                         Minecraft.getInstance().setScreen(this.parentScreen);
@@ -216,7 +216,7 @@ public class NPCSkinScreen extends Screen {
         }
 
         if (this.currentSkinValue == null || this.currentSkinValue.isBlank()) {
-            this.errorMessage = "Поле ввода пусто!";
+            this.errorMessage = Component.translatable("envoys.gui.skin.error_empty");
             return;
         }
 
@@ -230,14 +230,14 @@ public class NPCSkinScreen extends Screen {
                         if (result.isSuccess()) {
                             this.currentTexture = SkinGuiPreview.registerDynamicSkin(currentSkinValue, result.pngData());
                             this.currentModel = result.model();
-                            this.modelToggleButton.setMessage(Component.literal("Модель: " + currentModel.toUpperCase()));
+                            this.modelToggleButton.setMessage(Component.translatable("envoys.gui.skin.model_label", currentModel.toUpperCase()));
 
                             if (this.mannequin != null) {
                                 this.mannequin.setCustomTexture(this.currentTexture);
                                 this.mannequin.setSlim("slim".equalsIgnoreCase(currentModel));
                             }
                         } else {
-                            this.errorMessage = result.errorMsg();
+                            this.errorMessage = Component.literal(result.errorMsg());
                         }
                     });
                 });
@@ -329,9 +329,9 @@ public class NPCSkinScreen extends Screen {
         }
 
         if (isLoading) {
-            guiGraphics.drawCenteredString(this.font, "Загрузка...", (previewX1 + previewX2) / 2, (previewY1 + previewY2) / 2, 0xFFFFFF00);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("envoys.gui.skin.loading"), (previewX1 + previewX2) / 2, (previewY1 + previewY2) / 2, 0xFFFFFF00);
         } else if (errorMessage != null) {
-            guiGraphics.drawString(this.font, "Ошибка: " + errorMessage, centerX - 20, startY + 185, 0xFFFF5555);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.skin.error_prefix", errorMessage), centerX - 20, startY + 185, 0xFFFF5555);
         }
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);

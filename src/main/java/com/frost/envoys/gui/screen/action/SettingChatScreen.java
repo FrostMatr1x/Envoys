@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 
 public class SettingChatScreen extends Screen {
 
-    private static final String NEXT_TOOLTIP = "ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N";
+    private static final Component NEXT_TOOLTIP = Component.translatable("envoys.setting.chat.next_id_tooltip");
 
     private final Screen parentScreen;
     private final ActionChat action;
@@ -27,7 +27,7 @@ public class SettingChatScreen extends Screen {
     private String nextActionId = "";
 
     public SettingChatScreen(Screen parentScreen, ActionChat action) {
-        super(Component.literal("Настройка сообщения в чат"));
+        super(Component.translatable("envoys.setting.chat.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.message = action.message != null ? action.message : "";
@@ -48,7 +48,7 @@ public class SettingChatScreen extends Screen {
         this.messageEditBox.setMaxLength(256);
         this.addRenderableWidget(this.messageEditBox);
 
-        this.isGlobalCheckbox = Checkbox.builder(Component.literal("Глобально (всем игрокам)"), this.font)
+        this.isGlobalCheckbox = Checkbox.builder(Component.translatable("envoys.setting.chat.global"), this.font)
             .pos(centerX - 160, startY + 25)
             .selected(this.isGlobal)
             .onValueChange((checkbox, selected) -> this.isGlobal = selected)
@@ -58,11 +58,11 @@ public class SettingChatScreen extends Screen {
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 58, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(NEXT_TOOLTIP)));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(NEXT_TOOLTIP));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -88,8 +88,8 @@ public class SettingChatScreen extends Screen {
         int startY = this.height / 2 - 40;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Текст сообщения:", centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 60, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.chat.message_label"), centerX - 160, startY, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.chat.next_action_label"), centerX - 160, startY + 60, 0xA0A0A0);
     }
 
     @Override

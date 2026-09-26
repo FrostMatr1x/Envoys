@@ -36,12 +36,12 @@ public class AnimSyncService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (name == null || name.isBlank()) {
-                    return new AnimLoadResult(name, null, null, "Пустое имя анимации");
+                    return new AnimLoadResult(name, null, null, "Empty animation name");
                 }
 
                 Path animDir = PathManager.getServerAnimDir();
                 if (!Files.isDirectory(animDir)) {
-                    return new AnimLoadResult(name, null, null, "Папка анимаций не найдена");
+                    return new AnimLoadResult(name, null, null, "Animation folder not found");
                 }
 
                 try (Stream<Path> files = Files.list(animDir)) {
@@ -64,10 +64,10 @@ public class AnimSyncService {
                     }
                 }
 
-                return new AnimLoadResult(name, null, null, "Анимация не найдена на сервере");
+                return new AnimLoadResult(name, null, null, "Animation not found on the server");
             } catch (Exception e) {
-                Envoys.LOGGER.error("[Envoys] Ошибка при загрузке анимации", e);
-                return new AnimLoadResult(name, null, null, "Ошибка загрузки анимации");
+                Envoys.LOGGER.error("[Envoys] Failed to load animation", e);
+                return new AnimLoadResult(name, null, null, "Failed to load animation");
             }
         }, IO_EXECUTOR);
     }
@@ -96,7 +96,7 @@ public class AnimSyncService {
                     }
                 }
             } catch (Exception e) {
-                Envoys.LOGGER.error("[Envoys] Ошибка при сканировании анимаций", e);
+                Envoys.LOGGER.error("[Envoys] Failed to scan animations", e);
             }
             return result;
         }, IO_EXECUTOR);

@@ -41,7 +41,7 @@ public class NPCPassportScreen extends Screen {
     private EditBox posZField;
 
     public NPCPassportScreen(Screen parentScreen, NPCInteractManager manager, boolean isCreativeTuner) {
-        super(Component.literal("Личность NPC"));
+        super(Component.translatable("envoys.gui.passport.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.isCreativeTuner = isCreativeTuner;
@@ -71,24 +71,24 @@ public class NPCPassportScreen extends Screen {
         int leftX = centerX - 150;
         int rightX = centerX + 10;
 
-        this.nameField = new EditBox(this.font, leftX, 40, fieldWidth, fieldHeight, Component.literal("Имя"));
+        this.nameField = new EditBox(this.font, leftX, 40, fieldWidth, fieldHeight, Component.translatable("envoys.gui.passport.field_name"));
         this.nameField.setMaxLength(32);
         this.nameField.setValue(this.npcName);
         this.nameField.setResponder(text -> this.npcName = text);
         this.addRenderableWidget(this.nameField);
 
-        this.sizeField = new EditBox(this.font, leftX, 80, fieldWidth, fieldHeight, Component.literal("Размер"));
+        this.sizeField = new EditBox(this.font, leftX, 80, fieldWidth, fieldHeight, Component.translatable("envoys.gui.passport.field_size"));
         this.sizeField.setValue(String.valueOf(this.size));
         this.sizeField.setResponder(text -> this.size = parseOrDefaultFloat(text, this.size));
         this.addRenderableWidget(this.sizeField);
 
-        this.speedField = new EditBox(this.font, leftX, 120, fieldWidth, fieldHeight, Component.literal("Скорость"));
+        this.speedField = new EditBox(this.font, leftX, 120, fieldWidth, fieldHeight, Component.translatable("envoys.gui.passport.field_speed"));
         this.speedField.setValue(String.valueOf(this.speed));
         this.speedField.setResponder(text -> this.speed = parseOrDefaultFloat(text, this.speed));
         this.speedField.setEditable(this.isCreativeTuner);
         this.addRenderableWidget(this.speedField);
 
-        this.hpField = new EditBox(this.font, leftX, 160, fieldWidth, fieldHeight, Component.literal("ХП"));
+        this.hpField = new EditBox(this.font, leftX, 160, fieldWidth, fieldHeight, Component.translatable("envoys.gui.passport.field_hp"));
         this.hpField.setValue(String.valueOf(this.hp));
         this.hpField.setResponder(text -> this.hp = parseOrDefaultFloat(text, this.hp));
         this.hpField.setEditable(this.isCreativeTuner);
@@ -113,7 +113,7 @@ public class NPCPassportScreen extends Screen {
         this.posZField.setEditable(this.isCreativeTuner);
         this.addRenderableWidget(this.posZField);
 
-        Checkbox visibleCheckbox = Checkbox.builder(Component.literal("Отображать модель (Видимость)"), this.font)
+        Checkbox visibleCheckbox = Checkbox.builder(Component.translatable("envoys.gui.passport.visible"), this.font)
                 .pos(rightX, 65)
                 .selected(this.isVisible)
                 .onValueChange((checkbox, selected) -> {
@@ -123,7 +123,7 @@ public class NPCPassportScreen extends Screen {
         visibleCheckbox.active = this.isCreativeTuner;
         this.addRenderableWidget(visibleCheckbox);
 
-        Checkbox holdPosCheckbox = Checkbox.builder(Component.literal("Удерживать позицию"), this.font)
+        Checkbox holdPosCheckbox = Checkbox.builder(Component.translatable("envoys.gui.passport.hold_position"), this.font)
                 .pos(rightX, 85)
                 .selected(this.isHoldPosEnabled)
                 .onValueChange((checkbox, selected) -> this.isHoldPosEnabled = selected)
@@ -131,7 +131,7 @@ public class NPCPassportScreen extends Screen {
         holdPosCheckbox.active = true;
         this.addRenderableWidget(holdPosCheckbox);
 
-        Checkbox damageCheckbox = Checkbox.builder(Component.literal("Получает урон"), this.font)
+        Checkbox damageCheckbox = Checkbox.builder(Component.translatable("envoys.gui.passport.take_damage"), this.font)
                 .pos(rightX, 105)
                 .selected(this.canTakeDamage)
                 .onValueChange((checkbox, selected) -> {
@@ -141,7 +141,7 @@ public class NPCPassportScreen extends Screen {
         damageCheckbox.active = this.isCreativeTuner;
         this.addRenderableWidget(damageCheckbox);
 
-        Checkbox gravityCheckbox = Checkbox.builder(Component.literal("Подчиняется гравитации"), this.font)
+        Checkbox gravityCheckbox = Checkbox.builder(Component.translatable("envoys.gui.passport.gravity"), this.font)
                 .pos(rightX, 125)
                 .selected(this.useGravity)
                 .onValueChange((checkbox, selected) -> {
@@ -151,7 +151,7 @@ public class NPCPassportScreen extends Screen {
         gravityCheckbox.active = this.isCreativeTuner;
         this.addRenderableWidget(gravityCheckbox);
 
-        Checkbox creativeOnlyCheckbox = Checkbox.builder(Component.literal("Только Креатив-Тюнер"), this.font)
+        Checkbox creativeOnlyCheckbox = Checkbox.builder(Component.translatable("envoys.gui.passport.creative_only"), this.font)
                 .pos(rightX, 145)
                 .selected(this.creativeTunerOnly)
                 .onValueChange((checkbox, selected) -> {
@@ -161,7 +161,7 @@ public class NPCPassportScreen extends Screen {
         creativeOnlyCheckbox.active = this.isCreativeTuner;
         this.addRenderableWidget(creativeOnlyCheckbox);
 
-        Checkbox lookLockedCheckbox = Checkbox.builder(Component.literal("Заблокировать автоповорот"), this.font)
+        Checkbox lookLockedCheckbox = Checkbox.builder(Component.translatable("envoys.gui.passport.look_locked"), this.font)
                 .pos(rightX, 165)
                 .selected(this.lookLocked)
                 .onValueChange((checkbox, selected) -> this.lookLocked = selected)
@@ -172,7 +172,7 @@ public class NPCPassportScreen extends Screen {
         int buttonY = this.height - 35;
 
         this.addRenderableWidget(Button.builder(
-                Component.literal("Сохранить"),
+                Component.translatable("envoys.gui.common.save"),
                 button -> {
                     saveNpcData();
                     this.onClose();
@@ -180,7 +180,7 @@ public class NPCPassportScreen extends Screen {
         ).bounds(centerX - 105, buttonY, 100, 20).build());
 
         this.addRenderableWidget(Button.builder(
-                Component.literal("Назад"),
+                Component.translatable("envoys.gui.common.back"),
                 button -> {
                     if (this.parentScreen != null) {
                         Minecraft.getInstance().setScreen(this.parentScreen);
@@ -201,12 +201,12 @@ public class NPCPassportScreen extends Screen {
         int leftX = centerX - 150;
         int rightX = centerX + 10;
 
-        guiGraphics.drawString(this.font, "Имя NPC:", leftX, 28, 0xFFA0A0A0);
-        guiGraphics.drawString(this.font, "Размер:", leftX, 68, 0xFFA0A0A0);
-        guiGraphics.drawString(this.font, "Скорость:", leftX, 108, this.isCreativeTuner ? 0xFFA0A0A0 : 0xFF555555);
-        guiGraphics.drawString(this.font, "Здоровье (HP):", leftX, 148, this.isCreativeTuner ? 0xFFA0A0A0 : 0xFF555555);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.gui.passport.label_name"), leftX, 28, 0xFFA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.gui.passport.label_size"), leftX, 68, 0xFFA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.gui.passport.label_speed"), leftX, 108, this.isCreativeTuner ? 0xFFA0A0A0 : 0xFF555555);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.gui.passport.label_hp"), leftX, 148, this.isCreativeTuner ? 0xFFA0A0A0 : 0xFF555555);
 
-        guiGraphics.drawString(this.font, "Позиция удержания (X / Y / Z):", rightX, 28, this.isCreativeTuner ? 0xFFA0A0A0 : 0xFF555555);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.gui.passport.label_hold_position"), rightX, 28, this.isCreativeTuner ? 0xFFA0A0A0 : 0xFF555555);
     }
 
     @Override

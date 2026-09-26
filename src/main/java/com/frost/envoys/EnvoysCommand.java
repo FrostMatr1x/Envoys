@@ -115,7 +115,7 @@ public class EnvoysCommand {
         File indexFile = PathManager.getServerIndexFile();
 
         if (!Files.exists(cacheDir) || !indexFile.exists()) {
-            source.sendSuccess(() -> Component.literal("§e[Envoys] Кэш скинов пуст."), false);
+            source.sendSuccess(() -> Component.translatable("envoys.cmd.cleanup.skins_empty"), false);
             return 0;
         }
 
@@ -153,7 +153,7 @@ public class EnvoysCommand {
                         Files.deleteIfExists(pngPath);
                     }
                 } catch (IOException e) {
-                    Envoys.LOGGER.error("[Envoys] Ошибка удаления кэш-файла скина {}", pngPath, e);
+                    Envoys.LOGGER.error("[Envoys] Failed to delete skin cache file {}", pngPath, e);
                 }
 
                 Path jsonPath = cacheDir.resolve(entry.uuid + ".json");
@@ -172,10 +172,7 @@ public class EnvoysCommand {
         final int finalRemovedCount = toRemove.size();
         final double finalFreedMb = (double) freedBytes / (1024 * 1024);
 
-        source.sendSuccess(() -> Component.literal(String.format(
-                "§a[Envoys] Очищено неиспользуемых скинов: %d (Освобождено %.2f MB)", 
-                finalRemovedCount, finalFreedMb
-        )), true);
+        source.sendSuccess(() -> Component.translatable("envoys.cmd.cleanup.skins_done", finalRemovedCount, String.format("%.2f", finalFreedMb)), true);
 
         return finalRemovedCount;
     }
@@ -262,12 +259,9 @@ public class EnvoysCommand {
 
         final int finalCount = removedCount;
         final int finalUnverifiable = unverifiable;
-        source.sendSuccess(() -> Component.literal(
-                "§a[Envoys] Удалено записей удалённых NPC: " + finalCount
-                        + " (записи существующих NPC не затрагиваются)"), true);
+        source.sendSuccess(() -> Component.translatable("envoys.cmd.cleanup.npcs_done", finalCount), true);
         if (finalUnverifiable > 0) {
-            source.sendSuccess(() -> Component.literal(
-                    "§e[Envoys] Пропущено записей без известной локации: " + finalUnverifiable), false);
+            source.sendSuccess(() -> Component.translatable("envoys.cmd.cleanup.npcs_unverifiable", finalUnverifiable), false);
         }
         return finalCount;
     }
@@ -301,7 +295,7 @@ public class EnvoysCommand {
 
         Optional<NPCInteractManager> opt = NPCConfigManager.load(uuid);
         if (opt.isEmpty()) {
-            source.sendFailure(Component.literal("§c[Envoys] Конфиг NPC " + uuid + " не найден."));
+            source.sendFailure(Component.translatable("envoys.cmd.regen.not_found", uuid));
             return 0;
         }
 
@@ -333,11 +327,8 @@ public class EnvoysCommand {
         level.addFreshEntity(npc);
 
         final int finalRemoved = removed;
-        final String message = String.format(
-                "§a[Envoys] NPC %s регенерирован (удалено: %d) на %.1f %.1f %.1f",
-                uuid, finalRemoved, x, y, z
-        );
-        source.sendSuccess(() -> Component.literal(message), true);
+        final Component message = Component.translatable("envoys.cmd.regen.done", uuid, finalRemoved, x, y, z);
+        source.sendSuccess(() -> message, true);
 
         return 1;
     }
@@ -356,21 +347,21 @@ public class EnvoysCommand {
         }
 
         if (npc == null) {
-            source.sendFailure(Component.literal("§c[Envoys] NPC " + uuid + " не найден в мире."));
+            source.sendFailure(Component.translatable("envoys.cmd.tp.not_found", uuid));
             return 0;
         }
 
         player.teleportTo(npcLevel, npc.getX(), npc.getY(), npc.getZ(),
                 java.util.Set.<RelativeMovement>of(), player.getYRot(), player.getXRot());
 
-        source.sendSuccess(() -> Component.literal("§a[Envoys] Телепорт к NPC " + uuid), true);
+        source.sendSuccess(() -> Component.translatable("envoys.cmd.tp.done", uuid), true);
         return 1;
     }
 
     private static int saveNpcConfigs(CommandSourceStack source) {
         NPCConfigManager.saveAll();
         int count = NPCInteractManager.SCRIPTS.size();
-        source.sendSuccess(() -> Component.literal("§a[Envoys] Сохранено конфигов NPC: " + count), true);
+        source.sendSuccess(() -> Component.translatable("envoys.cmd.passport.saved", count), true);
         return count;
     }
 
@@ -395,27 +386,22 @@ public class EnvoysCommand {
 
         int count = NPCInteractManager.SCRIPTS.size();
         final int finalUpdated = updatedEntities;
-        source.sendSuccess(() -> Component.literal(
-                String.format("§a[Envoys] Загружено конфигов NPC: %d (Обновлено в мире: %d)", count, finalUpdated)
-        ), true);
+        source.sendSuccess(() -> Component.translatable("envoys.cmd.passport.loaded", count, finalUpdated), true);
 
         return count;
     }
 
     private static int reloadLuaScripts(CommandSourceStack source) {
         LuaEngineManager.ReloadResult result = LuaEngineManager.reloadAll();
-        final String message = String.format(
-                "§a[Envoys] Lua: загружено %d, ошибок %d",
-                result.loaded(), result.failed()
-        );
-        source.sendSuccess(() -> Component.literal(message), true);
+        final Component message = Component.translatable("envoys.cmd.lua.reload_done", result.loaded(), result.failed());
+        source.sendSuccess(() -> message, true);
         return result.loaded();
     }
 
     private static int questList(CommandSourceStack source) {
         List<QuestIndex.Entry> entries = QuestIndex.entries();
         if (entries.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("§e[Envoys] Квесты не найдены."), false);
+            source.sendSuccess(() -> Component.translatable("envoys.cmd.quest.none"), false);
             return 0;
         }
 
@@ -425,14 +411,14 @@ public class EnvoysCommand {
                     safe(quest.questUuid), safe(quest.localId), safe(quest.title), entry.manager().npcUUID);
             source.sendSuccess(() -> Component.literal(line), false);
         }
-        source.sendSuccess(() -> Component.literal("§a[Envoys] Всего квестов: " + entries.size()), false);
+        source.sendSuccess(() -> Component.translatable("envoys.cmd.quest.total", entries.size()), false);
         return entries.size();
     }
 
     private static int questFind(CommandSourceStack source, String rawQuery) {
         String query = rawQuery == null ? "" : rawQuery.trim();
         if (query.isEmpty()) {
-            source.sendFailure(Component.literal("§c[Envoys] Укажите запрос."));
+            source.sendFailure(Component.translatable("envoys.cmd.quest.enter_query"));
             return 0;
         }
 
@@ -452,10 +438,10 @@ public class EnvoysCommand {
         }
 
         if (found == 0) {
-            source.sendSuccess(() -> Component.literal("§e[Envoys] Ничего не найдено."), false);
+            source.sendSuccess(() -> Component.translatable("envoys.cmd.quest.not_found"), false);
         } else {
             final int total = found;
-            source.sendSuccess(() -> Component.literal("§a[Envoys] Найдено: " + total), false);
+            source.sendSuccess(() -> Component.translatable("envoys.cmd.quest.found", total), false);
         }
         return found;
     }
@@ -463,7 +449,7 @@ public class EnvoysCommand {
     private static int questDelete(CommandSourceStack source, String rawUuid) {
         String uuid = rawUuid == null ? "" : rawUuid.trim();
         if (uuid.isEmpty()) {
-            source.sendFailure(Component.literal("§c[Envoys] Укажите quest_uuid."));
+            source.sendFailure(Component.translatable("envoys.cmd.quest.enter_uuid"));
             return 0;
         }
 
@@ -485,9 +471,9 @@ public class EnvoysCommand {
 
         final int total = removed;
         if (total == 0) {
-            source.sendSuccess(() -> Component.literal("§e[Envoys] Квест " + safe(uuid) + " не найден."), false);
+            source.sendSuccess(() -> Component.translatable("envoys.cmd.quest.uuid_not_found", safe(uuid)), false);
         } else {
-            source.sendSuccess(() -> Component.literal("§a[Envoys] Удалено квестов: " + total), true);
+            source.sendSuccess(() -> Component.translatable("envoys.cmd.quest.deleted", total), true);
         }
         return total;
     }
@@ -497,44 +483,43 @@ public class EnvoysCommand {
         String playerName = rawPlayerName == null ? "" : rawPlayerName.trim();
         ServerPlayer target = server.getPlayerList().getPlayerByName(playerName);
         if (target == null) {
-            source.sendFailure(Component.literal("§c[Envoys] Игрок '" + playerName + "' не в сети."));
+            source.sendFailure(Component.translatable("envoys.cmd.quest.player_offline", playerName));
             return 0;
         }
         String uuid = rawUuid == null ? "" : rawUuid.trim();
         if (uuid.isEmpty()) {
-            source.sendFailure(Component.literal("§c[Envoys] Укажите quest_uuid."));
+            source.sendFailure(Component.translatable("envoys.cmd.quest.enter_uuid"));
             return 0;
         }
         PlayerQuestManager.reset(target, uuid);
-        final String message = String.format("§a[Envoys] Прогресс квеста %s сброшен для игрока %s.",
-                safe(uuid), target.getName().getString());
-        source.sendSuccess(() -> Component.literal(message), true);
+        final Component message = Component.translatable("envoys.cmd.quest.reset_done", safe(uuid), target.getName().getString());
+        source.sendSuccess(() -> message, true);
         return 1;
     }
 
     private static int stopLua(CommandSourceStack source, String rawTarget) throws CommandSyntaxException {
         BaseNPC npc = resolveNpcTarget(source, rawTarget);
         if (npc == null) {
-            source.sendFailure(Component.literal("§c[Envoys] NPC не найден (укажите UUID или наведитесь на NPC: aim)."));
+            source.sendFailure(Component.translatable("envoys.cmd.npc.not_found"));
             return 0;
         }
         UUID uuid = npc.getUUID();
         LuaEngineManager.stop(uuid);
-        final String message = "§a[Envoys] Lua-движок NPC " + uuid + " остановлен.";
-        source.sendSuccess(() -> Component.literal(message), true);
+        final Component message = Component.translatable("envoys.cmd.lua.stopped", uuid);
+        source.sendSuccess(() -> message, true);
         return 1;
     }
 
     private static int killNpc(CommandSourceStack source, String rawTarget) throws CommandSyntaxException {
         BaseNPC npc = resolveNpcTarget(source, rawTarget);
         if (npc == null) {
-            source.sendFailure(Component.literal("§c[Envoys] NPC не найден (укажите UUID или наведитесь на NPC: aim)."));
+            source.sendFailure(Component.translatable("envoys.cmd.npc.not_found"));
             return 0;
         }
         UUID uuid = npc.getUUID();
         npc.discard();
-        final String message = "§a[Envoys] NPC " + uuid + " удалён.";
-        source.sendSuccess(() -> Component.literal(message), true);
+        final Component message = Component.translatable("envoys.cmd.npc.killed", uuid);
+        source.sendSuccess(() -> message, true);
         return 1;
     }
 

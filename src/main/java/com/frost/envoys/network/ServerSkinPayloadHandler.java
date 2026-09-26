@@ -41,7 +41,7 @@ public class ServerSkinPayloadHandler {
                             PacketDistributor.sendToPlayer(player, 
                                     new SkinDataPayload(payload.npcUuid(), result.pngData()));
                         } else {
-                            Envoys.LOGGER.warn("[Envoys] Скин для NPC {} не найден на сервере", payload.npcUuid());
+                            Envoys.LOGGER.warn("[Envoys] Skin for NPC {} was not found on the server", payload.npcUuid());
                         }
                     });
         });
@@ -73,7 +73,7 @@ public class ServerSkinPayloadHandler {
                             }
 
                             PacketDistributor.sendToPlayer(player, new SkinConfirmedPayload(payload.npcUuid(), result.hash()));
-                            Envoys.LOGGER.info("[Envoys] Скин для NPC {} сохранен и применен в мире!", payload.npcUuid());
+                            Envoys.LOGGER.info("[Envoys] Skin for NPC {} saved and applied in the world", payload.npcUuid());
                         }
                     });
         });

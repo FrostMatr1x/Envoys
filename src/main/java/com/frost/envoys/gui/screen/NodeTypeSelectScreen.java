@@ -23,7 +23,7 @@ public class NodeTypeSelectScreen extends Screen {
 
     public NodeTypeSelectScreen(Screen parentScreen, NPCScriptScreen.NodeType current,
                                 Consumer<NPCScriptScreen.NodeType> onSelect) {
-        super(Component.literal("Выбор типа действия"));
+        super(Component.translatable("envoys.gui.node_type.title"));
         this.parentScreen = parentScreen;
         this.current = current;
         this.onSelect = onSelect;
@@ -39,7 +39,7 @@ public class NodeTypeSelectScreen extends Screen {
             this.typeList.addType(type);
         }
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> back())
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> back())
                 .bounds(this.width / 2 - 100, this.height - 35, 200, 20).build());
     }
 
@@ -95,8 +95,9 @@ public class NodeTypeSelectScreen extends Screen {
 
         TypeEntry(NPCScriptScreen.NodeType type) {
             boolean activeType = type == current;
-            String label = (activeType ? "\u25B6 " : "  ") + type.display;
-            this.button = Button.builder(Component.literal(label), b -> choose(type))
+            Component label = (activeType ? Component.literal("\u25B6 ") : Component.literal("  "))
+                    .copy().append(type.display());
+            this.button = Button.builder(label, b -> choose(type))
                     .bounds(0, 0, 300, 20).build();
             this.children.add(this.button);
         }

@@ -21,7 +21,7 @@ public class GlobalTradeBridge implements TradeGuiBridge {
 
             if (entity instanceof BaseNPC baseNpc) {
                 NPCMerchant merchant = new NPCMerchant(baseNpc, action, serverPlayer);
-                merchant.openTradingScreen(serverPlayer, Component.literal("Торговля"), 0, onClose);
+                merchant.openTradingScreen(serverPlayer, Component.translatable("envoys.gui.trade_title"), 0, onClose);
             }
         }
     }

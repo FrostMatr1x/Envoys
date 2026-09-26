@@ -31,7 +31,7 @@ public class EventConfigScreen extends Screen {
 
     public EventConfigScreen(Screen parentScreen, NPCInteractManager manager, EventType type, EventScript script,
                              boolean isCreativeTuner, Runnable onModified) {
-        super(Component.literal("Настройка события"));
+        super(Component.translatable("envoys.gui.event_config.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.type = type;
@@ -50,7 +50,7 @@ public class EventConfigScreen extends Screen {
         int centerX = this.width / 2;
         boolean hasArg = this.type == EventType.UPDATE || this.type == EventType.RANGE;
 
-        this.enabledCheckbox = Checkbox.builder(Component.literal("Событие включено"), this.font)
+        this.enabledCheckbox = Checkbox.builder(Component.translatable("envoys.gui.event_config.enabled"), this.font)
                 .pos(centerX - 160, this.height / 2 - 50)
                 .selected(this.enabled)
                 .onValueChange((checkbox, selected) -> this.enabled = selected)
@@ -66,13 +66,13 @@ public class EventConfigScreen extends Screen {
             this.addRenderableWidget(this.argEditBox);
         }
 
-        this.actionsButton = Button.builder(Component.literal(actionLabel()), button ->
+        this.actionsButton = Button.builder(actionLabel(), button ->
                 Minecraft.getInstance().setScreen(new NPCScriptScreen(EventConfigScreen.this, this.manager,
                         this.script.graphOrEmpty(this.type.jsonKey()), this.isCreativeTuner, this.onModified)))
                 .bounds(centerX - 100, this.height / 2 + 20, 200, 20).build();
         this.addRenderableWidget(this.actionsButton);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> {
             this.saveToGraph();
             if (this.onModified != null) {
                 this.onModified.run();
@@ -85,9 +85,9 @@ public class EventConfigScreen extends Screen {
         }).bounds(centerX - 100, this.height - 35, 200, 20).build());
     }
 
-    private String actionLabel() {
+    private Component actionLabel() {
         ActionGraph graph = this.script.graphOrEmpty(this.type.jsonKey());
-        return "Сценарий действий (" + graph.nodes.size() + ")";
+        return Component.translatable("envoys.gui.event_config.actions", graph.nodes.size());
     }
 
     private void saveToGraph() {
@@ -106,16 +106,17 @@ public class EventConfigScreen extends Screen {
 
         int centerX = this.width / 2;
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Тип события: " + EventCreationScreen.eventDisplayName(this.type)
-                + " (" + this.type.jsonKey() + ")", centerX - 160, this.height / 2 - 68, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.type",
+                EventCreationScreen.eventDisplayName(this.type), this.type.jsonKey()),
+                centerX - 160, this.height / 2 - 68, 0xFFFF55);
 
         if (this.type == EventType.UPDATE) {
-            guiGraphics.drawString(this.font, "Интервал (тики):", centerX - 160, this.height / 2 - 13, 0xA0A0A0);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.interval"), centerX - 160, this.height / 2 - 13, 0xFFFF55);
         } else if (this.type == EventType.RANGE) {
-            guiGraphics.drawString(this.font, "Радиус:", centerX - 160, this.height / 2 - 13, 0xA0A0A0);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.radius"), centerX - 160, this.height / 2 - 13, 0xFFFF55);
         }
 
-        this.actionsButton.setMessage(Component.literal(actionLabel()));
+        this.actionsButton.setMessage(actionLabel());
     }
 
     @Override

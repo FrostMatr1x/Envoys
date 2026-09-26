@@ -248,7 +248,7 @@ public class BaseNPC extends PathfinderMob {
                     NPCPassportData p = (passport != null) ? passport : manager.passport;
 
                     if (isSurvivalTuner && p.creativeTunerOnly) {
-                        serverPlayer.sendSystemMessage(Component.literal("§cЭтот NPC может быть настроен только Тюнером Креатива!"));
+                        serverPlayer.sendSystemMessage(Component.translatable("envoys.gui.npc.creative_only"));
                         return InteractionResult.FAIL;
                     }
 

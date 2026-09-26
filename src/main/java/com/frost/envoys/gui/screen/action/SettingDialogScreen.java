@@ -27,7 +27,7 @@ public class SettingDialogScreen extends Screen {
     private final ActionDialog action;
 
     public SettingDialogScreen(Screen parentScreen, ActionDialog action) {
-        super(Component.literal("Редактор диалогов"));
+        super(Component.translatable("envoys.setting.dialog.title"));
         this.parentScreen = parentScreen;
         this.action = action;
     }
@@ -40,7 +40,7 @@ public class SettingDialogScreen extends Screen {
         int buttonHeight = 20;
         int centerX = this.width / 2 - buttonWidth / 2;
 
-        this.phraseEditBox = new EditBox(this.font, centerX, 35, buttonWidth, 20, Component.literal("Текст фразы"));
+        this.phraseEditBox = new EditBox(this.font, centerX, 35, buttonWidth, 20, Component.translatable("envoys.setting.dialog.phrase_hint"));
         this.phraseEditBox.setMaxLength(1028);
 
         this.phraseEditBox.setValue(this.action.npcMessage != null ? ColorUtils.toFormattedString(this.action.npcMessage) : "");
@@ -55,7 +55,7 @@ public class SettingDialogScreen extends Screen {
         });
 
         this.addOptionButton = Button.builder(
-            Component.literal("Добавить вариант"), 
+            Component.translatable("envoys.setting.dialog.add_option"), 
             button -> {
                 if (this.optionList.getOptionCount() < 4) {
                     this.optionList.addOption("", "");
@@ -66,7 +66,7 @@ public class SettingDialogScreen extends Screen {
         this.addRenderableWidget(this.addOptionButton);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"), 
+            Component.translatable("envoys.gui.common.back"), 
             button -> {
                 this.saveData();
                 
@@ -101,7 +101,7 @@ public class SettingDialogScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 8, 0xFFFFFF);
 
         int centerX = this.width / 2 - 200 / 2;
-        guiGraphics.drawString(this.font, "Текст фразы NPC:", centerX, 23, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.dialog.phrase_label"), centerX, 23, 0xA0A0A0);
     }
 
     @Override
@@ -149,12 +149,12 @@ public class SettingDialogScreen extends Screen {
         private final List<GuiEventListener> children = new ArrayList<>();
 
         public OptionEntry() {
-            this.optionTextField = new EditBox(Minecraft.getInstance().font, 0, 0, 160, 20, Component.literal("Ответ"));
+            this.optionTextField = new EditBox(Minecraft.getInstance().font, 0, 0, 160, 20, Component.translatable("envoys.setting.dialog.answer_hint"));
             this.optionTextField.setMaxLength(128);
 
             this.nextIdField = new EditBox(Minecraft.getInstance().font, 0, 0, 45, 20, Component.literal("ID"));
             this.nextIdField.setMaxLength(10);
-            this.nextIdField.setTooltip(Tooltip.create(Component.literal("ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N")));
+            this.nextIdField.setTooltip(Tooltip.create(Component.translatable("envoys.setting.dialog.next_id_tooltip")));
 
             this.deleteButton = Button.builder(Component.literal("✖"), button -> {
                 SettingDialogScreen.this.optionList.removeOption(this);

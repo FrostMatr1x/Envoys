@@ -169,11 +169,11 @@ public final class ScenarioDecompiler {
                             int count = parseInt(attrs.get("count"), 0);
                             for (int i = 0; i < count; i++) {
                                 node.options.add(new GraphNode.BranchOption(
-                                        Integer.toString(i + 1), "Вариант " + (i + 1), null));
+                                        Integer.toString(i + 1), "Option " + (i + 1), null));
                             }
                         } else if (ScriptNodeTypes.QUEST_CHECK.equals(node.type)) {
-                            node.options.add(new GraphNode.BranchOption("completed", "Выполнен", null));
-                            node.options.add(new GraphNode.BranchOption("not_completed", "Не выполнен", null));
+                            node.options.add(new GraphNode.BranchOption("completed", "Completed", null));
+                            node.options.add(new GraphNode.BranchOption("not_completed", "Not completed", null));
                         } else {
                             locked = true;
                         }

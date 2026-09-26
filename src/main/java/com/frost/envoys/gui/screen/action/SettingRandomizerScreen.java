@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 
 public class SettingRandomizerScreen extends Screen {
 
-    private static final String TOOLTIP = "Action ID выполняемого действия. Пустые варианты игнорируются. Максимум 10. Не зацикливайте рандомайзер на себя.";
+    private static final Component TOOLTIP = Component.translatable("envoys.setting.randomizer.tooltip");
 
     private static final int MAX_OPTIONS = 10;
     private static final int ROW_HEIGHT = 24;
@@ -29,7 +29,7 @@ public class SettingRandomizerScreen extends Screen {
     private Button addButton;
 
     public SettingRandomizerScreen(Screen parentScreen, ActionRandomizer action) {
-        super(Component.literal("Настройка рандомайзера"));
+        super(Component.translatable("envoys.setting.randomizer.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         if (action.options != null) {
@@ -54,7 +54,7 @@ public class SettingRandomizerScreen extends Screen {
 
             EditBox field = new EditBox(this.font, centerX - 145, y, 200, 20, Component.literal("option"));
             field.setValue(this.options.get(i));
-            field.setTooltip(Tooltip.create(Component.literal(TOOLTIP)));
+            field.setTooltip(Tooltip.create(TOOLTIP));
             field.setResponder(text -> {
                 if (rowIndex < this.options.size()) {
                     this.options.set(rowIndex, text);
@@ -85,7 +85,7 @@ public class SettingRandomizerScreen extends Screen {
         this.addRenderableWidget(this.addButton);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -146,7 +146,7 @@ public class SettingRandomizerScreen extends Screen {
         int startY = this.height / 2 - 55;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, "Action ID выполняемого действия", centerX, startY - 18, 0xA0A0A0);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("envoys.setting.randomizer.subtitle"), centerX, startY - 18, 0xA0A0A0);
     }
 
     @Override

@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 
 public class SettingMerchantLevelUpScreen extends Screen {
 
-    private static final String NEXT_TOOLTIP = "ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N";
+    private static final Component NEXT_TOOLTIP = Component.translatable("envoys.setting.merchant_level_up.next_id_tooltip");
 
     private final Screen parentScreen;
     private final ActionMerchantLevelUp action;
@@ -22,7 +22,7 @@ public class SettingMerchantLevelUpScreen extends Screen {
     private String nextActionId = "";
 
     public SettingMerchantLevelUpScreen(Screen parentScreen, ActionMerchantLevelUp action) {
-        super(Component.literal("Настройка уровня торговца"));
+        super(Component.translatable("envoys.setting.merchant_level_up.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.nextActionId = action.nextActionId != null ? action.nextActionId : "";
@@ -38,11 +38,11 @@ public class SettingMerchantLevelUpScreen extends Screen {
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(NEXT_TOOLTIP)));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(NEXT_TOOLTIP));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -66,8 +66,8 @@ public class SettingMerchantLevelUpScreen extends Screen {
         int startY = this.height / 2 - 20;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 6, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Добавляет +1 разблокированный слот торговли этого NPC игроку", centerX - 160, startY + 36, 0x808080);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.merchant_level_up.next_action_label"), centerX - 160, startY + 6, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.merchant_level_up.description"), centerX - 160, startY + 36, 0x808080);
     }
 
     @Override

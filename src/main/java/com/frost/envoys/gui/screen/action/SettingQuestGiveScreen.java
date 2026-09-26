@@ -14,9 +14,6 @@ import net.minecraft.network.chat.Component;
 
 public class SettingQuestGiveScreen extends Screen {
 
-    private static final String NEXT_TOOLTIP = "ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N";
-    private static final String TARGET_TOOLTIP = "local_id или quest_uuid; резолвится в текущем NPC, затем глобально по uuid";
-
     private final Screen parentScreen;
     private final ActionQuestGive action;
     private final NPCInteractManager manager;
@@ -28,7 +25,7 @@ public class SettingQuestGiveScreen extends Screen {
     private String nextActionId = "";
 
     public SettingQuestGiveScreen(Screen parentScreen, ActionQuestGive action, NPCInteractManager manager) {
-        super(Component.literal("Настройка выдачи квеста"));
+        super(Component.translatable("envoys.setting.quest_give.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.manager = manager;
@@ -47,11 +44,11 @@ public class SettingQuestGiveScreen extends Screen {
         this.questTargetEditBox.setMaxLength(128);
         this.questTargetEditBox.setValue(this.questTarget);
         this.questTargetEditBox.setResponder(text -> this.questTarget = text);
-        this.questTargetEditBox.setTooltip(Tooltip.create(Component.literal(TARGET_TOOLTIP)));
+        this.questTargetEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.quest_give.target_tooltip")));
         this.addRenderableWidget(this.questTargetEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Выбрать"),
+            Component.translatable("envoys.setting.quest_give.select"),
             button -> Minecraft.getInstance().setScreen(new QuestPickerScreen(this, this.manager, selected -> {
                 this.questTarget = selected;
                 if (this.questTargetEditBox != null) {
@@ -63,11 +60,11 @@ public class SettingQuestGiveScreen extends Screen {
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(NEXT_TOOLTIP)));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.quest_give.next_tooltip")));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -92,8 +89,8 @@ public class SettingQuestGiveScreen extends Screen {
         int startY = this.height / 2 - 45;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Цель квеста:", centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.quest_give.quest_target"), centerX - 160, startY, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.quest_give.next_action"), centerX - 160, startY + 30, 0xA0A0A0);
     }
 
     @Override

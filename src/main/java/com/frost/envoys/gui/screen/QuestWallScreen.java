@@ -57,7 +57,7 @@ public class QuestWallScreen extends Screen {
 
         this.addRenderableWidget(this.addRenderableWidget(new CustomButton(
             this.panelX + (this.panelW - 100) / 2, this.panelY + this.panelH - PAD - 18, 100, 18,
-            Component.literal("Готово"),
+            Component.translatable("envoys.gui.common.done"),
             button -> this.onClose()
         )));
 

@@ -29,7 +29,7 @@ public class QuestManagementScreen extends Screen {
     private QuestList questList;
 
     public QuestManagementScreen(Screen parentScreen, NPCInteractManager manager, boolean isCreativeTuner) {
-        super(Component.literal("Квесты NPC"));
+        super(Component.translatable("envoys.gui.quest_management.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.isCreativeTuner = isCreativeTuner;
@@ -54,12 +54,12 @@ public class QuestManagementScreen extends Screen {
         }
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Создать"),
+            Component.translatable("envoys.gui.quest_management.create"),
             button -> Minecraft.getInstance().setScreen(new QuestEditScreen(this, this.manager, null, true))
         ).bounds(centerX - 105, this.height - 35, 100, 20).build());
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.saveAndSync();
                 if (this.parentScreen != null) {
@@ -121,7 +121,7 @@ public class QuestManagementScreen extends Screen {
 
         boolean empty = this.manager == null || this.manager.quests == null || this.manager.quests.isEmpty();
         if (empty) {
-            guiGraphics.drawCenteredString(this.font, Component.literal("Квестов нет"), this.width / 2, this.height / 2, 0xA0A0A0);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("envoys.gui.quest_management.empty"), this.width / 2, this.height / 2, 0xA0A0A0);
         }
     }
 
@@ -175,10 +175,10 @@ public class QuestManagementScreen extends Screen {
                 .bounds(0, 0, 20, 20).build();
             this.downButton = Button.builder(Component.literal("▼"), button -> QuestManagementScreen.this.move(this.quest, 1))
                 .bounds(0, 0, 20, 20).build();
-            this.editButton = Button.builder(Component.literal("Изменить"), button ->
+            this.editButton = Button.builder(Component.translatable("envoys.gui.quest_management.edit"), button ->
                 Minecraft.getInstance().setScreen(new QuestEditScreen(QuestManagementScreen.this, QuestManagementScreen.this.manager, this.quest, false))
             ).bounds(0, 0, 75, 20).build();
-            this.deleteButton = Button.builder(Component.literal("Удалить"), button -> {
+            this.deleteButton = Button.builder(Component.translatable("envoys.gui.common.delete"), button -> {
                 if (QuestManagementScreen.this.manager != null && QuestManagementScreen.this.manager.quests != null) {
                     QuestManagementScreen.this.manager.quests.remove(this.quest);
                 }

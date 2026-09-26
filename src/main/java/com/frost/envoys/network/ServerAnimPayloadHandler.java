@@ -40,7 +40,7 @@ public class ServerAnimPayloadHandler {
                 if (result.isSuccess()) {
                     PacketDistributor.sendToPlayer(player, new AnimDataPayload(result.name(), result.jsonData()));
                 } else {
-                    Envoys.LOGGER.warn("[Envoys] Анимация '{}' не найдена на сервере: {}", payload.name(), result.errorMsg());
+                    Envoys.LOGGER.warn("[Envoys] Animation '{}' was not found on the server: {}", payload.name(), result.errorMsg());
                 }
             });
         });

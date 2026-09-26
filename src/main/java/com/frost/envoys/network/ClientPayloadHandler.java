@@ -108,10 +108,8 @@ public class ClientPayloadHandler {
 
     public static void handleLuaScriptUploadResult(final LuaScriptUploadResultPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> {
-            String prefix = payload.success() ? "§a" : "§c";
-            String message = payload.message() == null ? "" : payload.message();
-            if (Minecraft.getInstance().player != null) {
-                Minecraft.getInstance().player.sendSystemMessage(Component.literal(prefix + message));
+            if (Minecraft.getInstance().player != null && payload.message() != null) {
+                Minecraft.getInstance().player.sendSystemMessage(payload.message());
             }
         });
     }

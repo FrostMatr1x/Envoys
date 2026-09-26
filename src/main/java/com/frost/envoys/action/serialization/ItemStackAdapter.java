@@ -37,11 +37,11 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
                 TypeAdapters.JSON_ELEMENT.write(out, result.result().get());
                 return;
             } else {
-                Envoys.LOGGER.error("Ошибка сериализации ItemStack: {}", 
-                    result.error().map(DataResult.Error::message).orElse("Неизвестная ошибка"));
+                Envoys.LOGGER.error("Failed to serialize ItemStack: {}", 
+                    result.error().map(DataResult.Error::message).orElse("Unknown error"));
             }
         } catch (Exception e) {
-            Envoys.LOGGER.error("Исключение при сериализации ItemStack: ", e);
+            Envoys.LOGGER.error("Exception while serializing ItemStack: ", e);
         }
 
         out.nullValue();
@@ -67,7 +67,7 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
                     .result()
                     .orElse(ItemStack.EMPTY);
         } catch (Exception e) {
-            Envoys.LOGGER.error("Ошибка десериализации ItemStack: ", e);
+            Envoys.LOGGER.error("Failed to deserialize ItemStack: ", e);
             return ItemStack.EMPTY;
         }
     }

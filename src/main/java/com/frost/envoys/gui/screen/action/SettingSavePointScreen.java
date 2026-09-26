@@ -26,7 +26,7 @@ public class SettingSavePointScreen extends Screen {
     private boolean exit;
 
     public SettingSavePointScreen(Screen parentScreen, ActionSavePoint action) {
-        super(Component.literal("Точка сохранения"));
+        super(Component.translatable("envoys.setting.save_point.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.name = action.saveId != null ? action.saveId : "";
@@ -45,14 +45,14 @@ public class SettingSavePointScreen extends Screen {
         this.nameEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("name"));
         this.nameEditBox.setValue(this.name);
         this.nameEditBox.setResponder(text -> this.name = text);
-        this.nameEditBox.setTooltip(Tooltip.create(Component.literal("Ключ точки (например, quest_point). Разрешены [a-zA-Z0-9_]")));
+        this.nameEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.save_point.name_tooltip")));
         this.addRenderableWidget(this.nameEditBox);
 
         this.cpEditBox = new EditBox(this.font, centerX + 10, startY + 30, 200, 20, Component.literal("cp"));
         this.cpEditBox.setMaxLength(36);
         this.cpEditBox.setValue(this.cp);
         this.cpEditBox.setEditable(false);
-        this.cpEditBox.setTooltip(Tooltip.create(Component.literal("Внутренний UUID точки. Генерируется автоматически")));
+        this.cpEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.save_point.cp_tooltip")));
         this.addRenderableWidget(this.cpEditBox);
 
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 60, 200, 20,
@@ -67,7 +67,7 @@ public class SettingSavePointScreen extends Screen {
         }).bounds(centerX - 160, startY + 95, 320, 20).build();
         this.addRenderableWidget(this.exitButton);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Назад"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.back"), button -> {
             this.save();
             if (this.parentScreen != null) {
                 Minecraft.getInstance().setScreen(this.parentScreen);
@@ -78,7 +78,8 @@ public class SettingSavePointScreen extends Screen {
     }
 
     private Component exitLabel() {
-        return Component.literal("Прервать после сохранения: " + (this.exit ? "включено" : "выключено"));
+        return Component.translatable("envoys.setting.save_point.exit_after_save",
+                Component.translatable(this.exit ? "envoys.setting.save_point.exit_on" : "envoys.setting.save_point.exit_off"));
     }
 
     private void save() {
@@ -96,9 +97,9 @@ public class SettingSavePointScreen extends Screen {
         int startY = this.height / 2 - 55;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Ключ точки:", centerX - 160, startY + 6, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "UUID точки:", centerX - 160, startY + 36, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующий ID:", centerX - 160, startY + 66, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.save_point.name"), centerX - 160, startY + 6, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.save_point.uuid"), centerX - 160, startY + 36, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.save_point.next_id"), centerX - 160, startY + 66, 0xA0A0A0);
     }
 
     @Override

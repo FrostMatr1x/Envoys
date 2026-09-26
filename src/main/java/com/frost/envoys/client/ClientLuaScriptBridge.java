@@ -41,7 +41,7 @@ public final class ClientLuaScriptBridge {
             listener.accept(payload);
             return;
         }
-        if (payload.message() != null && !payload.message().isBlank()) {
+        if (payload.message() != null && !payload.message().getString().isBlank()) {
             message(payload.message());
         }
     }
@@ -51,10 +51,10 @@ public final class ClientLuaScriptBridge {
         PULL_LISTENERS.clear();
     }
 
-    private static void message(String text) {
+    private static void message(Component text) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player != null) {
-            minecraft.player.sendSystemMessage(Component.literal(text));
+            minecraft.player.sendSystemMessage(text);
         }
     }
 }

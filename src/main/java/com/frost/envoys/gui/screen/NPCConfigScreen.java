@@ -20,7 +20,7 @@ public class NPCConfigScreen extends Screen {
     protected int topPos;
 
     public NPCConfigScreen(NPCInteractManager npcManager, boolean isCreativeTuner) {
-        super(Component.literal("Настройка NPC"));
+        super(Component.translatable("envoys.gui.config.title"));
         this.npcManager = npcManager;
         this.isCreativeTuner = isCreativeTuner;
     }
@@ -40,17 +40,17 @@ public class NPCConfigScreen extends Screen {
         int startY = this.topPos + 40;
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Редактировать личность"), 
+            Component.translatable("envoys.gui.config.edit_passport"), 
             button -> Minecraft.getInstance().setScreen(new NPCPassportScreen(this, this.npcManager, this.isCreativeTuner))
         ).bounds(centerX, startY, buttonWidth, buttonHeight).build());
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Редактировать скин"), 
+            Component.translatable("envoys.gui.config.edit_skin"), 
             button -> Minecraft.getInstance().setScreen(new NPCSkinScreen(this, this.npcManager.npcUUID))
         ).bounds(centerX, startY + 30, buttonWidth, buttonHeight).build());
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Редактировать сценарий"), 
+            Component.translatable("envoys.gui.config.edit_script"), 
             button -> {
                 if (com.frost.envoys.client.gui.backup.ClientBackupManager.exists(this.npcManager.npcUUID)) {
                     Minecraft.getInstance().setScreen(new BackupRestoreScreen(this, this.npcManager, this.isCreativeTuner));
@@ -61,7 +61,7 @@ public class NPCConfigScreen extends Screen {
         ).bounds(centerX, startY + 60, buttonWidth, buttonHeight).build());
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Закрыть"), 
+            Component.translatable("envoys.gui.common.close"), 
             button -> this.onClose()
         ).bounds(centerX, startY + 110, buttonWidth, buttonHeight).build());
     }

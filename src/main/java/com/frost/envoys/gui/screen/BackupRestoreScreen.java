@@ -17,7 +17,7 @@ public class BackupRestoreScreen extends Screen {
     private final boolean isCreativeTuner;
 
     public BackupRestoreScreen(Screen parentScreen, NPCInteractManager manager, boolean isCreativeTuner) {
-        super(Component.literal("Несохранённые изменения"));
+        super(Component.translatable("envoys.gui.backup.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.isCreativeTuner = isCreativeTuner;
@@ -30,7 +30,7 @@ public class BackupRestoreScreen extends Screen {
         int centerX = this.width / 2;
         int y = this.height / 2;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Да, восстановить"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.backup.restore"), button -> {
             ScriptProject project = ClientBackupManager.load(this.manager.npcUUID);
             if (project != null) {
                 ClientBackupManager.stashPendingRestore(this.manager.npcUUID, project);
@@ -39,7 +39,7 @@ public class BackupRestoreScreen extends Screen {
             openEditor();
         }).bounds(centerX - 100, y - 10, 200, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Нет, начать заново"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.backup.discard"), button -> {
             ClientBackupManager.delete(this.manager.npcUUID);
             openEditor();
         }).bounds(centerX - 100, y + 20, 200, 20).build());
@@ -55,8 +55,7 @@ public class BackupRestoreScreen extends Screen {
 
         int centerX = this.width / 2;
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 20, 0xFFFFFF);
-        guiGraphics.drawWordWrap(this.font, Component.literal(
-                        "Обнаружены несохранённые визуальные изменения сценария от предыдущей сессии. Восстановить работу?"),
+        guiGraphics.drawWordWrap(this.font, Component.translatable("envoys.gui.backup.message"),
                 centerX - 160, 50, 320, 0xFFFF55);
     }
 

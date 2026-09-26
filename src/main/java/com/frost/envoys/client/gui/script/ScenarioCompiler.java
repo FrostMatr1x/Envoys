@@ -66,7 +66,7 @@ public final class ScenarioCompiler {
 
         String arg = graph.arg == null ? "" : graph.arg.trim();
         if (validate && enabled && (update || range) && arg.isBlank()) {
-            throw new ScenarioCompileException("Событие '" + name + "' требует параметр (интервал/радиус).");
+            throw new ScenarioCompileException("envoys.compile.event_arg_required", name);
         }
 
         boolean hasArg = (update || range) && !arg.isBlank();
@@ -146,7 +146,7 @@ public final class ScenarioCompiler {
         while (nodeId != null) {
             GraphNode node = graph.node(nodeId);
             if (node == null || !visited.add(nodeId)) {
-                throw new ScenarioCompileException("Повторный или отсутствующий узел: '" + nodeId + "'.");
+                throw new ScenarioCompileException("envoys.compile.node_missing", nodeId);
             }
 
             if (ScriptNodeTypes.isSavePoint(node.type)) {
@@ -222,19 +222,19 @@ public final class ScenarioCompiler {
         try {
             return Integer.toString(Math.max(0, Integer.parseInt(arg.trim())));
         } catch (NumberFormatException e) {
-            throw new ScenarioCompileException("Параметр события должен быть целым числом: '" + arg + "'");
+            throw new ScenarioCompileException("envoys.compile.event_arg_invalid", arg);
         }
     }
 
     private static void validate(ActionGraph graph, boolean update) throws ScenarioCompileException {
         String entry = graph.entryId();
         if (entry == null || graph.node(entry) == null) {
-            throw new ScenarioCompileException("У события '" + graph.eventType + "' не задано начало цепочки.");
+            throw new ScenarioCompileException("envoys.compile.event_no_start", graph.eventType);
         }
 
         for (GraphNode node : graph.nodes) {
             if (!ScriptNodeTypes.isKnown(node.type)) {
-                throw new ScenarioCompileException("Неизвестный тип узла: '" + node.type + "'.");
+                throw new ScenarioCompileException("envoys.compile.unknown_node_type", node.type);
             }
         }
 
@@ -253,18 +253,17 @@ public final class ScenarioCompiler {
             }
             String key = node.param("name", "").trim();
             if (key.isEmpty() || !key.matches("[A-Za-z0-9_]{1,64}")) {
-                throw new ScenarioCompileException("Недопустимый ключ точки сохранения '" + key
-                        + "' (узел " + node.id + "): разрешены [a-zA-Z0-9_]{1,64}.");
+                throw new ScenarioCompileException("envoys.compile.savepoint_key_invalid", key, node.id);
             }
             if ("start".equals(key)) {
-                throw new ScenarioCompileException("Ключ 'start' зарезервирован (узел " + node.id + ").");
+                throw new ScenarioCompileException("envoys.compile.savepoint_key_reserved", node.id);
             }
             String cp = node.param("cp", "").trim();
             if (cp.isEmpty()) {
-                throw new ScenarioCompileException("У точки сохранения (узел " + node.id + ") не задан внутренний UUID.");
+                throw new ScenarioCompileException("envoys.compile.savepoint_cp_missing", node.id);
             }
             if (!keyCpPairs.add(key + "\u0000" + cp)) {
-                throw new ScenarioCompileException("Дублирующаяся пара ключ/UUID ('" + key + "') (узел " + node.id + ").");
+                throw new ScenarioCompileException("envoys.compile.savepoint_duplicate", key, node.id);
             }
         }
 
@@ -281,12 +280,10 @@ public final class ScenarioCompiler {
             }
             String target = node.param("target", "").trim();
             if (target.isEmpty() || !target.matches("[A-Za-z0-9_]{1,64}")) {
-                throw new ScenarioCompileException("Недопустимый ключ загрузки '" + target
-                        + "' (узел " + node.id + "): разрешены [a-zA-Z0-9_]{1,64}.");
+                throw new ScenarioCompileException("envoys.compile.loadpoint_key_invalid", target, node.id);
             }
             if (!saveByKey.containsKey(target)) {
-                throw new ScenarioCompileException("Загрузка точки (узел " + node.id
-                        + ") ссылается на несуществующий ключ '" + target + "'.");
+                throw new ScenarioCompileException("envoys.compile.loadpoint_target_missing", node.id, target);
             }
         }
         return saveByKey;
@@ -333,8 +330,7 @@ public final class ScenarioCompiler {
         Map<String, Integer> color = new LinkedHashMap<>();
         for (String id : adjacency.keySet()) {
             if (color.getOrDefault(id, 0) == 0 && hasCycle(id, adjacency, color)) {
-                throw new ScenarioCompileException("Обнаружен цикл без ожидающих действий "
-                        + "(диалог/торговля/ожидание/движение): он зависнет на лимите инструкций.");
+                throw new ScenarioCompileException("envoys.compile.spin_cycle");
             }
         }
     }
@@ -371,29 +367,27 @@ public final class ScenarioCompiler {
         while (nodeId != null) {
             GraphNode node = graph.node(nodeId);
             if (node == null) {
-                throw new ScenarioCompileException("Узел '" + nodeId + "' не найден в событии '" + graph.eventType + "'.");
+                throw new ScenarioCompileException("envoys.compile.node_not_in_event", nodeId, graph.eventType);
             }
             if (!ScriptNodeTypes.isKnown(node.type)) {
-                throw new ScenarioCompileException("Неизвестный тип узла: '" + node.type + "'.");
+                throw new ScenarioCompileException("envoys.compile.unknown_node_type", node.type);
             }
             if (!visited.add(nodeId)) {
-                throw new ScenarioCompileException("Цикл или fan-in: узел '" + nodeId + "' используется более одного раза.");
+                throw new ScenarioCompileException("envoys.compile.cycle_fanin", nodeId);
             }
             if (update && ScriptNodeTypes.requiresPlayer(node.type)) {
-                throw new ScenarioCompileException("Действие '" + ScriptNodeTypes.displayName(node.type)
-                        + "' нельзя использовать в событии 'update' (нет игрока).");
+                throw new ScenarioCompileException("envoys.compile.update_player_action", ScriptNodeTypes.displayName(node.type));
             }
             if (node.isBranch()) {
                 if (node.options.isEmpty()) {
-                    throw new ScenarioCompileException("Развилка '" + node.id + "' не имеет вариантов.");
+                    throw new ScenarioCompileException("envoys.compile.branch_empty", node.id);
                 }
                 if (node.type.equals(ScriptNodeTypes.QUEST_CHECK) && node.options.size() != 2) {
-                    throw new ScenarioCompileException("Развилка-проверка квеста '" + node.id
-                            + "' должна иметь ровно 2 ветки (выполнен / не выполнен).");
+                    throw new ScenarioCompileException("envoys.compile.quest_check_branches", node.id);
                 }
                 for (GraphNode.BranchOption option : node.options) {
                     if (node.type.equals(ScriptNodeTypes.DIALOGUE) && (option.label == null || option.label.isBlank())) {
-                        throw new ScenarioCompileException("У развилки-диалога '" + node.id + "' пустой текст варианта.");
+                        throw new ScenarioCompileException("envoys.compile.dialogue_empty_option", node.id);
                     }
                     if (option.headId != null) {
                         validateChain(graph, option.headId, update, visited, branchTypes, path);
@@ -410,7 +404,7 @@ public final class ScenarioCompiler {
         while (nodeId != null) {
             GraphNode node = graph.node(nodeId);
             if (node == null || !visited.add(nodeId)) {
-                throw new ScenarioCompileException("Повторный или отсутствующий узел: '" + nodeId + "'.");
+                throw new ScenarioCompileException("envoys.compile.node_missing", nodeId);
             }
 
             if (node.isBranch()) {

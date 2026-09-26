@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 
 public class SettingDelayScreen extends Screen {
 
-    private static final String NEXT_TOOLTIP = "ID действия, которое выполнится далее. Пусто — конец цепочки. Формат: id_N";
     private static final char[] UNITS = { 'h', 'm', 's', 't' };
 
     private final Screen parentScreen;
@@ -27,7 +26,7 @@ public class SettingDelayScreen extends Screen {
     private String nextActionId = "";
 
     public SettingDelayScreen(Screen parentScreen, ActionDelay action) {
-        super(Component.literal("Настройка ожидания"));
+        super(Component.translatable("envoys.setting.delay.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.duration = action.duration;
@@ -49,7 +48,7 @@ public class SettingDelayScreen extends Screen {
         this.addRenderableWidget(this.durationEditBox);
 
         this.timeUnitButton = Button.builder(
-            Component.literal("Единица: " + unitLabel(this.timeUnit)),
+            Component.translatable("envoys.setting.delay.unit", unitLabel(this.timeUnit)),
             button -> {
                 int currentIndex = 0;
                 for (int i = 0; i < UNITS.length; i++) {
@@ -60,7 +59,7 @@ public class SettingDelayScreen extends Screen {
                 }
                 int nextIndex = (currentIndex + 1) % UNITS.length;
                 this.timeUnit = UNITS[nextIndex];
-                button.setMessage(Component.literal("Единица: " + unitLabel(this.timeUnit)));
+                button.setMessage(Component.translatable("envoys.setting.delay.unit", unitLabel(this.timeUnit)));
             }
         ).bounds(centerX + 100, startY - 2, 110, 20).build();
         this.addRenderableWidget(this.timeUnitButton);
@@ -68,11 +67,11 @@ public class SettingDelayScreen extends Screen {
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.literal(NEXT_TOOLTIP)));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.delay.next_tooltip")));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.literal("Назад"),
+            Component.translatable("envoys.gui.common.back"),
             button -> {
                 this.save();
                 if (this.parentScreen != null) {
@@ -98,12 +97,12 @@ public class SettingDelayScreen extends Screen {
         }
     }
 
-    private static String unitLabel(char unit) {
+    private static Component unitLabel(char unit) {
         return switch (unit) {
-            case 'h' -> "часы";
-            case 'm' -> "минуты";
-            case 't' -> "тики";
-            default -> "секунды";
+            case 'h' -> Component.translatable("envoys.setting.delay.unit.hour");
+            case 'm' -> Component.translatable("envoys.setting.delay.unit.minute");
+            case 't' -> Component.translatable("envoys.setting.delay.unit.tick");
+            default -> Component.translatable("envoys.setting.delay.unit.second");
         };
     }
 
@@ -115,8 +114,8 @@ public class SettingDelayScreen extends Screen {
         int startY = this.height / 2 - 40;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Длительность:", centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, "Следующее действие:", centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.delay.duration"), centerX - 160, startY, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.delay.next_action"), centerX - 160, startY + 30, 0xA0A0A0);
     }
 
     @Override

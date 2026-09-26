@@ -46,7 +46,7 @@ public class SkinSyncService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (query == null || query.isBlank()) {
-                    return new SkinFetchResult(null, null, null, null, "Пустой запрос");
+                    return new SkinFetchResult(null, null, null, null, "Empty request");
                 }
 
                 Path cacheDir = isClient ? ClientPathManager.getClientSkinCacheDir() : PathManager.getServerSkinCacheDir();
@@ -122,13 +122,13 @@ public class SkinSyncService {
                     }
                 }
 
-                return new SkinFetchResult(null, null, null, null, "Скин не найден");
+                return new SkinFetchResult(null, null, null, null, "Skin not found");
 
             } catch (IllegalArgumentException e) {
                 return new SkinFetchResult(null, null, null, null, e.getMessage());
             } catch (Exception e) {
-                Envoys.LOGGER.error("Ошибка при загрузке скина: ", e);
-                return new SkinFetchResult(null, null, null, null, "Ошибка сети или загрузки");
+                Envoys.LOGGER.error("Failed to load skin: ", e);
+                return new SkinFetchResult(null, null, null, null, "Network or download error");
             }
         }, IO_EXECUTOR);
     }

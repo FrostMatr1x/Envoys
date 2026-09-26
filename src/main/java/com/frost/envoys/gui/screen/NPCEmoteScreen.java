@@ -31,7 +31,7 @@ public class NPCEmoteScreen extends Screen {
     private boolean isDraggingMannequin = false;
 
     public NPCEmoteScreen(Screen parentScreen, MannequinEntity mannequin, Consumer<String> onSelect) {
-        super(Component.literal("Выбор анимации"));
+        super(Component.translatable("envoys.gui.emote.title"));
         this.parentScreen = parentScreen;
         this.mannequin = mannequin;
         this.onSelect = onSelect;
@@ -47,7 +47,7 @@ public class NPCEmoteScreen extends Screen {
         int centerX = this.width / 2;
         int bottomY = this.height - 30;
 
-        this.selectButton = Button.builder(Component.literal("Выбрать"), button -> {
+        this.selectButton = Button.builder(Component.translatable("envoys.gui.emote.select"), button -> {
             if (this.selectedEmote != null) {
                 this.onSelect.accept(this.selectedEmote);
             }
@@ -56,7 +56,7 @@ public class NPCEmoteScreen extends Screen {
         this.selectButton.active = false;
         this.addRenderableWidget(this.selectButton);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Отмена"), button -> this.onClose())
+        this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.common.cancel"), button -> this.onClose())
                 .bounds(centerX + 5, bottomY, 100, 20).build());
     }
 
@@ -111,7 +111,7 @@ public class NPCEmoteScreen extends Screen {
         }
 
         if (this.emoteNames.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, Component.literal("Эмоции не найдены"), centerX + 50, listY + 40, 0xFFFF5555);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("envoys.gui.emote.empty"), centerX + 50, listY + 40, 0xFFFF5555);
         }
 
         this.selectButton.active = (this.selectedEmote != null);
