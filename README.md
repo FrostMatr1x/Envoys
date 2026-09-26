@@ -1,6 +1,6 @@
 [ English | [Русский](README_RU.md) ]
 
-# 🧭 Envoys
+# 💡 Envoys
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen?style=for-the-badge&logo=minecraft)
 ![NeoForge](https://img.shields.io/badge/NeoForge-21.1.x-orange?style=for-the-badge)
@@ -9,6 +9,15 @@
 **Envoys** is a Minecraft modification designed for creating custom Non-Player Characters (NPCs) with branching dialogues, an advanced economy, quests, and a built-in visual logic editor paired with a lightweight Lua engine.
 
 The mod offers two ways to build scenarios: an **intuitive in-game visual builder** for quickly assembling action sequences, and **full-fledged Lua scripting** for complex, programmable logic.
+
+---
+
+## 📚 Documentation & Guides
+
+Comprehensive guides covering mod configuration, the visual editor, commands, and the complete Lua API:
+
+* 📖 **[English Documentation](docs/en/INDEX.md)** — complete documentation and API reference.
+* 📖 **[Русская документация](docs/ru/INDEX.md)** — full step-by-step guide in Russian.
 
 ---
 

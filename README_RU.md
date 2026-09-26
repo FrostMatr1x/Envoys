@@ -1,6 +1,6 @@
 [ [English](README.md) | Русский ]
 
-# 🧭 Envoys
+# 💡 Envoys
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen?style=for-the-badge&logo=minecraft)
 ![NeoForge](https://img.shields.io/badge/NeoForge-21.1.x-orange?style=for-the-badge)
@@ -9,6 +9,15 @@
 **Envoys** — модификация для создания кастомных неигровых персонажей (NPC) с ветвящимися диалогами, продвинутой экономикой, квестами и встроенным визуальным редактором логики, совмещённым с легковесным Lua-движком.
 
 Мод предлагает два пути создания сценариев: **наглядный конструктор прямо в игре** для быстрого создания цепочек действий и **полноценный скриптинг на Lua** для сложной логики.
+
+---
+
+## 📚 Документация и руководства
+
+Подробные руководства по настройке мода, визуальному редактору, командам и полному Lua API:
+
+* 📖 **[Русская документация](docs/ru/INDEX.md)** — полное пошаговое руководство на русском языке.
+* 📖 **[English Documentation](docs/en/INDEX.md)** — complete documentation and API reference.
 
 ---
 
