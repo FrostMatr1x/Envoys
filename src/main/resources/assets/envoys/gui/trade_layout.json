@@ -1,0 +1,50 @@
+{
+  "image": {
+    "width": 276,
+    "height": 166,
+    "texWidth": 276,
+    "texHeight": 166
+  },
+  "list": {
+    "x": 5,
+    "y": 20,
+    "rowStep": 20,
+    "rows": 7,
+    "offerWidth": 88,
+    "offerHeight": 18
+  },
+  "row": {
+    "in1": 5,
+    "in2": 35,
+    "arrow": 52,
+    "out": 68,
+    "arrowWidth": 10,
+    "arrowHeight": 9,
+    "itemScale": 0.9,
+    "in1Scale": 0.9,
+    "in2Scale": 0.9,
+    "outScale": 0.9
+  },
+  "scroller": {
+    "x": 94,
+    "y": 18,
+    "width": 6,
+    "height": 27,
+    "trackHeight": 139
+  },
+  "tradeAll": {
+    "x": 187,
+    "y": 35,
+    "width": 20,
+    "height": 20,
+    "visible": true
+  },
+  "labels": {
+    "titleX": 11,
+    "titleY": 7,
+    "titleVisible": true,
+    "inventoryX": 109,
+    "inventoryY": 72,
+    "inventoryVisible": true
+  }
+}

@@ -2,6 +2,9 @@ package com.frost.envoys.event;
 
 import com.frost.envoys.Envoys;
 import com.frost.envoys.client.ClientLuaCommands;
+import com.frost.envoys.client.gui.DialogLayout;
+import com.frost.envoys.client.gui.QuestLayout;
+import com.frost.envoys.client.gui.TradeLayout;
 import com.frost.envoys.client.overlay.CurrentQuestOverlay;
 import com.frost.envoys.client.quest.ClientQuestTracker;
 import com.frost.envoys.gui.screen.NPCTradeScreen;
@@ -15,6 +18,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -22,6 +26,7 @@ import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -60,6 +65,15 @@ public class ClientEvents {
         @SubscribeEvent
         public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
             event.register(QUEST_WALL_KEY);
+        }
+
+        @SubscribeEvent
+        public static void onRegisterClientReloadListeners(RegisterClientReloadListenersEvent event) {
+            event.registerReloadListener((ResourceManagerReloadListener) manager -> {
+                TradeLayout.reload(manager);
+                DialogLayout.reload(manager);
+                QuestLayout.reload(manager);
+            });
         }
 
         @SubscribeEvent

@@ -24,15 +24,13 @@ public class QuestManagementScreen extends Screen {
 
     private final Screen parentScreen;
     private final NPCInteractManager manager;
-    private final boolean isCreativeTuner;
 
     private QuestList questList;
 
-    public QuestManagementScreen(Screen parentScreen, NPCInteractManager manager, boolean isCreativeTuner) {
+    public QuestManagementScreen(Screen parentScreen, NPCInteractManager manager) {
         super(Component.translatable("envoys.gui.quest_management.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
-        this.isCreativeTuner = isCreativeTuner;
     }
 
     @Override

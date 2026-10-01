@@ -100,7 +100,7 @@ public class EventCreationScreen extends Screen {
         int navY = this.height - 60;
         int rowStart = centerX - 150;
         this.addRenderableWidget(Button.builder(Component.translatable("envoys.gui.event_creation.quests"), button ->
-                Minecraft.getInstance().setScreen(new QuestManagementScreen(this, this.manager, this.isCreativeTuner)))
+                Minecraft.getInstance().setScreen(new QuestManagementScreen(this, this.manager)))
                 .bounds(rowStart, navY, 90, 20).build());
 
         Button process = Button.builder(Component.translatable("envoys.gui.event_creation.process"), button -> processScenario())

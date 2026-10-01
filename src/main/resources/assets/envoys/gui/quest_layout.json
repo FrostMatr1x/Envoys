@@ -1,0 +1,22 @@
+{
+  "panel": {
+    "xMode": "CENTER",
+    "x": 0,
+    "yMode": "CENTER",
+    "y": 0,
+    "widthMode": "FIXED",
+    "widthValue": 260,
+    "heightMode": "FIXED",
+    "heightValue": 220,
+    "pad": 12,
+    "headerHeight": 18,
+    "footerHeight": 24
+  },
+  "list": {
+    "rowHeight": 30,
+    "scroller": {
+      "width": 6,
+      "height": 27
+    }
+  }
+}

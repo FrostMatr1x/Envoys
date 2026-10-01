@@ -72,7 +72,7 @@ public class NPCPassportScreen extends Screen {
         int rightX = centerX + 10;
 
         this.nameField = new EditBox(this.font, leftX, 40, fieldWidth, fieldHeight, Component.translatable("envoys.gui.passport.field_name"));
-        this.nameField.setMaxLength(32);
+        this.nameField.setMaxLength(256);
         this.nameField.setValue(this.npcName);
         this.nameField.setResponder(text -> this.npcName = text);
         this.addRenderableWidget(this.nameField);

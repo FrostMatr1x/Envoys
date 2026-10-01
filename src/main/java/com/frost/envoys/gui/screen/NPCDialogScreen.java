@@ -3,13 +3,17 @@ package com.frost.envoys.gui.screen;
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.model.ActionDialog;
 import com.frost.envoys.gui.bridges.DialogGuiBridge;
+import com.frost.envoys.client.gui.DialogLayout;
 import com.frost.envoys.network.payload.SelectDialogAnswerPayload;
 import com.frost.envoys.util.ColorUtils;
+import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -25,7 +29,14 @@ import java.util.UUID;
 
 public class NPCDialogScreen extends Screen implements DialogGuiBridge {
 
-    private static final ResourceLocation CUSTOM_FRAME = ResourceLocation.fromNamespaceAndPath("envoys", "gui_background");
+    private static final ResourceLocation CUSTOM_FRAME = ResourceLocation.fromNamespaceAndPath("envoys", "dialog_background");
+    private static final ResourceLocation SCROLLER = ResourceLocation.fromNamespaceAndPath("envoys", "scroller");
+    private static final ResourceLocation SCROLLER_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "scroller_disabled");
+
+    protected static final ResourceLocation BUTTON = ResourceLocation.fromNamespaceAndPath("envoys", "background");
+    protected static final ResourceLocation BUTTON_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "background_hover");
+
+    protected static final WidgetSprites SPRITES_BUTTON = new WidgetSprites(BUTTON, BUTTON_DISABLED);
 
     private final Component npcName;
     private final Component dialogText;
@@ -34,6 +45,13 @@ public class NPCDialogScreen extends Screen implements DialogGuiBridge {
     private boolean answered = false;
 
     private double dialogScrollAmount = 0.0;
+
+    private DialogLayout layout = DialogLayout.get();
+
+    private int nameColor = 0xFFFFFF00;
+    private int textColor = 0xFFFFFFFF;
+    private int frameWidthCache;
+    private int frameHeightCache;
 
     public NPCDialogScreen(Component npcName, Component dialogText, List<DialogOption> options) {
         this(npcName, dialogText, options, null);
@@ -49,106 +67,65 @@ public class NPCDialogScreen extends Screen implements DialogGuiBridge {
 
     @Override
     protected void init() {
+        if (this.minecraft != null) {
+            DialogLayout.reload(this.minecraft.getResourceManager());
+        }
+        this.layout = DialogLayout.get();
+
         super.init();
 
-        int frameHeight = (int) (this.height * 0.4);
+        DialogLayout.Frame frame = this.layout.frame;
+        DialogLayout.OptionsCfg optionsCfg = this.layout.options;
 
-        int buttonX = 10;
-        int buttonWidth = (int) (this.width * 0.6);
-        int buttonHeight = 22;
-        int startY = 10 + frameHeight + 15;
-        int spacing = 6;
+        this.frameWidthCache = frame.resolveWidth(this.width, 0);
+        this.frameHeightCache = frame.resolveHeight(this.height, 0);
+        this.nameColor = this.layout.name.colorOrDefault();
+        this.textColor = this.layout.text.colorOrDefault();
 
-        for (int i = 0; i < options.size(); i++) {
-            if (i >= 5) break;
+        int frameY = frame.y;
+        int frameHeight = this.frameHeightCache;
+
+        int buttonX = optionsCfg.x;
+        int buttonWidth = optionsCfg.resolveWidth(this.width);
+        int buttonHeight = optionsCfg.height;
+        int startY = frameY + frameHeight + optionsCfg.yOffsetFromFrame;
+        int spacing = optionsCfg.spacing;
+        int maxVisible = Math.max(0, optionsCfg.maxVisible);
+
+        for (int i = 0; optionsCfg.visible && i < options.size() && i < maxVisible; i++) {
             DialogOption option = options.get(i);
 
             Component optionText = ColorUtils.parse(ColorUtils.toFormattedString(option.text()));
 
-            Button optionButton = new Button(
-                buttonX, 
-                startY + i * (buttonHeight + spacing), 
-                buttonWidth, 
-                buttonHeight, 
-                optionText, 
-                (btn) -> {
+            this.addRenderableWidget(new DialogOptionButton(
+                buttonX,
+                startY + i * (buttonHeight + spacing),
+                buttonWidth,
+                buttonHeight,
+                optionText,
+                btn -> {
                     this.answered = true;
                     option.onSelect().run();
                     this.onClose();
-                }, 
-                (supplier) -> supplier.get()
-            ) {
-                @Override
-                protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-                    if (!this.active) {
-                        guiGraphics.setColor(0.5F, 0.5F, 0.5F, 1.0F); 
-                    } else if (this.isHoveredOrFocused()) {
-                        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F); 
-                    } else {
-                        guiGraphics.setColor(0.75F, 0.75F, 0.75F, 1.0F); 
-                    }
-
-                    guiGraphics.blitSprite(CUSTOM_FRAME, this.getX(), this.getY(), this.width, this.height);
-                    guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-
-                    int textColor = this.active ? (this.isHoveredOrFocused() ? 0xFFFFFFA0 : 0xFFFFFFFF) : 0xFFA0A0A0;
-
-                    Component message = this.getMessage();
-                    int textWidth = NPCDialogScreen.this.font.width(message);
-                    int maxAllowedWidth = this.width - 12;
-
-                    int textY = this.getY() + (this.height - 8) / 2;
-
-                    if (textWidth <= maxAllowedWidth) {
-                        guiGraphics.drawCenteredString(
-                            NPCDialogScreen.this.font, 
-                            message, 
-                            this.getX() + this.width / 2, 
-                            textY, 
-                            textColor
-                        );
-                    } else {
-                        double maxOffset = textWidth - maxAllowedWidth;
-                        double time = Util.getMillis() / 1000.0;
-
-                        double speed = 1;
-                        double rawSin = Math.sin(time * speed);
-                        double clamped = Math.max(-0.75, Math.min(0.75, rawSin)) / 0.75;
-                        double progress = (clamped + 1.0) / 2.0;
-                        
-                        int offsetX = (int) (progress * maxOffset);
-
-                        int minX = this.getX() + 6;
-                        int maxX = minX + maxAllowedWidth;
-
-                        guiGraphics.enableScissor(minX, this.getY(), maxX, this.getY() + this.height);
-                        guiGraphics.drawString(
-                            NPCDialogScreen.this.font, 
-                            message, 
-                            minX - offsetX, 
-                            textY, 
-                            textColor, 
-                            true
-                        );
-                        guiGraphics.disableScissor();
-                    }
                 }
-            };
-
-            this.addRenderableWidget(optionButton);
+            ));
         }
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        int frameY = 10;
-        int frameHeight = (int) (this.height * 0.4);
+        DialogLayout.Frame frame = this.layout.frame;
+        DialogLayout.TextCfg textCfg = this.layout.text;
+        int frameY = frame.y;
+        int frameHeight = this.frameHeightCache;
 
         if (mouseY >= frameY && mouseY <= frameY + frameHeight) {
-            int textWidth = this.width - 20 - 30;
-            List<FormattedCharSequence> lines = this.font.split(this.dialogText, textWidth);
-            int totalTextHeight = lines.size() * 10;
-            int visibleHeight = frameHeight - 35;
+            int frameX = frame.x;
+            int frameWidth = this.frameWidthCache;
+            int textWidth = Math.max(1, frameWidth - frame.borderThickness * 2 - textCfg.padLeft - textCfg.padRight);
+            List<FormattedCharSequence> lines = this.font.split(this.dialogText, (int) (textWidth / textCfg.safeScale()));
+            int totalTextHeight = (int) (lines.size() * textCfg.lineHeight * textCfg.safeScale());
+            int visibleHeight = Math.max(1, frameHeight - frame.borderThickness * 2 - textCfg.padTop - textCfg.padBottom);
             int maxScroll = Math.max(0, totalTextHeight - visibleHeight);
 
             this.dialogScrollAmount = Mth.clamp(this.dialogScrollAmount - scrollY * 12, 0, maxScroll);
@@ -166,50 +143,74 @@ public class NPCDialogScreen extends Screen implements DialogGuiBridge {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick); 
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
-        int frameX = 10;
-        int frameY = 10;
-        int frameWidth = this.width - 20;
-        int frameHeight = (int) (this.height * 0.4);
-        int borderThickness = 6;
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+        DialogLayout.Frame frame = this.layout.frame;
+        DialogLayout.NameCfg nameCfg = this.layout.name;
+        DialogLayout.TextCfg textCfg = this.layout.text;
+        DialogLayout.TextCfg.Scroller scrollerCfg = textCfg.scroller;
+
+        int frameX = frame.x;
+        int frameY = frame.y;
+        int frameWidth = this.frameWidthCache;
+        int frameHeight = this.frameHeightCache;
+        int borderThickness = frame.borderThickness;
 
         guiGraphics.blitSprite(CUSTOM_FRAME, frameX, frameY, frameWidth, frameHeight);
 
-        int textX = frameX + borderThickness + 10;
-        int textY = frameY + borderThickness + 10;
-        guiGraphics.drawString(this.font, this.npcName, textX, textY, 0xFFFFFF00, true);
+        float nameScale = nameCfg.safeScale();
+        float textScale = textCfg.safeScale();
 
-        int dialogBoxY = textY + 15;
-        int dialogBoxHeight = frameY + frameHeight - borderThickness - dialogBoxY;
-        int dialogWidth = frameWidth - borderThickness * 2 - 20;
+        int nameX = frameX + borderThickness + nameCfg.padLeft;
+        int nameY = frameY + borderThickness + nameCfg.padTop;
+        int nameHeight = (int) (this.font.lineHeight * nameScale);
 
-        List<FormattedCharSequence> lines = this.font.split(this.dialogText, dialogWidth);
-        int totalTextHeight = lines.size() * 10;
+        if (nameCfg.visible) {
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(nameX, nameY, 0.0F);
+            guiGraphics.pose().scale(nameScale, nameScale, 1.0F);
+            guiGraphics.drawString(this.font, this.npcName, 0, 0, this.nameColor, nameCfg.shadow);
+            guiGraphics.pose().popPose();
+        }
+
+        int dialogBoxY = nameY + nameHeight + textCfg.offsetFromName;
+        int dialogBoxHeight = Math.max(1, frameY + frameHeight - borderThickness - dialogBoxY - textCfg.padBottom);
+        int dialogWidth = Math.max(1, frameWidth - borderThickness * 2 - textCfg.padLeft - textCfg.padRight);
+        int textX = frameX + borderThickness + textCfg.padLeft;
+
+        List<FormattedCharSequence> lines = this.font.split(this.dialogText, (int) (dialogWidth / textScale));
+        int totalTextHeight = (int) (lines.size() * textCfg.lineHeight * textScale);
         int maxDialogScroll = Math.max(0, totalTextHeight - dialogBoxHeight);
         this.dialogScrollAmount = Mth.clamp(this.dialogScrollAmount, 0, maxDialogScroll);
 
         guiGraphics.enableScissor(textX, dialogBoxY, textX + dialogWidth, dialogBoxY + dialogBoxHeight);
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(textX, dialogBoxY, 0.0F);
+        guiGraphics.pose().scale(textScale, textScale, 1.0F);
         for (int i = 0; i < lines.size(); i++) {
-            int lineY = dialogBoxY + i * 10 - (int) this.dialogScrollAmount;
-            if (lineY + 10 >= dialogBoxY && lineY <= dialogBoxY + dialogBoxHeight) {
-                guiGraphics.drawString(this.font, lines.get(i), textX, lineY, 0xFFFFFFFF, true);
+            int lineY = i * textCfg.lineHeight - (int) (this.dialogScrollAmount / textScale);
+            if (lineY + textCfg.lineHeight >= 0 && lineY <= (int) (dialogBoxHeight / textScale)) {
+                guiGraphics.drawString(this.font, lines.get(i), 0, lineY, this.textColor, textCfg.shadow);
             }
         }
+        guiGraphics.pose().popPose();
         guiGraphics.disableScissor();
 
+        int scrollerX = frameX + frameWidth - borderThickness - scrollerCfg.offsetRight;
+        int scrollerHeight = scrollerCfg.height;
         if (maxDialogScroll > 0) {
-            int scrollbarX = frameX + frameWidth - borderThickness - 8;
-            int scrollbarWidth = 4;
-            int trackHeight = dialogBoxHeight;
-
-            guiGraphics.fill(scrollbarX, dialogBoxY, scrollbarX + scrollbarWidth, dialogBoxY + trackHeight, 0x80000000);
-
-            int thumbHeight = Math.max(10, (int) ((float) trackHeight / totalTextHeight * trackHeight));
-            int thumbY = dialogBoxY + (int) ((dialogScrollAmount / maxDialogScroll) * (trackHeight - thumbHeight));
-
-            guiGraphics.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xFFA0A0A0);
+            int maxOffset = Math.max(0, dialogBoxHeight - scrollerHeight);
+            int scrollerY = dialogBoxY + (int) ((dialogScrollAmount / maxDialogScroll) * maxOffset);
+            guiGraphics.blitSprite(SCROLLER, scrollerX, scrollerY, scrollerCfg.width, scrollerHeight);
+        } else {
+            guiGraphics.blitSprite(SCROLLER_DISABLED, scrollerX, dialogBoxY, scrollerCfg.width, scrollerHeight);
         }
+
+        RenderSystem.disableBlend();
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
@@ -262,5 +263,59 @@ public class NPCDialogScreen extends Screen implements DialogGuiBridge {
         Component dialogTextComponent = dialog.npcMessage != null ? dialog.npcMessage : Component.empty();
 
         Minecraft.getInstance().setScreen(new NPCDialogScreen(npcNameComponent, dialogTextComponent, options));
+    }
+    
+    public class DialogOptionButton extends Button {
+
+        public DialogOptionButton(int x, int y, int width, int height, Component message, Button.OnPress onPress) {
+            super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            Font font = Minecraft.getInstance().font;
+            float optionScale = NPCDialogScreen.this.layout.options.safeScale();
+
+            RenderSystem.enableBlend();
+            RenderSystem.enableDepthTest();
+
+            guiGraphics.blitSprite(NPCDialogScreen.SPRITES_BUTTON.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+
+            int textColor = this.active ? (this.isHoveredOrFocused() ? 0xFFFFFFA0 : 0xFFFFFFFF) : 0xFFA0A0A0;
+
+            Component message = this.getMessage();
+            int textWidth = (int) (font.width(message) * optionScale);
+            int maxAllowedWidth = (int) ((this.width - 12) / optionScale);
+            int textY = this.getY() + (this.height - (int) (8 * optionScale)) / 2;
+
+            if (textWidth <= this.width - 12) {
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(this.getX() + this.width / 2.0F, textY, 0.0F);
+                guiGraphics.pose().scale(optionScale, optionScale, 1.0F);
+                guiGraphics.drawCenteredString(font, message, 0, 0, textColor);
+                guiGraphics.pose().popPose();
+            } else {
+                double maxOffset = textWidth - (this.width - 12);
+                double time = Util.getMillis() / 1000.0;
+
+                double speed = 1.0;
+                double rawSin = Math.sin(time * speed);
+                double clamped = Math.max(-0.75, Math.min(0.75, rawSin)) / 0.75;
+                double progress = (clamped + 1.0) / 2.0;
+
+                int offsetX = (int) (progress * maxOffset);
+
+                int minX = this.getX() + 6;
+                int maxX = minX + maxAllowedWidth;
+
+                guiGraphics.enableScissor(minX, this.getY(), maxX, this.getY() + this.height);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(minX - offsetX, textY, 0.0F);
+                guiGraphics.pose().scale(optionScale, optionScale, 1.0F);
+                guiGraphics.drawString(font, message, 0, 0, textColor, true);
+                guiGraphics.pose().popPose();
+                guiGraphics.disableScissor();
+            }
+        }
     }
 }

@@ -43,6 +43,7 @@ public class SettingSavePointScreen extends Screen {
         int startY = this.height / 2 - 55;
 
         this.nameEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("name"));
+        this.nameEditBox.setMaxLength(64);
         this.nameEditBox.setValue(this.name);
         this.nameEditBox.setResponder(text -> this.name = text);
         this.nameEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.save_point.name_tooltip")));

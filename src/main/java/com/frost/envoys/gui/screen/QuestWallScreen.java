@@ -2,8 +2,8 @@ package com.frost.envoys.gui.screen;
 
 import java.util.List;
 
+import com.frost.envoys.client.gui.QuestLayout;
 import com.frost.envoys.client.quest.ClientQuestTracker;
-import com.frost.envoys.gui.screen.NPCTradeScreen.CustomTradeAllButton;
 import com.frost.envoys.network.payload.ClientQuestEntry;
 import com.frost.envoys.quest.QuestInventoryUtil;
 import com.frost.envoys.quest.QuestType;
@@ -21,20 +21,16 @@ import net.minecraft.util.Mth;
 
 public class QuestWallScreen extends Screen {
 
-    private static final ResourceLocation PANEL = ResourceLocation.fromNamespaceAndPath("envoys", "quest_wall");
+    private static final ResourceLocation PANEL = ResourceLocation.fromNamespaceAndPath("envoys", "gui_background");
     private static final ResourceLocation SCROLLER = ResourceLocation.fromNamespaceAndPath("envoys", "scroller");
     private static final ResourceLocation SCROLLER_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "scroller_disabled");
 
-    protected static final ResourceLocation TRADE_BUTTON = ResourceLocation.fromNamespaceAndPath("envoys", "trade_button");
-    protected static final ResourceLocation TRADE_BUTTON_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "trade_button_disabled");
+    protected static final ResourceLocation BUTTON = ResourceLocation.fromNamespaceAndPath("envoys", "background");
+    protected static final ResourceLocation BUTTON_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "background_hover");
 
-    protected static final WidgetSprites SPRITES_BUTTON = new WidgetSprites(TRADE_BUTTON, TRADE_BUTTON_DISABLED);
+    protected static final WidgetSprites SPRITES_BUTTON = new WidgetSprites(BUTTON, BUTTON_DISABLED);
 
-    private static final int PAD = 12;
-    private static final int HEADER_H = 18;
-    private static final int FOOTER_H = 24;
-    private static final int ROW_H = 34;
-    private static final int SCROLLER_H = 27;
+    private QuestLayout layout = QuestLayout.get();
 
     private double scrollOff;
     private int panelX;
@@ -48,15 +44,23 @@ public class QuestWallScreen extends Screen {
 
     @Override
     protected void init() {
+        if (this.minecraft != null) {
+            QuestLayout.reload(this.minecraft.getResourceManager());
+        }
+        this.layout = QuestLayout.get();
+
         super.init();
 
-        this.panelW = Math.min(this.width - 40, 260);
-        this.panelH = Math.min(this.height - 40, 220);
-        this.panelX = (this.width - this.panelW) / 2;
-        this.panelY = (this.height - this.panelH) / 2;
+        QuestLayout.Panel panel = this.layout.panel;
+        int resolvedW = panel.resolveWidth(this.width);
+        int resolvedH = panel.resolveHeight(this.height);
+        this.panelW = resolvedW;
+        this.panelH = resolvedH;
+        this.panelX = panel.resolveX(this.width, resolvedW);
+        this.panelY = panel.resolveY(this.height, resolvedH);
 
         this.addRenderableWidget(this.addRenderableWidget(new CustomButton(
-            this.panelX + (this.panelW - 100) / 2, this.panelY + this.panelH - PAD - 18, 100, 18,
+            this.panelX + (this.panelW - 100) / 2, this.panelY + this.panelH - panel.pad - 18, 100, 18,
             Component.translatable("envoys.gui.common.done"),
             button -> this.onClose()
         )));
@@ -64,12 +68,20 @@ public class QuestWallScreen extends Screen {
         this.scrollOff = Mth.clamp(this.scrollOff, 0, this.maxScroll());
     }
 
+    private int pad() {
+        return this.layout.panel.pad;
+    }
+
+    private int rowHeight() {
+        return Math.max(1, this.layout.list.rowHeight);
+    }
+
     private int listTop() {
-        return this.panelY + PAD + HEADER_H;
+        return this.panelY + this.pad() + this.layout.panel.headerHeight;
     }
 
     private int listBottom() {
-        return this.panelY + this.panelH - PAD - FOOTER_H;
+        return this.panelY + this.panelH - this.pad() - this.layout.panel.footerHeight;
     }
 
     private int listHeight() {
@@ -77,7 +89,7 @@ public class QuestWallScreen extends Screen {
     }
 
     private int maxScroll() {
-        return Math.max(0, ClientQuestTracker.get().entries().size() * ROW_H - this.listHeight());
+        return Math.max(0, ClientQuestTracker.get().entries().size() * this.rowHeight() - this.listHeight());
     }
 
     @Override
@@ -87,7 +99,7 @@ public class QuestWallScreen extends Screen {
         guiGraphics.setColor(1F, 1F, 1F, 1F);
         guiGraphics.blitSprite(PANEL, this.panelX, this.panelY, this.panelW, this.panelH);
 
-        guiGraphics.drawCenteredString(this.font, this.title, this.panelX + this.panelW / 2, this.panelY + PAD, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, this.title, this.panelX + this.panelW / 2, this.panelY + this.pad(), 0xFFFFFF);
 
         List<ClientQuestEntry> entries = ClientQuestTracker.get().entries();
 
@@ -105,18 +117,20 @@ public class QuestWallScreen extends Screen {
     }
 
     private void renderRows(GuiGraphics guiGraphics, List<ClientQuestEntry> entries) {
-        int innerX = this.panelX + PAD;
-        int innerW = this.panelW - 2 * PAD;
+        int pad = this.pad();
+        int rowHeight = this.rowHeight();
+        int innerX = this.panelX + pad;
+        int innerW = this.panelW - 2 * pad;
         int top = this.listTop();
         int bottom = this.listBottom();
 
         guiGraphics.enableScissor(innerX, top, innerX + innerW, bottom);
 
         String pinned = ClientQuestTracker.get().pinnedQuestUuid();
-        int first = (int) (this.scrollOff / ROW_H);
+        int first = (int) (this.scrollOff / rowHeight);
         for (int i = Math.max(0, first); i < entries.size(); i++) {
-            int rowY = top - (int) this.scrollOff + i * ROW_H;
-            if (rowY + ROW_H < top) {
+            int rowY = top - (int) this.scrollOff + i * rowHeight;
+            if (rowY + rowHeight < top) {
                 continue;
             }
             if (rowY > bottom) {
@@ -154,17 +168,20 @@ public class QuestWallScreen extends Screen {
     }
 
     private void renderScroller(GuiGraphics guiGraphics, int entryCount) {
-        int visible = this.listHeight() / ROW_H;
-        int scrollerX = this.panelX + this.panelW - PAD - 6;
+        int rowHeight = this.rowHeight();
+        QuestLayout.ListCfg.Scroller scroller = this.layout.list.scroller;
+        int pad = this.pad();
+        int visible = this.listHeight() / rowHeight;
+        int scrollerX = this.panelX + this.panelW - pad - scroller.width;
         int scrollerY = this.listTop();
 
         if (entryCount > visible) {
-            int track = this.listHeight() - SCROLLER_H;
+            int track = this.listHeight() - scroller.height;
             int maxScroll = this.maxScroll();
             int offset = maxScroll <= 0 ? 0 : (int) (this.scrollOff / maxScroll * track);
-            guiGraphics.blitSprite(SCROLLER, scrollerX, scrollerY + offset, 6, SCROLLER_H);
+            guiGraphics.blitSprite(SCROLLER, scrollerX, scrollerY + offset, scroller.width, scroller.height);
         } else {
-            guiGraphics.blitSprite(SCROLLER_DISABLED, scrollerX, scrollerY, 6, SCROLLER_H);
+            guiGraphics.blitSprite(SCROLLER_DISABLED, scrollerX, scrollerY, scroller.width, scroller.height);
         }
     }
 
@@ -181,21 +198,22 @@ public class QuestWallScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         int maxScroll = this.maxScroll();
         if (maxScroll > 0) {
-            this.scrollOff = Mth.clamp(this.scrollOff - scrollY * ROW_H, 0, maxScroll);
+            this.scrollOff = Mth.clamp(this.scrollOff - scrollY * this.rowHeight(), 0, maxScroll);
         }
         return true;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int innerX = this.panelX + PAD;
-        int innerW = this.panelW - 2 * PAD;
+        int rowHeight = this.rowHeight();
+        int innerX = this.panelX + this.pad();
+        int innerW = this.panelW - 2 * this.pad();
         int top = this.listTop();
         int bottom = this.listBottom();
 
         if (button == 0 && mouseX >= innerX && mouseX <= innerX + innerW && mouseY >= top && mouseY < bottom) {
             List<ClientQuestEntry> entries = ClientQuestTracker.get().entries();
-            int index = (int) ((mouseY - top + this.scrollOff) / ROW_H);
+            int index = (int) ((mouseY - top + this.scrollOff) / rowHeight);
             if (index >= 0 && index < entries.size()) {
                 String uuid = entries.get(index).questUuid();
                 if (uuid != null && !uuid.isBlank()) {
@@ -226,7 +244,7 @@ public class QuestWallScreen extends Screen {
             RenderSystem.enableBlend();
             RenderSystem.enableDepthTest();
 
-            guiGraphics.blitSprite(NPCTradeScreen.SPRITES_BUTTON.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+            guiGraphics.blitSprite(QuestWallScreen.SPRITES_BUTTON.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
 
             guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             int color = this.getFGColor();

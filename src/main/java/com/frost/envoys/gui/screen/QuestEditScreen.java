@@ -125,14 +125,14 @@ public class QuestEditScreen extends Screen {
         this.addRenderableWidget(this.visibleCheckbox);
 
         this.typeButton = Button.builder(
-            Component.translatable("envoys.gui.quest_edit.type_label", this.type),
+            this.typeLabel(),
             button -> {
                 this.type = switch (this.type) {
                     case ITEM -> QuestType.BOOLEAN;
                     case BOOLEAN -> QuestType.KILL;
                     case KILL -> QuestType.ITEM;
                 };
-                button.setMessage(Component.translatable("envoys.gui.quest_edit.type_label", this.type));
+                button.setMessage(this.typeLabel());
                 this.applyTypeVisibility();
             }
         ).bounds(labelX, startY + 104, 140, 20).build();
@@ -232,6 +232,15 @@ public class QuestEditScreen extends Screen {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    private Component typeLabel() {
+        String key = switch (this.type) {
+            case ITEM -> "envoys.gui.quest_edit.type.item";
+            case BOOLEAN -> "envoys.gui.quest_edit.type.boolean";
+            case KILL -> "envoys.gui.quest_edit.type.kill";
+        };
+        return Component.translatable("envoys.gui.quest_edit.type_label", Component.translatable(key));
     }
 
     private Component validate() {

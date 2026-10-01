@@ -1,0 +1,46 @@
+{
+  "frame": {
+    "x": 2,
+    "y": 10,
+    "widthMode": "SCREEN_MINUS",
+    "widthValue": 20,
+    "heightMode": "SCREEN_PERCENT",
+    "heightValue": 0.4,
+    "borderThickness": 7
+  },
+  "name": {
+    "visible": true,
+    "scale": 1.0,
+    "padLeft": 10,
+    "padTop": 5,
+    "color": "0xFFFFFF00",
+    "shadow": true
+  },
+  "text": {
+    "scale": 1.0,
+    "lineHeight": 10,
+    "padLeft": 5,
+    "padRight": 8,
+    "padTop": 5,
+    "padBottom": 2,
+    "offsetFromName": 12,
+    "color": "0xFFFFFFFF",
+    "shadow": true,
+    "scroller": {
+      "offsetRight": 8,
+      "width": 6,
+      "height": 27
+    }
+  },
+  "options": {
+    "visible": true,
+    "x": 10,
+    "yOffsetFromFrame": 15,
+    "widthMode": "SCREEN_PERCENT",
+    "widthValue": 0.6,
+    "height": 22,
+    "spacing": 6,
+    "maxVisible": 5,
+    "scale": 1.0
+  }
+}

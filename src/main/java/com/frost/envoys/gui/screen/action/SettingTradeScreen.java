@@ -375,7 +375,6 @@ public class SettingTradeScreen extends Screen {
 
         public float getPriceMultiplier() { return priceMultiplier; }
         public void setPriceMultiplier(float priceMultiplier) { 
-            // Ограничиваем множитель от 0.1 до 10.0 и округляем до десятых во избежание ошибок float
             this.priceMultiplier = Math.max(0.1f, Math.min(10.0f, Math.round(priceMultiplier * 10.0f) / 10.0f)); 
         }
 

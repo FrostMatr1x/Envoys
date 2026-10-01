@@ -1,5 +1,6 @@
 package com.frost.envoys.gui.screen;
 
+import com.frost.envoys.client.gui.TradeLayout;
 import com.frost.envoys.network.payload.TradeAllPayload;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -14,16 +15,16 @@ import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
+import java.util.ArrayList;
+import java.util.List;
 
-    private static final float ITEM_SCALE = 0.9F;
+public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
 
     private static final ResourceLocation TRADE_GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath("envoys", "textures/gui/sprites/trade_menu.png");
     private static final ResourceLocation TRADE_ARROW = ResourceLocation.fromNamespaceAndPath("envoys", "textures/gui/sprites/trade_arrow.png");
@@ -31,12 +32,17 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
     private static final ResourceLocation SCROLLER = ResourceLocation.fromNamespaceAndPath("envoys", "scroller");
     private static final ResourceLocation SCROLLER_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "scroller_disabled");
 
-    protected static final ResourceLocation TRADE_BUTTON = ResourceLocation.fromNamespaceAndPath("envoys", "trade_button");
-    protected static final ResourceLocation TRADE_BUTTON_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "trade_button_disabled");
+    protected static final ResourceLocation MERCH_BUTTON = ResourceLocation.fromNamespaceAndPath("envoys", "merch");
+    protected static final ResourceLocation MERCH_BUTTON_DISABLED = ResourceLocation.fromNamespaceAndPath("envoys", "merch_hover");
 
-    protected static final WidgetSprites SPRITES_BUTTON = new WidgetSprites(TRADE_BUTTON, TRADE_BUTTON_DISABLED);
+    protected static final WidgetSprites MERCH_SPRITES_BUTTON = new WidgetSprites(MERCH_BUTTON, MERCH_BUTTON_DISABLED);
 
-    private final CustomTradeOfferButton[] customTradeButtons = new CustomTradeOfferButton[7];
+    protected static final ResourceLocation TRADE_ALL = ResourceLocation.fromNamespaceAndPath("envoys", "trade_arrow_disable");
+    protected static final ResourceLocation TRADE_ALL_HOVER = ResourceLocation.fromNamespaceAndPath("envoys", "trade_arrow");
+
+    protected static final WidgetSprites TRADE_ALL_SPRITES = new WidgetSprites(TRADE_ALL, TRADE_ALL_HOVER);
+
+    private final List<CustomTradeOfferButton> customTradeButtons = new ArrayList<>();
 
     private Button tradeAllButton;
 
@@ -44,11 +50,16 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
     private int shopItem = 0;
     private boolean isDragging = false;
 
+    private TradeLayout layout = TradeLayout.get();
+
     public NPCTradeScreen(MerchantMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 276;
-        this.imageHeight = 166;
-        this.inventoryLabelX = 107;
+        applyLayout(TradeLayout.get());
+    }
+
+    private void applyLayout(TradeLayout layout) {
+        this.imageWidth = layout.image.width;
+        this.imageHeight = layout.image.height;
     }
 
     private void postButtonClick(int selectedTrade) {
@@ -62,39 +73,66 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
 
     @Override
     protected void init() {
+        if (this.minecraft != null) {
+            TradeLayout.reload(this.minecraft.getResourceManager());
+        }
+        this.layout = TradeLayout.get();
+        applyLayout(this.layout);
+
         super.init();
         this.clearWidgets();
+        this.customTradeButtons.clear();
 
+        TradeLayout.ListCfg list = this.layout.list;
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        int startY = j + 16 + 2;
+        int startY = j + list.y;
 
-        for (int l = 0; l < 7; ++l) {
-            int buttonIndex = l;
-            CustomTradeOfferButton button = new CustomTradeOfferButton(i + 5, startY, buttonIndex, (b) -> {
-                if (b instanceof CustomTradeOfferButton customBtn) {
-                    int selectedTrade = customBtn.getIndex() + this.scrollOff;
-                    if (selectedTrade >= 0 && selectedTrade < this.menu.getOffers().size()) {
-                        this.postButtonClick(selectedTrade);
-                    }
-                }
-            });
+        int rows = list.safeRows();
+        for (int l = 0; l < rows; ++l) {
+            final int buttonIndex = l;
+            CustomTradeOfferButton button = new CustomTradeOfferButton(
+                    i + list.x, startY, list.offerWidth, list.offerHeight, buttonIndex,
+                    (b) -> {
+                        if (b instanceof CustomTradeOfferButton customBtn) {
+                            int selectedTrade = customBtn.getIndex() + this.scrollOff;
+                            if (selectedTrade >= 0 && selectedTrade < this.menu.getOffers().size()) {
+                                this.postButtonClick(selectedTrade);
+                            }
+                        }
+                    });
 
-            this.customTradeButtons[l] = this.addRenderableWidget(button);
-            startY += 20;
+            this.customTradeButtons.add(this.addRenderableWidget(button));
+            startY += list.rowStep;
         }
-        
-        this.tradeAllButton = this.addRenderableWidget(new CustomTradeAllButton(
-                i + 113, j + 12, 80, 16,
-                Component.translatable("envoys.gui.trade.trade_all"),
-                b -> this.tradeAll()
-        ));
+
+        TradeLayout.ButtonCfg all = this.layout.tradeAll;
+        if (all.visible) {
+            this.tradeAllButton = this.addRenderableWidget(new CustomTradeAllArrowButton(
+                    i + all.x, j + all.y, all.width, all.height,
+                    b -> this.tradeAll()
+            ));
+        } else {
+            this.tradeAllButton = null;
+        }
     }
 
     private void tradeAll() {
+        if (this.tradeAllButton == null) return;
         MerchantOffers offers = this.menu.getOffers();
         if (offers.isEmpty() || this.shopItem < 0 || this.shopItem >= offers.size()) return;
         PacketDistributor.sendToServer(new TradeAllPayload(this.shopItem));
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        TradeLayout.LabelsCfg labels = this.layout.labels;
+        if (labels.titleVisible) {
+            guiGraphics.drawString(this.font, this.title, labels.titleX, labels.titleY, 0x404040, false);
+        }
+        if (labels.inventoryVisible) {
+            guiGraphics.drawString(this.font, this.playerInventoryTitle, labels.inventoryX, labels.inventoryY, 0x404040, false);
+        }
     }
 
     @Override
@@ -102,7 +140,14 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        guiGraphics.blit(TRADE_GUI_TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight, 512, 256);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+        guiGraphics.blit(TRADE_GUI_TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight,
+                this.layout.image.texWidth, this.layout.image.texHeight);
+
+        RenderSystem.disableBlend();
     }
 
     @Override
@@ -116,11 +161,13 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
 
             renderCustomScroller(guiGraphics, i, j, offers);
 
-            int startY = j + 16 + 2;
+            TradeLayout.ListCfg list = this.layout.list;
+            TradeLayout.RowCfg row = this.layout.row;
+            int startY = j + list.y;
 
-            for (int l = 0; l < 7; ++l) {
+            for (int l = 0; l < this.customTradeButtons.size(); ++l) {
                 int offerIndex = l + this.scrollOff;
-                CustomTradeOfferButton button = this.customTradeButtons[l];
+                CustomTradeOfferButton button = this.customTradeButtons.get(l);
 
                 if (button != null) {
                     if (offerIndex < offers.size()) {
@@ -131,26 +178,26 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
                         ItemStack costB = offer.getCostB();
                         ItemStack result = offer.getResult();
 
-                        int itemY = startY + (int) ((20.0F - (16.0F * ITEM_SCALE)) / 2.0F);
-                        int buttonX = i + 5;
+                        int itemY = startY + (int) ((list.offerHeight - (16.0F * row.itemScale)) / 2.0F);
+                        int buttonX = i + list.x;
 
-                        renderScaledItem(guiGraphics, costA, buttonX + 5, itemY, ITEM_SCALE);
+                        renderScaledItem(guiGraphics, costA, buttonX + row.in1, itemY, row.scaleFor(0));
 
                         if (!costB.isEmpty()) {
-                            renderScaledItem(guiGraphics, costB, buttonX + 35, itemY, ITEM_SCALE);
+                            renderScaledItem(guiGraphics, costB, buttonX + row.in2, itemY, row.scaleFor(1));
                         }
 
-                        int arrowX = buttonX + 52;
-                        int arrowY = startY + 5;
+                        int arrowY = startY + (list.offerHeight - row.arrowHeight) / 2;
 
-                        guiGraphics.blit(TRADE_ARROW, arrowX, arrowY, 0, 0, 10, 9, 10, 9);
+                        guiGraphics.blit(TRADE_ARROW, buttonX + row.arrow, arrowY, 0, 0,
+                                row.arrowWidth, row.arrowHeight, row.arrowWidth, row.arrowHeight);
 
-                        renderScaledItem(guiGraphics, result, buttonX + 68, itemY, ITEM_SCALE);
+                        renderScaledItem(guiGraphics, result, buttonX + row.out, itemY, row.scaleFor(2));
                     } else {
                         button.visible = false;
                     }
                 }
-                startY += 20;
+                startY += list.rowStep;
             }
 
             for (CustomTradeOfferButton button : this.customTradeButtons) {
@@ -176,23 +223,30 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
     }
 
     private void renderCustomScroller(GuiGraphics guiGraphics, int posX, int posY, MerchantOffers merchantOffers) {
-        int maxScroll = merchantOffers.size() - 7;
-        int scrollerX = posX + 94;
-        int scrollerY = posY + 18;
+        TradeLayout.ScrollerCfg scroller = this.layout.scroller;
+        int maxScroll = merchantOffers.size() - this.layout.list.safeRows();
+        int scrollerX = posX + scroller.x;
+        int scrollerY = posY + scroller.y;
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         if (maxScroll > 0) {
-            int scrollBarLength = 139 - 27;
-            int offsetY = (int) ((float) this.scrollOff / (float) maxScroll * scrollBarLength);
+            int trackLength = scroller.trackHeight - scroller.height;
+            int offsetY = (int) ((float) this.scrollOff / (float) maxScroll * trackLength);
 
-            guiGraphics.blitSprite(SCROLLER, scrollerX, scrollerY + offsetY, 6, 27);
+            guiGraphics.blitSprite(SCROLLER, scrollerX, scrollerY + offsetY, scroller.width, scroller.height);
         } else {
-            guiGraphics.blitSprite(SCROLLER_DISABLED, scrollerX, scrollerY, 6, 27);
+            guiGraphics.blitSprite(SCROLLER_DISABLED, scrollerX, scrollerY, scroller.width, scroller.height);
         }
+
+        RenderSystem.disableBlend();
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        int maxScroll = this.menu.getOffers().size() - 7;
+        int maxScroll = this.menu.getOffers().size() - this.layout.list.safeRows();
         if (maxScroll > 0) {
             this.scrollOff = Mth.clamp((int) ((double) this.scrollOff - scrollY), 0, maxScroll);
         }
@@ -202,12 +256,13 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         this.isDragging = false;
+        TradeLayout.ScrollerCfg scroller = this.layout.scroller;
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
 
-        if (this.menu.getOffers().size() > 7 
-                && mouseX > (double)(i + 94) && mouseX < (double)(i + 94 + 6) 
-                && mouseY > (double)(j + 18) && mouseY <= (double)(j + 18 + 139)) {
+        if (this.menu.getOffers().size() > this.layout.list.safeRows()
+                && mouseX > (double) (i + scroller.x) && mouseX < (double) (i + scroller.x + scroller.width)
+                && mouseY > (double) (j + scroller.y) && mouseY <= (double) (j + scroller.y + scroller.trackHeight)) {
             this.isDragging = true;
         }
 
@@ -216,11 +271,13 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        int maxScroll = this.menu.getOffers().size() - 7;
+        int maxScroll = this.menu.getOffers().size() - this.layout.list.safeRows();
         if (this.isDragging && maxScroll > 0) {
-            int j = (this.height - this.imageHeight) / 2 + 18;
-            int k = j + 139;
-            float f = ((float) mouseY - (float) j - 13.5F) / ((float) (k - j) - 27.0F);
+            TradeLayout.ScrollerCfg scroller = this.layout.scroller;
+            int top = (this.height - this.imageHeight) / 2 + scroller.y;
+            int bottom = top + scroller.trackHeight;
+            float f = ((float) mouseY - (float) top - (scroller.height / 2.0F))
+                    / ((float) (bottom - top) - scroller.height);
             f = f * (float) maxScroll + 0.5F;
             this.scrollOff = Mth.clamp((int) f, 0, maxScroll);
             return true;
@@ -228,23 +285,20 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
-    class CustomTradeAllButton extends Button {
-        public CustomTradeAllButton(int x, int y, int width, int height, Component message, Button.OnPress onPress) {
-            super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
+    class CustomTradeAllArrowButton extends Button {
+        public CustomTradeAllArrowButton(int x, int y, int width, int height, Button.OnPress onPress) {
+            super(x, y, width, height, Component.empty(), onPress, DEFAULT_NARRATION);
         }
 
         @Override
         protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-            Minecraft minecraft = Minecraft.getInstance();
             guiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
             RenderSystem.enableBlend();
             RenderSystem.enableDepthTest();
 
-            guiGraphics.blitSprite(NPCTradeScreen.SPRITES_BUTTON.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+            guiGraphics.blitSprite(TRADE_ALL_SPRITES.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
 
             guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-            int color = this.getFGColor();
-            this.renderString(guiGraphics, minecraft.font, color | Mth.ceil(this.alpha * 255.0F) << 24);
         }
     }
 
@@ -252,8 +306,8 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
 
         private final int index;
 
-        public CustomTradeOfferButton(int x, int y, int index, Button.OnPress onPress) {
-            super(x, y, 88, 20, CommonComponents.EMPTY, onPress, DEFAULT_NARRATION);
+        public CustomTradeOfferButton(int x, int y, int width, int height, int index, Button.OnPress onPress) {
+            super(x, y, width, height, CommonComponents.EMPTY, onPress, DEFAULT_NARRATION);
             this.index = index;
         }
 
@@ -267,7 +321,7 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
             guiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
             RenderSystem.enableBlend();
             RenderSystem.enableDepthTest();
-            guiGraphics.blitSprite(SPRITES_BUTTON.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+            guiGraphics.blitSprite(MERCH_SPRITES_BUTTON.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
             guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             int i = this.getFGColor();
             this.renderString(guiGraphics, minecraft.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
@@ -279,15 +333,16 @@ public class NPCTradeScreen extends AbstractContainerScreen<MerchantMenu> {
 
             if (this.isHovered && offerIndex < offers.size()) {
                 MerchantOffer offer = offers.get(offerIndex);
+                TradeLayout.RowCfg row = NPCTradeScreen.this.layout.row;
 
-                if (mouseX < this.getX() + 25) {
+                if (mouseX < this.getX() + row.in2) {
                     guiGraphics.renderTooltip(NPCTradeScreen.this.font, offer.getCostA(), mouseX, mouseY);
-                } else if (mouseX < this.getX() + 55 && mouseX > this.getX() + 28) {
+                } else if (mouseX < this.getX() + row.arrow) {
                     ItemStack costB = offer.getCostB();
                     if (!costB.isEmpty()) {
                         guiGraphics.renderTooltip(NPCTradeScreen.this.font, costB, mouseX, mouseY);
                     }
-                } else if (mouseX > this.getX() + 60) {
+                } else {
                     guiGraphics.renderTooltip(NPCTradeScreen.this.font, offer.getResult(), mouseX, mouseY);
                 }
             }

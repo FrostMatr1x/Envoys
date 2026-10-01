@@ -54,7 +54,6 @@ public class NPCScriptScreen extends Screen {
     private final Screen parentScreen;
     private final NPCInteractManager manager;
     private final ActionGraph graph;
-    private final boolean isCreativeTuner;
     private final Runnable onModified;
     private final Map<GraphNode, EntityActionData> pendingEdits = new HashMap<>();
 
@@ -64,13 +63,11 @@ public class NPCScriptScreen extends Screen {
     private Button typeButton;
     private boolean pendingDirectEdit;
 
-    public NPCScriptScreen(Screen parentScreen, NPCInteractManager manager, ActionGraph graph,
-                           boolean isCreativeTuner, Runnable onModified) {
+    public NPCScriptScreen(Screen parentScreen, NPCInteractManager manager, ActionGraph graph, Runnable onModified) {
         super(Component.translatable("envoys.gui.script.title"));
         this.parentScreen = parentScreen;
         this.manager = manager;
         this.graph = graph;
-        this.isCreativeTuner = isCreativeTuner;
         this.onModified = onModified;
     }
 
@@ -106,7 +103,7 @@ public class NPCScriptScreen extends Screen {
                 }))).bounds(centerX - 195, this.height - 35, 120, 20).build();
         this.addRenderableWidget(this.typeButton);
 
-        this.idInputField = new EditBox(this.font, centerX - 60, this.height - 35, 60, 20, Component.literal("ID"));
+        this.idInputField = new EditBox(this.font, centerX - 70, this.height - 35, 60, 20, Component.literal("ID"));
         this.idInputField.setValue(graph.nextId());
         this.idInputField.setTooltip(Tooltip.create(Component.translatable("envoys.gui.script.id_tooltip")));
         this.addRenderableWidget(this.idInputField);

@@ -37,6 +37,7 @@ public class SettingLoadPointScreen extends Screen {
         int startY = this.height / 2 - 35;
 
         this.targetEditBox = new EditBox(this.font, centerX + 10, startY, 200, 20, Component.literal("target"));
+        this.targetEditBox.setMaxLength(64);
         this.targetEditBox.setValue(this.target);
         this.targetEditBox.setResponder(text -> this.target = text);
         this.targetEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.load_point.target_tooltip")));

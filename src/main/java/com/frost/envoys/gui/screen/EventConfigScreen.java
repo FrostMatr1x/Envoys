@@ -68,7 +68,7 @@ public class EventConfigScreen extends Screen {
 
         this.actionsButton = Button.builder(actionLabel(), button ->
                 Minecraft.getInstance().setScreen(new NPCScriptScreen(EventConfigScreen.this, this.manager,
-                        this.script.graphOrEmpty(this.type.jsonKey()), this.isCreativeTuner, this.onModified)))
+                        this.script.graphOrEmpty(this.type.jsonKey()), this.onModified)))
                 .bounds(centerX - 100, this.height / 2 + 20, 200, 20).build();
         this.addRenderableWidget(this.actionsButton);
 
@@ -108,12 +108,12 @@ public class EventConfigScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
         guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.type",
                 EventCreationScreen.eventDisplayName(this.type), this.type.jsonKey()),
-                centerX - 160, this.height / 2 - 68, 0xFFFF55);
+                centerX - 160, this.height / 2 - 68, 0xA0A0A0);
 
         if (this.type == EventType.UPDATE) {
-            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.interval"), centerX - 160, this.height / 2 - 13, 0xFFFF55);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.interval"), centerX - 160, this.height / 2 - 13, 0xA0A0A0);
         } else if (this.type == EventType.RANGE) {
-            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.radius"), centerX - 160, this.height / 2 - 13, 0xFFFF55);
+            guiGraphics.drawString(this.font, Component.translatable("envoys.gui.event_config.radius"), centerX - 160, this.height / 2 - 13, 0xA0A0A0);
         }
 
         this.actionsButton.setMessage(actionLabel());
