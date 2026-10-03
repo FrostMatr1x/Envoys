@@ -1,6 +1,7 @@
 package com.frost.envoys.gui.screen;
 
 import com.frost.envoys.client.EmoteIntegration;
+import com.frost.envoys.client.anim.ClientAnimStore;
 import com.frost.envoys.npc.entity.MannequinEntity;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,6 +26,7 @@ public class NPCEmoteScreen extends Screen {
     private String selectedEmote;
     private int scrollOffset = 0;
     private int lastServerListVersion;
+    private long lastLocalAnimVersion;
 
     private Button selectButton;
     private float mannequinYaw = 0.0F;
@@ -36,6 +38,7 @@ public class NPCEmoteScreen extends Screen {
         this.mannequin = mannequin;
         this.onSelect = onSelect;
         this.lastServerListVersion = EmoteIntegration.serverListVersion();
+        this.lastLocalAnimVersion = ClientAnimStore.version();
         this.emoteNames.addAll(EmoteIntegration.clientEmoteNames());
         EmoteIntegration.requestServerList();
     }
@@ -183,8 +186,11 @@ public class NPCEmoteScreen extends Screen {
     @Override
     public void tick() {
         EmoteIntegration.tickPreview(this.mannequin);
-        if (EmoteIntegration.serverListVersion() != this.lastServerListVersion) {
+        long localVersion = ClientAnimStore.version();
+        if (EmoteIntegration.serverListVersion() != this.lastServerListVersion
+                || localVersion != this.lastLocalAnimVersion) {
             this.lastServerListVersion = EmoteIntegration.serverListVersion();
+            this.lastLocalAnimVersion = localVersion;
             this.emoteNames.clear();
             this.emoteNames.addAll(EmoteIntegration.clientEmoteNames());
         }

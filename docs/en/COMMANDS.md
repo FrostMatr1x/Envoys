@@ -71,6 +71,30 @@ Registered on the client for managing local script files. Local scripts live in
 - **`/envoys lua pull <target>`** — download the NPC's `main.lua` into
   `.minecraft/envoys/local/` as `<npc_name>_<uuid4>.lua`.
 
+### Animations
+
+Client-side commands for managing animation files. Local animations live in
+`.minecraft/envoys/anim/` as `.json` files; server animations live in `world/envoys/anim/`.
+
+```text
+/envoys anim reload
+/envoys anim push [name]
+/envoys anim delete <name>
+```
+
+- **`/envoys anim reload`** — rescan the local animation folder
+  (`.minecraft/envoys/anim/`) and refresh the client cache.
+- **`/envoys anim push [name]`** — upload a local animation to the server. Without an
+  argument, all local animations that differ from the server copies (by SHA-256 hash) are
+  sent; with a name, only that one file is sent. Valid JSON is required; the file must not
+  exceed **2 MB**.
+- **`/envoys anim delete <name>`** — remove an animation from the server. All connected
+  players are notified and drop their cached copies.
+
+Uploading and deleting animations requires **permission level 4 (OP-4)** on the server.
+Received files are validated (JSON syntax, size, path safety) and stored in
+`world/envoys/anim/`. Clients cache them in `.minecraft/envoysCache/<server_id>/anim/`.
+
 ---
 
 **Next:** [QUESTS.md →](QUESTS.md)

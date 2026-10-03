@@ -30,6 +30,9 @@ public class ServerEvents {
         NPCConfigManager.loadAll();
         TradeCounterStore.loadAll();
         LuaEngineManager.init();
+        // D1: кэш списка анимаций заполняется только при старте сервера
+        // (и по явной команде обновления, которую подключает отдельная ИИ).
+        com.frost.envoys.skin.service.AnimSyncService.refreshCache();
     }
 
     @SubscribeEvent

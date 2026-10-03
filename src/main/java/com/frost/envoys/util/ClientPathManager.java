@@ -52,6 +52,12 @@ public class ClientPathManager {
         return p;
     }
 
+    public static Path getClientLocalAnimDir() {
+        Path p = FMLPaths.GAMEDIR.get().resolve("envoys").resolve("anim");
+        p.toFile().mkdirs();
+        return p;
+    }
+
     public static Path getClientLocalLuaDir() {
         Path p = FMLPaths.GAMEDIR.get().resolve("envoys").resolve("local");
         p.toFile().mkdirs();

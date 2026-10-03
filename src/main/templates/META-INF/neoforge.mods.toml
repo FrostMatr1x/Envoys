@@ -46,8 +46,24 @@ authors="FrostMatrix"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-This mod adds NPCs.
+Envoys adds fully configurable NPCs with branching dialogues, an advanced economy,
+quests, a visual logic editor and a built-in Lua engine.
 '''
+
+# Dependencies are declared at the bottom of the description block.
+[[dependencies.${mod_id}]]
+    modId="playeranimator"
+    type="required"
+    versionRange="[2.0.1,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="sophisticatedbackpacks"
+    type="optional"
+    versionRange="[1,)"
+    ordering="AFTER"
+    side="BOTH"
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
 #[[mixins]]

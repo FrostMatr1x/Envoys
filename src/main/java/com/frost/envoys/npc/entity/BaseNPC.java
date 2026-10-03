@@ -63,6 +63,17 @@ public class BaseNPC extends PathfinderMob {
         super(type, level);
         this.setInvulnerable(true);
         passport = new NPCPassportData();
+        if (level != null && level.isClientSide) {
+            LOADED_CLIENT_NPCS.add(this);
+        }
+    }
+
+    // Реестр загруженных клиентских NPC для пробуждения ожидания анимаций (EmoteIntegration.wakeNpcsWaitingFor).
+    private static final Set<BaseNPC> LOADED_CLIENT_NPCS = new HashSet<>();
+
+    public static java.util.List<BaseNPC> getLoadedClientNpcs() {
+        LOADED_CLIENT_NPCS.removeIf(npc -> npc == null || !npc.isAlive());
+        return new java.util.ArrayList<>(LOADED_CLIENT_NPCS);
     }
 
     @Override
@@ -383,6 +394,9 @@ public class BaseNPC extends PathfinderMob {
     public void remove(Entity.RemovalReason reason) {
         if (this.level() != null && !this.level().isClientSide) {
             trackPassportLocation();
+        }
+        if (this.level() != null && this.level().isClientSide) {
+            LOADED_CLIENT_NPCS.remove(this);
         }
         super.remove(reason);
         if (this.level() != null && !this.level().isClientSide) {

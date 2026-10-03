@@ -142,11 +142,9 @@ dependencies {
     // Example mod dependency using a file as dependency
     // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
 
-    // Emotecraft (runtime comes from the installed mod; compileOnly so nothing is shaded into our jar)
-    compileOnly "io.github.kosmx.emotes:emotesAPI:2.4.12"
+    // playerAnimator (runtime comes from the installed mod; compileOnly so nothing is shaded into our jar)
     compileOnly "dev.kosmx.player-anim:player-animation-lib-forge:2.0.1+1.21.1"
 
-    localRuntime "io.github.kosmx.emotes:emotesAPI:2.4.12"
     localRuntime "dev.kosmx.player-anim:player-animation-lib-forge:2.0.1+1.21.1"
 
     implementation "curse.maven:sophisticated-core-618298:8627791"
@@ -217,4 +215,8 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+tasks.named('runServer') {
+    standardInput = System.in
 }

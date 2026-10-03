@@ -2,6 +2,9 @@ package com.frost.envoys.event;
 
 import com.frost.envoys.Envoys;
 import com.frost.envoys.client.ClientLuaCommands;
+import com.frost.envoys.client.EmoteIntegration;
+import com.frost.envoys.client.anim.ClientAnimCommands;
+import com.frost.envoys.client.anim.ClientAnimStore;
 import com.frost.envoys.client.gui.DialogLayout;
 import com.frost.envoys.client.gui.QuestLayout;
 import com.frost.envoys.client.gui.TradeLayout;
@@ -102,11 +105,20 @@ public class ClientEvents {
             ClientQuestTracker.get().clear();
             com.frost.envoys.client.ClientLuaScriptBridge.clear();
             com.frost.envoys.client.gui.backup.ClientBackupManager.flushActive();
+            com.frost.envoys.client.EmoteIntegration.clearServerData();
+            ClientAnimStore.invalidate();
+        }
+
+        @SubscribeEvent
+        public static void onLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
+            ClientAnimStore.scan();
+            EmoteIntegration.requestServerList();
         }
 
         @SubscribeEvent
         public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
             ClientLuaCommands.register(event.getDispatcher());
+            ClientAnimCommands.register(event.getDispatcher());
         }
     }
 }

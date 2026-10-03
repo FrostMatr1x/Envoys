@@ -63,6 +63,21 @@ Comprehensive guides covering mod configuration, the visual editor, commands, an
 
 ---
 
+## 📦 Dependencies
+
+| Mod | Required | Description |
+|-----|----------|-------------|
+| **[playerAnimator](https://github.com/Kosmx/AnimLib)** | **Yes** | Animation library used by Envoys to parse and apply player animations (emotes). Without it, animations will not play on players. |
+| **[Sophisticated Backpacks](https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks)** | Optional | Backpack mod supported as an add-on: NPCs can interact with backpacks as containers (e.g. for item gathering/delivery quests and trading stock). |
+
+> ⚠️ **Note:** `playerAnimator` is loaded via `compileOnly` — it must be installed as a separate mod in the `mods` folder. Envoys itself ships the [Cobalt](https://github.com/twosigma/Cobalt) Lua engine as an embedded library.
+>
+> Local animations are read from `.minecraft/envoys/anim/` (`.json` files) and can be uploaded to the server with `/envoys anim push`.
+
+> 🙏 Cobalt is used as the embedded Lua engine for NPC scripting. Thanks to the Cobalt team for their awesome work.
+
+---
+
 ## 📥 Installation
 
 1. Install the matching version of **NeoForge** for both client and server.

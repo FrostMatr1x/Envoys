@@ -9,11 +9,15 @@ import com.frost.envoys.network.ServerPayloadHandler;
 import com.frost.envoys.network.ServerSkinPayloadHandler;
 import com.frost.envoys.network.payload.AnimDataPayload;
 import com.frost.envoys.network.payload.AnimListPayload;
+import com.frost.envoys.network.payload.AnimOpResultPayload;
+import com.frost.envoys.network.payload.AnimRemovedPayload;
+import com.frost.envoys.network.payload.DeleteAnimPayload;
 import com.frost.envoys.network.payload.FetchNpcLuaScriptPayload;
 import com.frost.envoys.network.payload.LuaScriptUploadResultPayload;
 import com.frost.envoys.network.payload.NpcLuaScriptResponsePayload;
 import com.frost.envoys.network.payload.OpenDialogPayload;
 import com.frost.envoys.network.payload.OpenSettingGuiPayload;
+import com.frost.envoys.network.payload.PushAnimPayload;
 import com.frost.envoys.network.payload.RequestAnimListPayload;
 import com.frost.envoys.network.payload.RequestAnimPayload;
 import com.frost.envoys.network.payload.RequestSkinPayload;
@@ -153,6 +157,30 @@ public class CommonEvents {
                 AnimDataPayload.TYPE,
                 AnimDataPayload.CODEC,
                 FMLEnvironment.dist.isClient() ? ClientAnimPayloadHandler::handleAnimData : (payload, context) -> {}
+        );
+
+        registrar.playToServer(
+                PushAnimPayload.TYPE,
+                PushAnimPayload.CODEC,
+                ServerAnimPayloadHandler::handlePushAnim
+        );
+
+        registrar.playToServer(
+                DeleteAnimPayload.TYPE,
+                DeleteAnimPayload.CODEC,
+                ServerAnimPayloadHandler::handleDeleteAnim
+        );
+
+        registrar.playToClient(
+                AnimOpResultPayload.TYPE,
+                AnimOpResultPayload.CODEC,
+                FMLEnvironment.dist.isClient() ? ClientAnimPayloadHandler::handleAnimOpResult : (payload, context) -> {}
+        );
+
+        registrar.playToClient(
+                AnimRemovedPayload.TYPE,
+                AnimRemovedPayload.CODEC,
+                FMLEnvironment.dist.isClient() ? ClientAnimPayloadHandler::handleAnimRemoved : (payload, context) -> {}
         );
 
         registrar.playToClient(
