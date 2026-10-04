@@ -38,7 +38,9 @@ public final class ClientAnimCommands {
                                         .suggests(ClientAnimCommands::suggestLocal)
                                         .executes(ctx -> pushOne(StringArgumentType.getString(ctx, "name")))))
                         .then(Commands.literal("delete")
-                                .then(Commands.argument("name", StringArgumentType.word())
+                                // Имена серверных анимаций содержат пробелы и §-коды,
+                                // поэтому word() обрезал бы вставленную подсказку.
+                                .then(Commands.argument("name", StringArgumentType.greedyString())
                                         .suggests(ClientAnimCommands::suggestServer)
                                         .executes(ctx -> delete(StringArgumentType.getString(ctx, "name")))))));
     }

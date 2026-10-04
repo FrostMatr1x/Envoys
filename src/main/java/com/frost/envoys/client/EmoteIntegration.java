@@ -365,7 +365,10 @@ public final class EmoteIntegration {
 
     public static List<String> clientEmoteNames() {
         Map<String, String> byKey = new TreeMap<>();
-        for (String localName : ClientAnimStore.listNames()) {
+        // Локальные имена берём в исходном (отображаемом) виде, а не в
+        // sanitized-варианте: иначе одна и та же анимация, пришедшая с сервера
+        // под исходным именем, попадала бы в список второй раз.
+        for (String localName : ClientAnimStore.listDisplayNames()) {
             addEmoteName(byKey, localName);
         }
         for (String name : SERVER_ANIMS.keySet()) {

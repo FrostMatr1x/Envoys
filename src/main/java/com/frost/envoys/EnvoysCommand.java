@@ -505,7 +505,7 @@ public class EnvoysCommand {
         }
         UUID uuid = npc.getUUID();
         LuaEngineManager.stop(uuid);
-        final Component message = Component.translatable("envoys.cmd.lua.stopped", uuid);
+        final Component message = Component.translatable("envoys.cmd.lua.stopped", safe(uuid.toString()));
         source.sendSuccess(() -> message, true);
         return 1;
     }

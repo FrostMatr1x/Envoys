@@ -23,7 +23,7 @@ public final class ClientAnimStore {
 
     public static final int MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
 
-    public record Entry(Path path, String hash, long size) {
+    public record Entry(Path path, String hash, long size, String displayName) {
     }
 
     public record ScanResult(int loaded, int errors) {
@@ -64,10 +64,15 @@ public final class ClientAnimStore {
                 String hash = SkinCacheService.calculateSHA256(data);
                 String primary = AnimSyncService.extractPrimaryNameFromJson(data, file.getFileName().toString());
                 String name = EmoteIntegration.sanitizeAnimName(primary);
+                // Отображаемое имя хранится "сырым" (как в JSON), т.к. sanitizeAnimName
+                // заменяет кириллицу и § на '_'. Иначе локальная анимация и та же
+                // анимация, пришедшая с сервера под исходным именем, считались бы
+                // разными и попадали в список дважды.
+                String displayName = (primary == null || primary.isBlank()) ? name : primary;
 
                 Entry existing = CACHE.get(name);
                 if (existing == null) {
-                    CACHE.put(name, new Entry(file, hash, size));
+                    CACHE.put(name, new Entry(file, hash, size, displayName));
                 } else {
                     Envoys.LOGGER.warn("[Envoys] Duplicate local animation name '{}' ({} kept, {} ignored)",
                             name, existing.path(), file);
@@ -82,8 +87,21 @@ public final class ClientAnimStore {
         return new ScanResult(CACHE.size(), errors);
     }
 
+    /** Файловые (безопасные) имена — используются командами push и автодополнением. */
     public static List<String> listNames() {
         List<String> names = new ArrayList<>(CACHE.keySet());
+        names.sort(String.CASE_INSENSITIVE_ORDER);
+        return names;
+    }
+
+    /** Отображаемые имена (как в JSON/на сервере) — используются GUI выбора эмоций. */
+    public static List<String> listDisplayNames() {
+        List<String> names = new ArrayList<>(CACHE.size());
+        for (Entry entry : CACHE.values()) {
+            if (entry.displayName() != null && !entry.displayName().isBlank()) {
+                names.add(entry.displayName());
+            }
+        }
         names.sort(String.CASE_INSENSITIVE_ORDER);
         return names;
     }
@@ -94,10 +112,17 @@ public final class ClientAnimStore {
 
     public static Entry get(String name) {
         if (name == null) return null;
-        Entry direct = CACHE.get(name);
+        // Сначала пробуем файловый (sanitized) ключ, затем исходное/отображаемое имя.
+        Entry direct = CACHE.get(EmoteIntegration.sanitizeAnimName(name));
+        if (direct != null) return direct;
+        direct = CACHE.get(name);
         if (direct != null) return direct;
         for (Map.Entry<String, Entry> entry : CACHE.entrySet()) {
             if (entry.getKey().equalsIgnoreCase(name)) return entry.getValue();
+            Entry value = entry.getValue();
+            if (value.displayName() != null && value.displayName().equalsIgnoreCase(name)) {
+                return value;
+            }
         }
         return null;
     }
