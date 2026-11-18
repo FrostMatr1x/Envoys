@@ -74,6 +74,7 @@ public class NPCSkinScreen extends Screen {
     private boolean isLoading = false;
     private Component errorMessage = null;
     private String confirmedHash = null;
+    private byte[] currentSkinData = null;
 
     public NPCSkinScreen(Screen parentScreen, UUID npcUuid) {
         super(Component.translatable("envoys.gui.skin.title"));
@@ -97,9 +98,13 @@ public class NPCSkinScreen extends Screen {
             }
         }
 
-        currentSkinValue = manager.passport.skinValue;
-        currentSkinType = SkinType.valueOf(manager.passport.skinType);
-        currentModel = manager.passport.skinModel;
+        currentSkinValue = manager.passport.skinValue != null ? manager.passport.skinValue : "";
+        try {
+            currentSkinType = SkinType.valueOf(manager.passport.skinType);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            currentSkinType = SkinType.NICKNAME;
+        }
+        currentModel = manager.passport.skinModel != null ? manager.passport.skinModel : "classic";
     }
 
     @Override
@@ -118,6 +123,7 @@ public class NPCSkinScreen extends Screen {
                 Component.translatable("envoys.gui.skin.type_label", currentSkinType.getDisplayName()),
                 button -> {
                     this.currentSkinType = this.currentSkinType.next();
+                    this.currentSkinData = null;
                     this.typeToggleButton.setMessage(Component.translatable("envoys.gui.skin.type_label", currentSkinType.getDisplayName()));
                     updateVisibility();
                 }
@@ -129,6 +135,9 @@ public class NPCSkinScreen extends Screen {
         this.inputField.setValue(this.currentSkinValue);
         this.inputField.setResponder(text -> {
             if (currentSkinType != SkinType.FILE) {
+                if (!text.equals(this.currentSkinValue)) {
+                    this.currentSkinData = null;
+                }
                 this.currentSkinValue = text;
             }
         });
@@ -228,6 +237,7 @@ public class NPCSkinScreen extends Screen {
                     Minecraft.getInstance().execute(() -> {
                         this.isLoading = false;
                         if (result.isSuccess()) {
+                            this.currentSkinData = result.pngData();
                             this.currentTexture = SkinGuiPreview.registerDynamicSkin(currentSkinValue, result.pngData());
                             this.currentModel = result.model();
                             this.modelToggleButton.setMessage(Component.translatable("envoys.gui.skin.model_label", currentModel.toUpperCase()));
@@ -249,7 +259,11 @@ public class NPCSkinScreen extends Screen {
     }
 
     public void onSkinDataReceived(byte[] pngData) {
+        this.currentSkinData = pngData;
         this.currentTexture = SkinGuiPreview.registerDynamicSkin("server_skin", pngData);
+        if (this.mannequin != null) {
+            this.mannequin.setCustomTexture(this.currentTexture);
+        }
     }
 
     private void scanSkinFolder() {
@@ -347,7 +361,8 @@ public class NPCSkinScreen extends Screen {
                             this.npcUuid,
                             this.currentSkinType.name(),
                             this.currentSkinValue,
-                            this.currentModel
+                            this.currentModel,
+                            this.currentSkinData
                     )
             );
         }
@@ -415,6 +430,7 @@ public class NPCSkinScreen extends Screen {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 setSelected(this);
                 currentSkinValue = fileName;
+                currentSkinData = null;
                 return true;
             }
         }

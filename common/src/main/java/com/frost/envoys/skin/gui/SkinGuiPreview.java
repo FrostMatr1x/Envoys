@@ -16,8 +16,9 @@ public class SkinGuiPreview {
             return ResourceLocation.withDefaultNamespace("textures/entity/player/wide/steve.png");
         }
 
-        try (InputStream is = new ByteArrayInputStream(pngData);
-             NativeImage image = NativeImage.read(is)) {
+        NativeImage image = null;
+        try (InputStream is = new ByteArrayInputStream(pngData)) {
+            image = NativeImage.read(is);
 
             ResourceLocation location = ResourceLocation.fromNamespaceAndPath(
                     "envoys", 
@@ -31,11 +32,17 @@ public class SkinGuiPreview {
                 textureManager.release(location);
             }
 
+            // DynamicTexture takes ownership of the NativeImage and closes it with the texture.
             DynamicTexture texture = new DynamicTexture(image);
+            image = null;
             textureManager.register(location, texture);
             return location;
         } catch (Exception e) {
             return ResourceLocation.withDefaultNamespace("textures/entity/player/wide/steve.png");
+        } finally {
+            if (image != null) {
+                image.close();
+            }
         }
     }
 }

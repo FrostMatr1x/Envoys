@@ -6,18 +6,18 @@ import com.frost.envoys.network.payload.RequestSkinPayload;
 import com.frost.envoys.network.payload.SkinConfirmedPayload;
 import com.frost.envoys.network.payload.SkinDataPayload;
 import com.frost.envoys.network.payload.SkinInfoPayload;
-import com.frost.envoys.skin.gui.SkinGuiPreview;
 import com.frost.envoys.skin.model.SkinMetaData;
+import com.frost.envoys.npc.entity.BaseNPC;
 import com.frost.envoys.skin.service.SkinCacheService;
 import com.frost.envoys.util.ClientPathManager;
-import com.frost.envoys.util.PathManager;
 import com.frost.envoys.util.SkinModelUtil;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.UUID;
 
 public class ClientSkinPayloadHandler {
 
@@ -32,7 +32,7 @@ public class ClientSkinPayloadHandler {
                 if (localHash.equalsIgnoreCase(payload.hash())) {
                     try {
                         byte[] localBytes = Files.readAllBytes(cachedPng);
-                        ResourceLocation location = SkinGuiPreview.registerDynamicSkin(uuidStr, localBytes);
+                        applyToWorldNpc(payload.npcUuid(), localBytes);
 
                         if (Minecraft.getInstance().screen instanceof NPCSkinScreen skinScreen) {
                             skinScreen.onSkinDataReceived(localBytes);
@@ -65,6 +65,8 @@ public class ClientSkinPayloadHandler {
                         new SkinMetaData(uuidStr, hash, model, "server", System.currentTimeMillis())
                 );
 
+                applyToWorldNpc(payload.npcUuid(), pngData);
+
                 if (Minecraft.getInstance().screen instanceof NPCSkinScreen skinScreen) {
                     skinScreen.onSkinDataReceived(pngData);
                 }
@@ -83,5 +85,16 @@ public class ClientSkinPayloadHandler {
                 skinScreen.onSkinConfirmed(payload.hash());
             }
         });
+    }
+
+    private static void applyToWorldNpc(UUID npcUuid, byte[] pngData) {
+        if (Minecraft.getInstance().level == null) return;
+
+        for (Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
+            if (entity.getUUID().equals(npcUuid) && entity instanceof BaseNPC npc) {
+                npc.applyClientSkin(pngData);
+                return;
+            }
+        }
     }
 }

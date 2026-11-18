@@ -2,11 +2,16 @@ package com.frost.envoys;
 
 import com.frost.envoys.EnvoysConstants;
 import com.frost.envoys.action.NPCInteractManager;
+import com.frost.envoys.action.PlayerCheckpointData;
 import com.frost.envoys.action.ScriptRunner;
+import com.frost.envoys.action.event.NpcEventData;
+import com.frost.envoys.action.model.ActionSavePoint;
+import com.frost.envoys.action.model.EntityActionData;
 import com.frost.envoys.config.NPCConfigManager;
 import com.frost.envoys.init.ModEntities;
 import com.frost.envoys.lua.LuaEngineManager;
 import com.frost.envoys.npc.entity.BaseNPC;
+import com.frost.envoys.platform.EnvoysPlatform;
 import com.frost.envoys.quest.PlayerQuestManager;
 import com.frost.envoys.quest.QuestDefinition;
 import com.frost.envoys.quest.QuestIndex;
@@ -59,6 +64,7 @@ public class EnvoysCommand {
                 )
                 .then(Commands.literal("regen")
                         .then(Commands.argument("npc", UuidArgument.uuid())
+                                .suggests(EnvoysCommand::suggestSavedNpcUuids)
                                 .executes(ctx -> regenNpc(ctx.getSource(), UuidArgument.getUuid(ctx, "npc"))))
                 )
                 .then(Commands.literal("tp")
@@ -95,6 +101,14 @@ public class EnvoysCommand {
                                 .then(Commands.argument("target", StringArgumentType.word())
                                         .suggests(EnvoysCommand::suggestNpcTargets)
                                         .executes(ctx -> killNpc(ctx.getSource(), StringArgumentType.getString(ctx, "target")))))
+                        .then(Commands.literal("resetpoints")
+                                .then(Commands.argument("target", StringArgumentType.word())
+                                        .suggests(EnvoysCommand::suggestNpcTargets)
+                                        .then(Commands.argument("branch", StringArgumentType.word())
+                                                .suggests(EnvoysCommand::suggestSavePointKeys)
+                                                .executes(ctx -> resetNpcCheckpoints(ctx.getSource(),
+                                                        StringArgumentType.getString(ctx, "target"),
+                                                        StringArgumentType.getString(ctx, "branch"))))))
                 )
                 .then(Commands.literal("lua")
                         .then(Commands.literal("reload")
@@ -129,7 +143,8 @@ public class EnvoysCommand {
                         activeSkinKeys.add(script.passport.skinHash.toLowerCase());
                     }
                     if (script.passport.skinValue != null && !script.passport.skinValue.isBlank()) {
-                        activeSkinKeys.add(SkinSyncService.sanitizeFileName(script.passport.skinValue).toLowerCase());
+                        activeSkinKeys.add(SkinSyncService.resolveFileKey(
+                                script.passport.skinValue, script.passport.skinType).toLowerCase());
                     }
                 }
             });
@@ -295,7 +310,7 @@ public class EnvoysCommand {
 
         Optional<NPCInteractManager> opt = NPCConfigManager.load(uuid);
         if (opt.isEmpty()) {
-            source.sendFailure(Component.translatable("envoys.cmd.regen.not_found", uuid));
+            source.sendFailure(Component.translatable("envoys.cmd.regen.not_found", uuid.toString()));
             return 0;
         }
 
@@ -327,7 +342,7 @@ public class EnvoysCommand {
         level.addFreshEntity(npc);
 
         final int finalRemoved = removed;
-        final Component message = Component.translatable("envoys.cmd.regen.done", uuid, finalRemoved, x, y, z);
+        final Component message = Component.translatable("envoys.cmd.regen.done", uuid.toString(), finalRemoved, x, y, z);
         source.sendSuccess(() -> message, true);
 
         return 1;
@@ -347,14 +362,14 @@ public class EnvoysCommand {
         }
 
         if (npc == null) {
-            source.sendFailure(Component.translatable("envoys.cmd.tp.not_found", uuid));
+            source.sendFailure(Component.translatable("envoys.cmd.tp.not_found", uuid.toString()));
             return 0;
         }
 
         player.teleportTo(npcLevel, npc.getX(), npc.getY(), npc.getZ(),
                 java.util.Set.<RelativeMovement>of(), player.getYRot(), player.getXRot());
 
-        source.sendSuccess(() -> Component.translatable("envoys.cmd.tp.done", uuid), true);
+        source.sendSuccess(() -> Component.translatable("envoys.cmd.tp.done", uuid.toString()), true);
         return 1;
     }
 
@@ -518,9 +533,55 @@ public class EnvoysCommand {
         }
         UUID uuid = npc.getUUID();
         npc.discard();
-        final Component message = Component.translatable("envoys.cmd.npc.killed", uuid);
+        final Component message = Component.translatable("envoys.cmd.npc.killed", uuid.toString());
         source.sendSuccess(() -> message, true);
         return 1;
+    }
+
+    private static int resetNpcCheckpoints(CommandSourceStack source, String rawTarget, String rawBranch) {
+        UUID uuid = resolveNpcUuid(source, rawTarget);
+        if (uuid == null || NPCConfigManager.load(uuid).isEmpty()) {
+            source.sendFailure(Component.translatable("envoys.cmd.npc.not_found"));
+            return 0;
+        }
+
+        String branch = rawBranch == null ? "" : rawBranch.trim();
+        if (branch.isEmpty()) {
+            source.sendFailure(Component.translatable("envoys.cmd.npc.resetpoints.branch_required"));
+            return 0;
+        }
+
+        int resetPlayers = 0;
+        for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
+            if (PlayerCheckpointData.resetCheckpoint(player, uuid.toString(), branch)) {
+                resetPlayers++;
+            }
+        }
+
+        final String finalBranch = branch;
+        final int finalResetPlayers = resetPlayers;
+        if (resetPlayers == 0) {
+            source.sendSuccess(() -> Component.translatable(
+                    "envoys.cmd.npc.resetpoints.none", finalBranch), false);
+        } else {
+            source.sendSuccess(() -> Component.translatable(
+                    "envoys.cmd.npc.resetpoints.done", uuid.toString(), finalBranch, finalResetPlayers), true);
+        }
+        return resetPlayers;
+    }
+
+    private static UUID resolveNpcUuid(CommandSourceStack source, String rawTarget) {
+        String target = rawTarget == null ? "" : rawTarget.trim();
+        if ("aim".equalsIgnoreCase(target)) {
+            ServerPlayer player = source.getPlayer();
+            BaseNPC npc = player == null ? null : raycastNpc(player);
+            return npc == null ? null : npc.getUUID();
+        }
+        try {
+            return UUID.fromString(target);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static BaseNPC resolveNpcTarget(CommandSourceStack source, String rawTarget) throws CommandSyntaxException {
@@ -567,6 +628,51 @@ public class EnvoysCommand {
                         builder.suggest(uuid);
                     }
                 }
+            }
+        }
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestSavedNpcUuids(
+            CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        String remaining = builder.getRemainingLowerCase();
+        Set<String> seen = new HashSet<>();
+        for (UUID uuid : NPCConfigManager.getAllSavedUuids()) {
+            String id = uuid.toString();
+            if (id.toLowerCase(Locale.ROOT).startsWith(remaining) && seen.add(id)) {
+                builder.suggest(id);
+            }
+        }
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestSavePointKeys(
+            CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        String remaining = builder.getRemainingLowerCase();
+        Set<String> keys = new LinkedHashSet<>();
+        String target = StringArgumentType.getString(context, "target");
+        UUID uuid = resolveNpcUuid(context.getSource(), target);
+        if (uuid != null) {
+            String npcUuid = uuid.toString();
+            NPCConfigManager.load(uuid).ifPresent(manager -> {
+                for (NpcEventData event : manager.events.values()) {
+                    for (EntityActionData action : event.actions()) {
+                        if (action instanceof ActionSavePoint savePoint
+                                && savePoint.saveId != null && !savePoint.saveId.isBlank()) {
+                            keys.add(savePoint.saveId);
+                        }
+                    }
+                }
+            });
+            for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
+                if (EnvoysPlatform.hasCheckpoints(player)) {
+                    keys.addAll(EnvoysPlatform.checkpoints(player).keys(npcUuid));
+                }
+            }
+        }
+        for (String key : keys) {
+            if (key.toLowerCase(Locale.ROOT).startsWith(remaining)) {
+                builder.suggest(key);
             }
         }
         return builder.buildFuture();

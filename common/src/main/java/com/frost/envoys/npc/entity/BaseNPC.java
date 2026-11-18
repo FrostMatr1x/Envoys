@@ -13,6 +13,7 @@ import com.frost.envoys.lua.LuaEngineManager;
 import com.frost.envoys.lua.LuaNpcEngine;
 import com.frost.envoys.init.ModItems;
 import com.frost.envoys.network.payload.OpenSettingGuiPayload;
+import com.frost.envoys.network.payload.RequestSkinPayload;
 import com.frost.envoys.skin.gui.SkinGuiPreview;
 import com.frost.envoys.skin.service.SkinSyncService;
 
@@ -49,6 +50,7 @@ public class BaseNPC extends PathfinderMob {
     private NPCPassportData passport;
     private ResourceLocation clientSkinLocation = null;
     private String lastLoadedHash = "";
+    private String lastRequestedServerSkinHash = null;
     private boolean scriptedMovement = false;
     private final Set<UUID> playersInRange = new HashSet<>();
 
@@ -121,6 +123,8 @@ public class BaseNPC extends PathfinderMob {
     }
 
     public ResourceLocation getClientSkinLocation() {
+        if (this.level() == null || !this.level().isClientSide()) return null;
+
         String value = this.entityData.get(SKIN_VALUE);
         String type = this.entityData.get(SKIN_TYPE);
         String hash = this.entityData.get(SKIN_HASH);
@@ -134,10 +138,35 @@ public class BaseNPC extends PathfinderMob {
                     Minecraft.getInstance().execute(() -> {
                         this.clientSkinLocation = SkinGuiPreview.registerDynamicSkin("npc_" + getUUID(), result.pngData());
                     });
+                } else {
+                    // The client cannot resolve the skin itself (e.g. a server-side FILE skin or
+                    // a rate-limited Mojang lookup) - ask the server for its cached copy.
+                    requestServerSkin(hash);
                 }
             });
         }
         return clientSkinLocation;
+    }
+
+    private void requestServerSkin(String hash) {
+        if (lastRequestedServerSkinHash != null && lastRequestedServerSkinHash.equalsIgnoreCase(hash)) {
+            return;
+        }
+        lastRequestedServerSkinHash = hash;
+
+        Minecraft.getInstance().execute(() -> {
+            if (Minecraft.getInstance().level != null) {
+                Network.sendToServer(new RequestSkinPayload(getUUID()));
+            }
+        });
+    }
+
+    public void applyClientSkin(byte[] pngData) {
+        if (pngData == null || pngData.length == 0) return;
+
+        this.lastLoadedHash = this.entityData.get(SKIN_HASH);
+        Minecraft.getInstance().execute(() ->
+                this.clientSkinLocation = SkinGuiPreview.registerDynamicSkin("npc_" + getUUID(), pngData));
     }
 
     public String getSkinModel() {

@@ -87,6 +87,27 @@ public class SkinRemoteService {
         throw new RuntimeException("Maximum number of redirects exceeded (5)");
     }
 
+    private static HttpResponse<InputStream> sendWithRetries(String url) throws Exception {
+        final int maxAttempts = 3;
+        HttpResponse<InputStream> response = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            response = sendWithSSRFAndRedirects(url);
+            int status = response.statusCode();
+
+            if (status != 429 && status < 500) {
+                return response;
+            }
+
+            response.body().close();
+            if (attempt < maxAttempts) {
+                Thread.sleep(400L * attempt);
+            }
+        }
+
+        return response;
+    }
+
     public static byte[] downloadSkinFromUrl(String urlString) throws Exception {
         String url = urlString.trim();
 
@@ -96,7 +117,7 @@ public class SkinRemoteService {
             url = "https://" + url;
         }
 
-        HttpResponse<InputStream> response = sendWithSSRFAndRedirects(url);
+        HttpResponse<InputStream> response = sendWithRetries(url);
 
         if (response.statusCode() != 200) {
             throw new RuntimeException("HTTP error: " + response.statusCode());
@@ -129,9 +150,13 @@ public class SkinRemoteService {
     public static Optional<MojangSkinResult> fetchMojangSkin(String username) {
         try {
             String uuidUrl = "https://api.mojang.com/users/profiles/minecraft/" + username;
-            HttpResponse<InputStream> resp1 = sendWithSSRFAndRedirects(uuidUrl);
+            HttpResponse<InputStream> resp1 = sendWithRetries(uuidUrl);
 
-            if (resp1.statusCode() != 200) return Optional.empty();
+            if (resp1.statusCode() != 200) {
+                EnvoysConstants.LOGGER.warn("Mojang profile lookup for {} returned HTTP {}", username, resp1.statusCode());
+                resp1.body().close();
+                return Optional.empty();
+            }
 
             String body1;
             try (InputStream in = resp1.body()) {
@@ -141,9 +166,13 @@ public class SkinRemoteService {
             String uuid = obj1.get("id").getAsString();
 
             String profileUrl = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid;
-            HttpResponse<InputStream> resp2 = sendWithSSRFAndRedirects(profileUrl);
+            HttpResponse<InputStream> resp2 = sendWithRetries(profileUrl);
 
-            if (resp2.statusCode() != 200) return Optional.empty();
+            if (resp2.statusCode() != 200) {
+                EnvoysConstants.LOGGER.warn("Mojang session lookup for {} returned HTTP {}", username, resp2.statusCode());
+                resp2.body().close();
+                return Optional.empty();
+            }
 
             String body2;
             try (InputStream in = resp2.body()) {

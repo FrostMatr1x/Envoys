@@ -28,6 +28,18 @@ public class SkinSyncService {
         public boolean isSuccess() { return pngData != null && errorMsg == null; }
     }
 
+    public static String resolveFileKey(String query, String skinType) {
+        if (query == null || query.isBlank()) return "unknown";
+
+        String normalized = query.trim();
+        if ("URL".equalsIgnoreCase(skinType)
+                && !normalized.toLowerCase().startsWith("http://")
+                && !normalized.toLowerCase().startsWith("https://")) {
+            normalized = "https://" + normalized;
+        }
+        return sanitizeFileName(normalized);
+    }
+
     public static String sanitizeFileName(String input) {
         if (input == null || input.isBlank()) return "unknown";
 
@@ -48,6 +60,7 @@ public class SkinSyncService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (query == null || query.isBlank()) {
+                    EnvoysConstants.LOGGER.warn("Skin request with empty value (type={})", skinType);
                     return new SkinFetchResult(null, null, null, null, "Empty request");
                 }
 
@@ -61,7 +74,7 @@ public class SkinSyncService {
                     normalizedQuery = "https://" + normalizedQuery;
                 }
 
-                String fileKey = sanitizeFileName(normalizedQuery);
+                String fileKey = resolveFileKey(normalizedQuery, skinType);
 
                 SkinIndexData index = SkinLocalService.readIndex(indexFile);
                 Optional<SkinIndexEntry> entryOpt = index.skins.stream()
@@ -124,12 +137,14 @@ public class SkinSyncService {
                     }
                 }
 
+                EnvoysConstants.LOGGER.warn("Skin '{}' (type={}, client={}) was not found", normalizedQuery, skinType, isClient);
                 return new SkinFetchResult(null, null, null, null, "Skin not found");
 
             } catch (IllegalArgumentException e) {
+                EnvoysConstants.LOGGER.warn("Invalid skin '{}' (type={}, client={}): {}", query, skinType, isClient, e.getMessage());
                 return new SkinFetchResult(null, null, null, null, e.getMessage());
             } catch (Exception e) {
-                EnvoysConstants.LOGGER.error("Failed to load skin: ", e);
+                EnvoysConstants.LOGGER.error("Failed to load skin '{}' (type={}, client={})", query, skinType, isClient, e);
                 return new SkinFetchResult(null, null, null, null, "Network or download error");
             }
         }, IO_EXECUTOR);
