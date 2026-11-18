@@ -1,0 +1,220 @@
+package com.frost.envoys.quest;
+
+import com.frost.envoys.network.Network;
+
+import com.frost.envoys.platform.EnvoysPlatform;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.frost.envoys.network.payload.ClientQuestEntry;
+import com.frost.envoys.network.payload.SyncPlayerQuestsPayload;
+
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+
+public final class PlayerQuestManager {
+
+    private PlayerQuestManager() {
+    }
+
+    private static PlayerQuestTracker tracker(Player player) {
+        return EnvoysPlatform.quests(player);
+    }
+
+    public static void give(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid)) {
+            return;
+        }
+        PlayerQuestTracker tracker = tracker(player);
+        QuestProgress existing = tracker.get(questUuid);
+
+        if (existing == null || existing.getStatus() != QuestStatus.ACTIVE) {
+            // A completed (or stale) entry must not block re-giving the quest:
+            // the check action resets it, so re-activation is the expected flow.
+            tracker.put(questUuid, new QuestProgress(QuestStatus.ACTIVE, List.of(), 0));
+            syncIfServer(player);
+        }
+    }
+
+    public static boolean isActive(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !EnvoysPlatform.hasQuests(player)) {
+            return false;
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress != null && progress.getStatus() == QuestStatus.ACTIVE;
+    }
+
+    public static boolean isCompleted(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !EnvoysPlatform.hasQuests(player)) {
+            return false;
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress != null && progress.getStatus() == QuestStatus.COMPLETED;
+    }
+
+    public static void advanceStep(Player player, QuestDefinition quest, String completionId) {
+        if (player == null || quest == null || isBlank(quest.questUuid) || isBlank(completionId)) {
+            return;
+        }
+        if (!isActive(player, quest.questUuid)) {
+            return;
+        }
+        QuestProgress progress = tracker(player).get(quest.questUuid);
+        if (progress == null) {
+            return;
+        }
+        progress.getCompletedSteps().add(completionId);
+        if (progress.getCompletedSteps().size() >= Math.max(1, quest.requiredCompletions)) {
+            markCompleted(player, quest.questUuid);
+        }
+        syncIfServer(player);
+    }
+
+    public static void addKill(Player player, QuestDefinition quest) {
+        addKill(player, quest, 1);
+    }
+
+    public static void addKill(Player player, QuestDefinition quest, int amount) {
+        if (player == null || quest == null || isBlank(quest.questUuid) || amount <= 0) {
+            return;
+        }
+        if (!isActive(player, quest.questUuid)) {
+            return;
+        }
+        QuestProgress progress = tracker(player).get(quest.questUuid);
+        if (progress == null) {
+            return;
+        }
+        progress.setKillCount(progress.getKillCount() + amount);
+        if (progress.getKillCount() >= Math.max(1, quest.killCount)) {
+            markCompleted(player, quest.questUuid);
+        }
+        syncIfServer(player);
+    }
+
+    public static QuestStatus status(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !EnvoysPlatform.hasQuests(player)) {
+            return QuestStatus.NOT_STARTED;
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress == null ? QuestStatus.NOT_STARTED : progress.getStatus();
+    }
+
+    public static List<String> completedSteps(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !EnvoysPlatform.hasQuests(player)) {
+            return List.of();
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress == null ? List.of() : List.copyOf(progress.getCompletedSteps());
+    }
+
+    public static void markCompleted(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid)) {
+            return;
+        }
+        tracker(player).put(questUuid, new QuestProgress(QuestStatus.COMPLETED, List.of(), 0));
+        syncIfServer(player);
+    }
+
+    public static void reset(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !EnvoysPlatform.hasQuests(player)) {
+            return;
+        }
+        tracker(player).remove(questUuid);
+        syncIfServer(player);
+    }
+
+    public static int currentKillCount(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !EnvoysPlatform.hasQuests(player)) {
+            return 0;
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress == null ? 0 : progress.getKillCount();
+    }
+
+    public static int completedStepCount(Player player, String questUuid) {
+        if (player == null || isBlank(questUuid) || !EnvoysPlatform.hasQuests(player)) {
+            return 0;
+        }
+        QuestProgress progress = tracker(player).get(questUuid);
+        return progress == null ? 0 : progress.getCompletedSteps().size();
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    public static void sync(ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        Network.sendToPlayer(player, new SyncPlayerQuestsPayload(buildEntries(player)));
+    }
+
+    private static List<ClientQuestEntry> buildEntries(ServerPlayer player) {
+        if (!EnvoysPlatform.hasQuests(player)) {
+            return List.of();
+        }
+
+        Map<String, QuestDefinition> definitions = new HashMap<>();
+        Map<String, String> npcNames = new HashMap<>();
+        for (QuestIndex.Entry entry : QuestIndex.entries()) {
+            QuestDefinition quest = entry.quest();
+            if (quest == null || isBlank(quest.questUuid)) {
+                continue;
+            }
+            definitions.putIfAbsent(quest.questUuid, quest);
+            String name = (entry.manager() != null && entry.manager().passport != null)
+                    ? entry.manager().passport.npcName
+                    : "";
+            if (name != null && !name.isBlank()) {
+                npcNames.putIfAbsent(quest.questUuid, name);
+            }
+        }
+
+        List<ClientQuestEntry> result = new ArrayList<>();
+        for (Map.Entry<String, QuestProgress> progressEntry : EnvoysPlatform.quests(player).asMap().entrySet()) {
+            QuestProgress progress = progressEntry.getValue();
+            if (progress == null || progress.getStatus() == QuestStatus.NOT_STARTED) {
+                continue;
+            }
+            QuestDefinition definition = definitions.get(progressEntry.getKey());
+            if (definition == null || definition.type == null) {
+                continue;
+            }
+
+            int current = switch (definition.type) {
+                case KILL -> progress.getKillCount();
+                case BOOLEAN -> progress.getCompletedSteps().size();
+                case ITEM -> 0;
+            };
+            int target = switch (definition.type) {
+                case KILL -> Math.max(1, definition.killCount);
+                case BOOLEAN -> Math.max(1, definition.requiredCompletions);
+                case ITEM -> Math.max(1, definition.itemCount);
+            };
+
+            result.add(new ClientQuestEntry(
+                definition.questUuid,
+                definition.title == null ? "" : definition.title,
+                npcNames.getOrDefault(definition.questUuid, ""),
+                definition.visibleInGui,
+                definition.type,
+                definition.itemId == null ? "" : definition.itemId,
+                target,
+                current,
+                progress.getStatus() == QuestStatus.COMPLETED
+            ));
+        }
+        return result;
+    }
+
+    private static void syncIfServer(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            sync(serverPlayer);
+        }
+    }
+}

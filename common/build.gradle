@@ -1,0 +1,46 @@
+plugins {
+    id 'dev.architectury.loom'
+}
+
+architectury {
+    common(['fabric', 'neoforge'] as String[])
+}
+
+loom {
+    silentMojangMappingsLicense()
+
+    mixin {
+        useLegacyMixinAp = false
+    }
+}
+
+configurations {
+    cobaltEmbed
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
+    }
+
+    compileOnly 'net.fabricmc:sponge-mixin:0.15.2+mixin.0.8.7'
+    compileOnly 'cc.tweaked:cobalt:0.9.7'
+    cobaltEmbed 'cc.tweaked:cobalt:0.9.7'
+    compileOnly "dev.kosmx.player-anim:player-animation-lib-forge:${rootProject.player_animator_version}"
+}
+
+
+tasks.named('remapJar') {
+    exclude 'org/squiddev/cobalt/**'
+    exclude 'cc/tweaked/cobalt/**'
+}
+
+tasks.named('jar') {
+    from({ configurations.cobaltEmbed.collect { zipTree(it) } }) {
+        exclude 'META-INF/**'
+        exclude 'module-info.class'
+        exclude '**/module-info.class'
+    }
+}

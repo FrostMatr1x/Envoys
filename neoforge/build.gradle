@@ -1,0 +1,122 @@
+plugins {
+    id 'dev.architectury.loom'
+    id 'com.gradleup.shadow'
+}
+
+def generatedResources = file('src/generated/resources')
+def existingResources = file('src/main/resources')
+
+architectury {
+    platformSetupLoomIde()
+}
+
+loom {
+    silentMojangMappingsLicense()
+
+    runs {
+        client {
+            getSystemProperties().put('neoforge.enabledGameTestNamespaces', rootProject.mod_id)
+        }
+
+        server {
+            getSystemProperties().put('neoforge.enabledGameTestNamespaces', rootProject.mod_id)
+        }
+
+        data {
+            data()
+            programArgs '--mod', rootProject.mod_id, '--all',
+                    '--output', generatedResources.absolutePath,
+                    '--existing', existingResources.absolutePath
+        }
+
+        configureEach {
+            getSystemProperties().put('forge.logging.markers', 'REGISTRIES')
+        }
+    }
+
+    mods {
+        "${rootProject.mod_id}" {
+            sourceSet 'main'
+            sourceSet 'main', project(':common')
+        }
+    }
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentNeoForge.extendsFrom common
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
+    }
+
+    neoForge "net.neoforged:neoforge:${rootProject.neo_version}"
+
+    compileOnly 'curse.maven:sophisticated-core-618298:8627791'
+    compileOnly 'curse.maven:sophisticated-backpacks-422301:8627841'
+    runtimeOnly 'curse.maven:sophisticated-core-618298:8627791'
+    runtimeOnly 'curse.maven:sophisticated-backpacks-422301:8627841'
+
+    runtimeOnly "dev.kosmx.player-anim:player-animation-lib-forge:${rootProject.player_animator_version}"
+
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionNeoForge')) { transitive = false }
+}
+
+base {
+    archivesName = "${rootProject.mod_id}-neoforge"
+}
+
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+    exclude '**/*.bbmodel'
+    exclude 'src/generated/**/.cache'
+}
+
+def resourceProperties = [
+        minecraft_version      : rootProject.minecraft_version,
+        minecraft_version_range: rootProject.minecraft_version_range,
+        neo_version            : rootProject.neo_version,
+        loader_version_range   : rootProject.loader_version_range,
+        mod_id                 : rootProject.mod_id,
+        mod_name               : rootProject.mod_name,
+        mod_license            : rootProject.mod_license,
+        mod_version            : rootProject.mod_version,
+]
+
+processResources {
+    inputs.properties resourceProperties
+
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand resourceProperties
+    }
+}
+
+shadowJar {
+    relocate 'org.squiddev.cobalt', 'com.frost.envoys.shaded.cobalt'
+    relocate 'cc.tweaked.cobalt.internal', 'com.frost.envoys.shaded.cobalt.internal'
+    exclude 'fabric.mod.json'
+    exclude 'architectury.common.json'
+
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = 'dev-shadow'
+}
+
+remapJar {
+    input.set shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier = null
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}

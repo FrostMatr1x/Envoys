@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "envoys",
+  "version": "${version}",
+  "name": "Envoys",
+  "description": "Envoys adds fully configurable NPCs with branching dialogues, an advanced economy, quests, a visual logic editor and a built-in Lua engine.",
+  "authors": [
+    "FrostMatrix"
+  ],
+  "license": "GPL-3.0-only",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.frost.envoys.fabric.EnvoysFabric"
+    ],
+    "client": [
+      "com.frost.envoys.fabric.EnvoysFabricClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "playeranimator": ">=2.0.1"
+  }
+}
