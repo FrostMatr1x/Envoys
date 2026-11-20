@@ -272,7 +272,9 @@ public class NPCSkinScreen extends Screen {
         if (!skinsDir.exists()) skinsDir.mkdirs();
 
         SkinIndexData index = SkinLocalService.readIndex(ClientPathManager.getClientIndexFile());
-        index.skins.forEach(e -> this.localSkinFiles.add(e.path));
+        if (index != null) {
+            index.skins.forEach(e -> this.localSkinFiles.add(e.path));
+        }
     }
 
     @Override

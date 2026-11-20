@@ -81,7 +81,7 @@ public class SkinSyncService {
                 String fileKey = resolveFileKey(normalizedQuery, skinType);
 
                 SkinIndexData index = SkinLocalService.readIndex(indexFile);
-                Optional<SkinIndexEntry> entryOpt = index.skins.stream()
+                Optional<SkinIndexEntry> entryOpt = index == null ? Optional.empty() : index.skins.stream()
                         .filter(e -> e != null
                                 && e.uuid != null
                                 && e.hash != null
@@ -109,7 +109,9 @@ public class SkinSyncService {
                     SkinCacheService.saveToCache(cacheDir, fileKey, data, new SkinMetaData(fileKey, hash, model, "url", System.currentTimeMillis()));
 
                     SkinIndexEntry newEntry = new SkinIndexEntry(fileKey, fileKey + ".png", model, "url", hash, System.currentTimeMillis());
-                    SkinLocalService.addOrUpdateIndex(indexFile, newEntry);
+                    if (!SkinLocalService.addOrUpdateIndex(indexFile, newEntry)) {
+                        EnvoysConstants.LOGGER.warn("Skin index was not updated for '{}' (index unreadable)", fileKey);
+                    }
 
                     return new SkinFetchResult(data, hash, model, "url", null);
                 }
@@ -127,7 +129,9 @@ public class SkinSyncService {
                         SkinCacheService.saveToCache(cacheDir, fileKey, data, new SkinMetaData(fileKey, hash, model, "local", System.currentTimeMillis()));
 
                         SkinIndexEntry newEntry = new SkinIndexEntry(fileKey, fileKey + ".png", model, "local", hash, System.currentTimeMillis());
-                        SkinLocalService.addOrUpdateIndex(indexFile, newEntry);
+                        if (!SkinLocalService.addOrUpdateIndex(indexFile, newEntry)) {
+                            EnvoysConstants.LOGGER.warn("Skin index was not updated for '{}' (index unreadable)", fileKey);
+                        }
 
                         return new SkinFetchResult(data, hash, model, "local", null);
                     }
@@ -143,7 +147,9 @@ public class SkinSyncService {
                         SkinCacheService.saveToCache(cacheDir, fileKey, data, new SkinMetaData(fileKey, hash, model, "mojang", System.currentTimeMillis()));
 
                         SkinIndexEntry newEntry = new SkinIndexEntry(fileKey, fileKey + ".png", model, "mojang", hash, System.currentTimeMillis());
-                        SkinLocalService.addOrUpdateIndex(indexFile, newEntry);
+                        if (!SkinLocalService.addOrUpdateIndex(indexFile, newEntry)) {
+                            EnvoysConstants.LOGGER.warn("Skin index was not updated for '{}' (index unreadable)", fileKey);
+                        }
 
                         return new SkinFetchResult(data, hash, model, "mojang", null);
                     }

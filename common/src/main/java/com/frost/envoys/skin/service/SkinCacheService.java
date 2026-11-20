@@ -3,11 +3,14 @@ package com.frost.envoys.skin.service;
 import com.frost.envoys.action.serialization.EntityActionAdapter;
 import com.frost.envoys.skin.model.SkinMetaData;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 
@@ -59,17 +62,39 @@ public class SkinCacheService {
 
         Path pngPath = cacheDir.resolve(cleanKey + ".png");
         Path jsonPath = cacheDir.resolve(cleanKey + ".json");
+        Path pngTmp = cacheDir.resolve(cleanKey + ".png.tmp");
+        Path jsonTmp = cacheDir.resolve(cleanKey + ".json.tmp");
 
-        Files.deleteIfExists(pngPath);
-        Files.deleteIfExists(jsonPath);
+        try {
+            Files.write(pngTmp, pngData,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
+            moveReplacing(pngTmp, pngPath);
 
-        Files.write(pngPath, pngData,
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
+            String json = EntityActionAdapter.GSON.toJson(meta);
+            Files.writeString(jsonTmp, json, StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
+            moveReplacing(jsonTmp, jsonPath);
+        } catch (Exception e) {
+            deleteQuietly(pngTmp);
+            deleteQuietly(jsonTmp);
+            throw e;
+        }
+    }
 
-        String json = EntityActionAdapter.GSON.toJson(meta);
-        Files.writeString(jsonPath, json, StandardCharsets.UTF_8,
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
+    private static void moveReplacing(Path source, Path target) throws IOException {
+        try {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static void deleteQuietly(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
+        }
     }
 }

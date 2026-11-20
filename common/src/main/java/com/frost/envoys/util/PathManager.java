@@ -61,6 +61,12 @@ public class PathManager {
         return p;
     }
 
+    public static Path getServerTradesDir() {
+        Path p = getServerEnvoysDir().resolve("trades");
+        createDirectories(p);
+        return p;
+    }
+
     public static Path getServerLuaDir() {
         Path p = getServerEnvoysDir().resolve("lua");
         createDirectories(p);

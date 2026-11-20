@@ -12,6 +12,7 @@ import com.frost.envoys.client.quest.ClientQuestTracker;
 import com.frost.envoys.gui.screen.NPCDialogScreen;
 import com.frost.envoys.gui.screen.NPCDialogScreen.DialogOption;
 import com.frost.envoys.gui.screen.NPCConfigScreen;
+import com.frost.envoys.client.ClientLuaSaveTracker;
 import com.frost.envoys.client.ClientLuaScriptBridge;
 import com.frost.envoys.network.payload.LuaScriptUploadResultPayload;
 import com.frost.envoys.network.payload.NpcLuaScriptResponsePayload;
@@ -106,10 +107,22 @@ public class ClientPayloadHandler {
 
     public static void handleLuaScriptUploadResult(final LuaScriptUploadResultPayload payload, final NetworkContext context) {
         context.enqueueWork(() -> {
+            ClientLuaSaveTracker.confirm(parseUuid(payload.npcUuid()), payload.sourceHash(), payload.success());
             if (Minecraft.getInstance().player != null && payload.message() != null) {
                 Minecraft.getInstance().player.sendSystemMessage(payload.message());
             }
         });
+    }
+
+    private static java.util.UUID parseUuid(String value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try {
+            return java.util.UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public static void handleNpcLuaScriptResponse(final NpcLuaScriptResponsePayload payload, final NetworkContext context) {

@@ -92,6 +92,8 @@ public class NPCScriptDataAdapter implements JsonSerializer<NPCScriptData>, Json
             data.quests = quests;
         }
 
+        // Events are parsed without per-entry try/catch on purpose: a parse failure aborts
+        // the whole load, so the on-disk file stays untouched instead of silently losing data.
         JsonObject eventsObj = root.has("events") && root.get("events").isJsonObject()
                 ? root.getAsJsonObject("events")
                 : null;

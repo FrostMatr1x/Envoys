@@ -152,6 +152,12 @@ public class NPCConfigManager {
     }
 
     public static void loadAll() {
+        // SCRIPTS is a static map that survives a world switch in singleplayer (same JVM).
+        // Without clearing it here, NPCs from world A would be written into world B by the
+        // next saveAll() when world B stops.
+        NPCInteractManager.SCRIPTS.clear();
+        QuestIndex.invalidate();
+
         Path dir = getNpcDir();
         try (Stream<Path> files = Files.list(dir)) {
             files.filter(p -> {

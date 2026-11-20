@@ -23,6 +23,7 @@
   "envoys.cmd.cleanup.npcs_unverifiable": "§e[Envoys] Skipped records without a known location: %s",
   "envoys.cmd.cleanup.skins_done": "§a[Envoys] Removed unused skins: %s (freed %s MB)",
   "envoys.cmd.cleanup.skins_empty": "§e[Envoys] Skin cache is empty.",
+  "envoys.cmd.cleanup.skins_index_unreadable": "§c[Envoys] The skin index is corrupted and cannot be read. Cleanup aborted, file left untouched.",
   "envoys.cmd.lua.aim_required": "§c[Envoys] Aim at an NPC (or provide a UUID).",
   "envoys.cmd.lua.bad_name": "§cInvalid file name (expected [a-zA-Z0-9_-]+.lua).",
   "envoys.cmd.lua.compile_error": "§cCompile error: %s",

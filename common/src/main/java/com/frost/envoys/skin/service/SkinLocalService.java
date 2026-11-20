@@ -7,6 +7,7 @@ import com.frost.envoys.skin.model.SkinIndexEntry;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -19,6 +20,10 @@ public class SkinLocalService {
                 && path.matches("[A-Za-z0-9._-]+\\.png");
     }
 
+    /**
+     * Reads the skin index. A missing file yields an empty index; an unreadable or
+     * corrupt file yields {@code null}, meaning "unknown state, do not overwrite".
+     */
     public static SkinIndexData readIndex(File indexFile) {
         if (!indexFile.exists()) {
             return new SkinIndexData();
@@ -36,27 +41,49 @@ public class SkinLocalService {
             return data;
         } catch (Exception e) {
             EnvoysConstants.LOGGER.error("Failed to read skin index: {}", indexFile.getAbsolutePath(), e);
-            return new SkinIndexData();
+            return null;
         }
     }
 
     public static synchronized void saveIndex(File indexFile, SkinIndexData data) {
+        Path target = indexFile.toPath();
+        Path tmp = target.resolveSibling(indexFile.getName() + ".tmp");
         try {
-            if (!indexFile.getParentFile().exists()) {
-                indexFile.getParentFile().mkdirs();
+            Path parent = target.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
             }
             String json = EntityActionAdapter.GSON.toJson(data);
-            Files.writeString(indexFile.toPath(), json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(tmp, json, StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+            try {
+                Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
             EnvoysConstants.LOGGER.error("Failed to save skin index: {}", indexFile.getAbsolutePath(), e);
+            try {
+                Files.deleteIfExists(tmp);
+            } catch (IOException ignored) {
+            }
         }
     }
 
-    public static synchronized void addOrUpdateIndex(File indexFile, SkinIndexEntry entry) {
+    public static synchronized boolean addOrUpdateIndex(File indexFile, SkinIndexEntry entry) {
+        if (entry == null || entry.uuid == null) {
+            return false;
+        }
         SkinIndexData index = readIndex(indexFile);
-        index.skins.removeIf(e -> e.uuid.equalsIgnoreCase(entry.uuid));
+        if (index == null) {
+            EnvoysConstants.LOGGER.error("Skin index is unreadable, refusing to overwrite: {}",
+                    indexFile.getAbsolutePath());
+            return false;
+        }
+        index.skins.removeIf(e -> e != null && e.uuid != null && e.uuid.equalsIgnoreCase(entry.uuid));
         index.skins.add(entry);
         saveIndex(indexFile, index);
+        return true;
     }
     
     public static Optional<Path> findSkinRecursively(Path rootDir, String identifier) {

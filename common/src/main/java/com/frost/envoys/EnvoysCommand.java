@@ -151,6 +151,11 @@ public class EnvoysCommand {
         }
 
         SkinIndexData indexData = SkinLocalService.readIndex(indexFile);
+        if (indexData == null) {
+            EnvoysConstants.LOGGER.error("[Envoys] Cleanup skins aborted: index {} is unreadable", indexFile);
+            source.sendFailure(Component.translatable("envoys.cmd.cleanup.skins_index_unreadable"));
+            return 0;
+        }
         List<SkinIndexEntry> toRemove = new ArrayList<>();
         long freedBytes = 0;
         Path cacheRoot = cacheDir.toAbsolutePath().normalize();

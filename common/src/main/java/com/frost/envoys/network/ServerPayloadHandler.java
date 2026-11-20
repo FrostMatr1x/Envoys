@@ -27,6 +27,7 @@ import com.frost.envoys.network.payload.SaveNPCScriptPayload;
 import com.frost.envoys.network.payload.SelectDialogAnswerPayload;
 import com.frost.envoys.network.payload.TradeAllPayload;
 import com.frost.envoys.npc.entity.BaseNPC;
+import com.frost.envoys.skin.service.SkinCacheService;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -74,8 +75,8 @@ public class ServerPayloadHandler {
                     return;
                 }
 
-                NPCInteractManager manager = NPCInteractManager.byUUID(payload.npcId())
-                        .orElseGet(() -> new NPCInteractManager(payload.npcId()));
+                NPCInteractManager existing = NPCInteractManager.byUUID(payload.npcId()).orElse(null);
+                NPCInteractManager manager = existing != null ? existing : new NPCInteractManager(payload.npcId());
 
                 if (!isOp && manager.passport.creativeTunerOnly) {
                     EnvoysConstants.LOGGER.warn("[Envoys] Player {} tried to modify creative-only NPC script!", player.getName().getString());
@@ -84,6 +85,15 @@ public class ServerPayloadHandler {
 
                 NPCScriptData scriptData = EntityActionAdapter.GSON.fromJson(payload.jsonScript(), NPCScriptData.class);
                 if (scriptData == null) return;
+
+                // Deserialization materializes all event types, so an "empty" script still has
+                // event entries. Check for real actions/quests to protect a populated NPC from
+                // a client that failed to parse its copy and then sent an empty save.
+                if (!hasScriptContent(scriptData) && existing != null && existing.hasActions()) {
+                    EnvoysConstants.LOGGER.warn("[Envoys] Rejecting empty script payload for populated NPC {}",
+                            payload.npcId());
+                    return;
+                }
 
                 if (!isOp && containsForbiddenActions(scriptData)) {
                     EnvoysConstants.LOGGER.warn("[Envoys] Security alert! Player {} tried to save forbidden action types in NPC {}", 
@@ -110,27 +120,29 @@ public class ServerPayloadHandler {
             }
             playerRef[0] = player;
 
+            String npcUuid = payload.npcId() == null ? "" : payload.npcId().toString();
+
             try {
                 if (!player.hasPermissions(4)) {
                     EnvoysConstants.LOGGER.warn("[Envoys] Player {} tried to upload a Lua script without OP-4",
                             player.getName().getString());
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.upload_op_only"));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.upload_op_only"), npcUuid, "");
                     return;
                 }
 
                 if (!EnvoysPlatform.config().luaEnabled) {
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.disabled"));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.disabled"), npcUuid, "");
                     return;
                 }
 
                 MinecraftServer server = player.getServer();
                 if (server == null) {
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.server_unavailable"));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.server_unavailable"), npcUuid, "");
                     return;
                 }
 
                 if (findLuaNpc(server, payload.npcId()) == null) {
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.npc_not_found", payload.npcId().toString()));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.npc_not_found", npcUuid), npcUuid, "");
                     return;
                 }
 
@@ -138,14 +150,14 @@ public class ServerPayloadHandler {
                 if (fileName == null || !LUA_FILE_NAME.matcher(fileName).matches()) {
                     EnvoysConstants.LOGGER.warn("[Envoys] Player {} tried to upload Lua script with invalid name '{}'",
                             player.getName().getString(), fileName);
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.bad_name"));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.bad_name"), npcUuid, "");
                     return;
                 }
 
                 String source = payload.source() == null ? "" : payload.source();
                 int byteLength = source.getBytes(StandardCharsets.UTF_8).length;
                 if (byteLength > MAX_LUA_SOURCE_BYTES) {
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.too_big", byteLength));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.too_big", byteLength), npcUuid, "");
                     return;
                 }
 
@@ -154,42 +166,45 @@ public class ServerPayloadHandler {
                 } catch (CompileException e) {
                     EnvoysConstants.LOGGER.warn("[Envoys] Lua compile error for NPC {} uploaded by {}: {}",
                             payload.npcId(), player.getName().getString(), e.getMessage());
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.compile_error", String.valueOf(e.getMessage())));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.compile_error", String.valueOf(e.getMessage())), npcUuid, "");
                     return;
                 } catch (LuaError e) {
                     EnvoysConstants.LOGGER.warn("[Envoys] Lua setup error for NPC {} uploaded by {}",
                             payload.npcId(), player.getName().getString(), e);
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.setup_error", String.valueOf(e.getMessage())));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.setup_error", String.valueOf(e.getMessage())), npcUuid, "");
                     return;
                 }
 
                 if (!LuaScriptStore.writeScript(payload.npcId(), source)) {
-                    replyLua(player, false, Component.translatable("envoys.cmd.lua.save_failed"));
+                    replyLua(player, false, Component.translatable("envoys.cmd.lua.save_failed"), npcUuid, "");
                     return;
                 }
+
+                String sourceHash = SkinCacheService.calculateSHA256(source.getBytes(StandardCharsets.UTF_8));
 
                 if (payload.restartEngine()) {
                     LuaNpcEngine engine = LuaEngineManager.createOrRestart(payload.npcId());
                     if (engine != null && engine.isErrored()) {
-                        replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_engine_error", engine.errorText()));
+                        replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_engine_error", engine.errorText()), npcUuid, sourceHash);
                     } else {
-                        replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_restart", fileName));
+                        replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_restart", fileName), npcUuid, sourceHash);
                     }
                 } else {
-                    replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_no_restart", fileName));
+                    replyLua(player, true, Component.translatable("envoys.cmd.lua.saved_no_restart", fileName), npcUuid, sourceHash);
                 }
 
                 EnvoysConstants.LOGGER.info("[Envoys] Lua script '{}' saved for NPC {} by {} (restart={})",
                         fileName, payload.npcId(), player.getName().getString(), payload.restartEngine());
             } catch (Exception e) {
                 EnvoysConstants.LOGGER.error("[Envoys] Failed to process Lua script upload for NPC {}", payload.npcId(), e);
-                replyLua(player, false, Component.translatable("envoys.cmd.lua.internal_error"));
+                replyLua(player, false, Component.translatable("envoys.cmd.lua.internal_error"), npcUuid, "");
             }
         }).exceptionally(e -> {
             EnvoysConstants.LOGGER.error("[Envoys] Unhandled error during Lua script upload for NPC {}", payload.npcId(), e);
             ServerPlayer player = playerRef[0];
             if (player != null) {
-                replyLua(player, false, Component.translatable("envoys.cmd.lua.internal_error"));
+                String npcUuid = payload.npcId() == null ? "" : payload.npcId().toString();
+                replyLua(player, false, Component.translatable("envoys.cmd.lua.internal_error"), npcUuid, "");
             }
             return null;
         });
@@ -221,8 +236,10 @@ public class ServerPayloadHandler {
         });
     }
 
-    private static void replyLua(ServerPlayer player, boolean success, net.minecraft.network.chat.Component message) {
-        Network.sendToPlayer(player, new LuaScriptUploadResultPayload(success, message));
+    private static void replyLua(ServerPlayer player, boolean success, net.minecraft.network.chat.Component message,
+                                 String npcUuid, String sourceHash) {
+        Network.sendToPlayer(player, new LuaScriptUploadResultPayload(success, message,
+                npcUuid == null ? "" : npcUuid, sourceHash == null ? "" : sourceHash));
     }
 
     private static BaseNPC findLuaNpc(MinecraftServer server, UUID npcId) {
@@ -235,6 +252,21 @@ public class ServerPayloadHandler {
             }
         }
         return null;
+    }
+
+    private static boolean hasScriptContent(NPCScriptData scriptData) {
+        if (scriptData.quests != null && !scriptData.quests.isEmpty()) {
+            return true;
+        }
+        if (scriptData.events == null) {
+            return false;
+        }
+        for (NpcEventData event : scriptData.events.values()) {
+            if (event != null && event.actions() != null && !event.actions().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean containsForbiddenActions(NPCScriptData scriptData) {

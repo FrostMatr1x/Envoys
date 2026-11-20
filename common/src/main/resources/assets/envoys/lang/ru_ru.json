@@ -23,6 +23,7 @@
   "envoys.cmd.cleanup.npcs_unverifiable": "§e[Envoys] Пропущено записей без известной локации: %s",
   "envoys.cmd.cleanup.skins_done": "§a[Envoys] Очищено неиспользуемых скинов: %s (Освобождено %s MB)",
   "envoys.cmd.cleanup.skins_empty": "§e[Envoys] Кэш скинов пуст.",
+  "envoys.cmd.cleanup.skins_index_unreadable": "§c[Envoys] Индекс скинов повреждён и не может быть прочитан. Очистка отменена, файл не изменён.",
   "envoys.cmd.lua.aim_required": "§c[Envoys] Наведитесь на NPC (или укажите UUID).",
   "envoys.cmd.lua.bad_name": "§cНедопустимое имя файла (ожидается [a-zA-Z0-9_-]+.lua).",
   "envoys.cmd.lua.compile_error": "§cОшибка компиляции: %s",

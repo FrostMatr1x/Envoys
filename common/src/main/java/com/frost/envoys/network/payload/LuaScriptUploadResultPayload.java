@@ -7,13 +7,16 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record LuaScriptUploadResultPayload(boolean success, Component message) implements CustomPacketPayload {
+public record LuaScriptUploadResultPayload(boolean success, Component message, String npcUuid, String sourceHash)
+        implements CustomPacketPayload {
     public static final Type<LuaScriptUploadResultPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath("envoys", "lua_script_upload_result"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LuaScriptUploadResultPayload> CODEC = StreamCodec.composite(
             net.minecraft.network.codec.ByteBufCodecs.BOOL, LuaScriptUploadResultPayload::success,
             ComponentSerialization.STREAM_CODEC, LuaScriptUploadResultPayload::message,
+            net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8, LuaScriptUploadResultPayload::npcUuid,
+            net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8, LuaScriptUploadResultPayload::sourceHash,
             LuaScriptUploadResultPayload::new
     );
 

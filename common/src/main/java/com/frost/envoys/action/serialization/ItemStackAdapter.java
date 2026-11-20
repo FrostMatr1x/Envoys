@@ -4,6 +4,7 @@ import com.frost.envoys.platform.EnvoysPlatform;
 
 import com.frost.envoys.EnvoysConstants;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.internal.bind.TypeAdapters;
 import com.google.gson.stream.JsonReader;
@@ -28,6 +29,8 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
             return;
         }
 
+        // Kept non-throwing on encode failure: the in-memory stack is already valid, and
+        // throwing would abort whole-file serialization on GUI write paths.
         try {
             HolderLookup.Provider registries = getRegistryAccess();
             RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
@@ -63,12 +66,18 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
             HolderLookup.Provider registries = getRegistryAccess();
             RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
 
-            return ItemStack.CODEC.parse(ops, element)
-                    .result()
-                    .orElse(ItemStack.EMPTY);
+            DataResult<ItemStack> result = ItemStack.CODEC.parse(ops, element);
+            if (result.isSuccess() && result.result().isPresent()) {
+                return result.result().get();
+            }
+            String error = result.error().map(DataResult.Error::message).orElse("Unknown error");
+            EnvoysConstants.LOGGER.error("Failed to deserialize ItemStack ({}): {}", error, element);
+            throw new JsonParseException("Failed to parse ItemStack: " + error);
+        } catch (JsonParseException e) {
+            throw e;
         } catch (Exception e) {
-            EnvoysConstants.LOGGER.error("Failed to deserialize ItemStack: ", e);
-            return ItemStack.EMPTY;
+            EnvoysConstants.LOGGER.error("Exception while deserializing ItemStack: ", e);
+            throw new JsonParseException("Failed to parse ItemStack", e);
         }
     }
 

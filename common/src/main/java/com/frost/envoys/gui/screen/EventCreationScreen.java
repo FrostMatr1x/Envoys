@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.event.EventType;
+import com.frost.envoys.client.ClientLuaSaveTracker;
 import com.frost.envoys.client.ClientLuaScriptBridge;
 import com.frost.envoys.client.ScriptNames;
 import com.frost.envoys.client.gui.backup.ClientBackupManager;
@@ -235,6 +236,9 @@ public class EventCreationScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (manager != null) {
+            ClientLuaSaveTracker.expireIfStale(manager.npcUUID);
+        }
         if (loading && ++loadingTicks > LOAD_TIMEOUT_TICKS) {
             this.loading = false;
             this.errorText = Component.translatable("envoys.gui.event_creation.fetch_timeout");

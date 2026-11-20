@@ -3,7 +3,9 @@ package com.frost.envoys.gui.screen;
 import com.frost.envoys.network.Network;
 
 import com.frost.envoys.client.ClientLocalScriptStore;
+import com.frost.envoys.client.ClientLuaSaveTracker;
 import com.frost.envoys.network.payload.SaveNpcLuaScriptPayload;
+import com.frost.envoys.skin.service.SkinCacheService;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,6 +14,7 @@ import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class ScriptSendScreen extends Screen {
@@ -54,10 +57,9 @@ public class ScriptSendScreen extends Screen {
     }
 
     private void send(boolean restart) {
+        String hash = SkinCacheService.calculateSHA256(this.source.getBytes(StandardCharsets.UTF_8));
+        ClientLuaSaveTracker.begin(this.npcUuid, hash, this.onSent);
         Network.sendToServer(new SaveNpcLuaScriptPayload(this.npcUuid, "main.lua", this.source, restart));
-        if (this.onSent != null) {
-            this.onSent.run();
-        }
         back();
     }
 
@@ -67,9 +69,6 @@ public class ScriptSendScreen extends Screen {
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.sendSystemMessage(
                         Component.translatable("envoys.cmd.lua.saved_local", this.localFileName));
-            }
-            if (this.onSent != null) {
-                this.onSent.run();
             }
         } else if (Minecraft.getInstance().player != null) {
             Minecraft.getInstance().player.sendSystemMessage(
