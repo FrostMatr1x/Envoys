@@ -10,7 +10,7 @@ import org.squiddev.cobalt.ValueFactory;
 import org.squiddev.cobalt.function.LibFunction;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
@@ -20,31 +20,46 @@ public final class LuaPlayerProxy extends LuaUserdata {
     private static final LuaTable METATABLE = createMetatable();
 
     private final UUID playerId;
-    private final ServerLevel level;
+    private final MinecraftServer server;
 
-    public LuaPlayerProxy(UUID playerId, ServerLevel level) {
+    public LuaPlayerProxy(UUID playerId, MinecraftServer server) {
         super(playerId, METATABLE);
         this.playerId = playerId;
-        this.level = level;
+        this.server = server;
     }
 
     public UUID playerId() {
         return playerId;
     }
 
-    public ServerPlayer resolve() throws LuaError {
-        if (level != null && level.getPlayerByUUID(playerId) instanceof ServerPlayer player && !player.isRemoved()) {
-            return player;
+    public ServerPlayer tryResolve() {
+        if (server == null) {
+            return null;
         }
-        throw new LuaError("player offline");
+        ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+        return player != null && !player.isRemoved() ? player : null;
+    }
+
+    public ServerPlayer resolve() throws LuaError {
+        ServerPlayer player = tryResolve();
+        if (player == null) {
+            throw new LuaError("player offline");
+        }
+        return player;
     }
 
     private LuaValue index(String key) throws LuaError {
         return switch (key) {
-            case "name" -> LuaStrings.toLua(resolve().getGameProfile().getName());
+            case "name" -> {
+                ServerPlayer player = tryResolve();
+                yield player == null ? Constants.NIL : LuaStrings.toLua(player.getGameProfile().getName());
+            }
             case "uuid" -> LuaStrings.toLua(playerId.toString());
             case "pos" -> {
-                ServerPlayer player = resolve();
+                ServerPlayer player = tryResolve();
+                if (player == null) {
+                    yield Constants.NIL;
+                }
                 LuaTable pos = new LuaTable();
                 pos.rawset("x", ValueFactory.valueOf(player.getX()));
                 pos.rawset("y", ValueFactory.valueOf(player.getY()));
@@ -52,16 +67,25 @@ public final class LuaPlayerProxy extends LuaUserdata {
                 yield pos;
             }
             case "sendMessage" -> LibFunction.create((LibFunction.TwoArg) (state, self, message) -> {
-                asProxy(self).resolve().sendSystemMessage(Component.literal(LuaStrings.toJava(message)));
+                ServerPlayer player = asProxy(self).tryResolve();
+                if (player != null) {
+                    player.sendSystemMessage(Component.literal(LuaStrings.toJava(message)));
+                }
                 return Constants.NIL;
             });
             case "distanceTo" -> LibFunction.create((LibFunction.TwoArg) (state, self, target) -> {
-                ServerPlayer player = asProxy(self).resolve();
+                ServerPlayer player = asProxy(self).tryResolve();
+                if (player == null) {
+                    return Constants.NIL;
+                }
                 double x;
                 double y;
                 double z;
                 if (target instanceof LuaPlayerProxy other) {
-                    ServerPlayer otherPlayer = other.resolve();
+                    ServerPlayer otherPlayer = other.tryResolve();
+                    if (otherPlayer == null) {
+                        return Constants.NIL;
+                    }
                     x = otherPlayer.getX();
                     y = otherPlayer.getY();
                     z = otherPlayer.getZ();

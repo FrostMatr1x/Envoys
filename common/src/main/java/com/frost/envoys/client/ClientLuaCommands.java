@@ -35,7 +35,7 @@ public final class ClientLuaCommands {
     public static void register(CommandDispatcher<?> dispatcher) {
         @SuppressWarnings({"unchecked", "rawtypes"})
         CommandDispatcher raw = dispatcher;
-        raw.register(Commands.literal("envoys")
+        raw.register(ClientEnvoysCommand.root()
                 .then(Commands.literal("lua")
                         .then(Commands.literal("list")
                                 .executes(ctx -> list()))
@@ -50,7 +50,11 @@ public final class ClientLuaCommands {
                         .then(Commands.literal("pull")
                                 .then(Commands.argument("target", StringArgumentType.word())
                                         .suggests(ClientLuaCommands::suggestTargets)
-                                        .executes(ctx -> pull(StringArgumentType.getString(ctx, "target")))))));
+                                        .executes(ctx -> pull(StringArgumentType.getString(ctx, "target")))))
+                        // Server-side lua commands (reload/stop) share the same "lua" literal.
+                        .then(Commands.argument("serverArgs", StringArgumentType.greedyString())
+                                .executes(ctx -> ClientEnvoysCommand.forwardToServer(
+                                        "envoys lua " + StringArgumentType.getString(ctx, "serverArgs"))))));
     }
 
     private static int list() {

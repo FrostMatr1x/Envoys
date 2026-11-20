@@ -2,6 +2,7 @@ package com.frost.envoys.client.anim;
 
 import com.frost.envoys.network.Network;
 
+import com.frost.envoys.client.ClientEnvoysCommand;
 import com.frost.envoys.client.EmoteIntegration;
 import com.frost.envoys.network.payload.DeleteAnimPayload;
 import com.frost.envoys.network.payload.PushAnimPayload;
@@ -31,7 +32,7 @@ public final class ClientAnimCommands {
     public static void register(CommandDispatcher<?> dispatcher) {
         @SuppressWarnings({"unchecked", "rawtypes"})
         CommandDispatcher raw = dispatcher;
-        raw.register(Commands.literal("envoys")
+        raw.register(ClientEnvoysCommand.root()
                 .then(Commands.literal("anim")
                         .then(Commands.literal("reload")
                                 .executes(ctx -> reload()))

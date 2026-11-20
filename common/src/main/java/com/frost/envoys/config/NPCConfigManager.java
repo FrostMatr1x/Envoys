@@ -6,8 +6,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -94,10 +98,24 @@ public class NPCConfigManager {
         data.quests = NPCScriptData.sanitizeQuests(data.quests, script);
 
         Path file = getNpcFile(script.npcUUID);
-        try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
-            GSON.toJson(data, writer);
+        Path tmp = file.resolveSibling(file.getFileName().toString() + ".tmp");
+        try {
+            Files.deleteIfExists(tmp);
+            try (BufferedWriter writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS)) {
+                GSON.toJson(data, writer);
+            }
+            try {
+                Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
             EnvoysConstants.LOGGER.error("[Envoys] Failed to save NPC script {}", script.npcUUID, e);
+            try {
+                Files.deleteIfExists(tmp);
+            } catch (IOException ignored) {
+            }
         }
         QuestIndex.invalidate();
     }

@@ -12,6 +12,7 @@ import com.frost.envoys.network.payload.OpenDialogPayload;
 import com.frost.envoys.npc.NPCTrade;
 import com.frost.envoys.npc.entity.BaseNPC;
 import com.frost.envoys.npc.merchant.NPCMerchant;
+import com.frost.envoys.util.LuaCommandPolicy;
 
 import org.squiddev.cobalt.Constants;
 import org.squiddev.cobalt.LuaError;
@@ -148,7 +149,7 @@ public final class LuaNpcEngine {
         }
         LuaPlayerProxy proxy = null;
         if (player instanceof ServerPlayer serverPlayer) {
-            proxy = new LuaPlayerProxy(serverPlayer.getUUID(), serverPlayer.serverLevel());
+            proxy = new LuaPlayerProxy(serverPlayer.getUUID(), serverPlayer.server);
         }
         queue.push(new LuaEvent(type, proxy));
     }
@@ -198,19 +199,31 @@ public final class LuaNpcEngine {
                 }
             } else if (script.pending == null) {
                 if (budget.wasExhausted()) {
-                    errorState("too long without yielding");
+                    failScript(script, "too long without yielding");
                 } else {
-                    errorState("script yielded without a pending action");
+                    failScript(script, "script yielded without a pending action");
                 }
             }
         } catch (LuaError e) {
-            errorState(e.getMessage() != null ? e.getMessage() : e.toString());
+            failScript(script, e.getMessage() != null ? e.getMessage() : e.toString());
         } catch (RuntimeException e) {
-            errorState(e.toString());
+            failScript(script, e.toString());
         } finally {
             current = null;
             currentTarget = null;
         }
+    }
+
+    private void failScript(Script script, String message) {
+        if (script.callbackType == null) {
+            errorState(message);
+            return;
+        }
+
+        active.remove(script);
+        runningCallbacks.remove(script.callbackType, script);
+        EnvoysConstants.LOGGER.warn("[Envoys] Lua callback {} error for NPC {}: {}",
+                script.callbackType.jsonKey(), npcUUID, message);
     }
 
     private void errorState(String message) {
@@ -248,7 +261,7 @@ public final class LuaNpcEngine {
                 UUID id = player.getUUID();
                 inside.add(id);
                 if (!rangePlayers.contains(id)) {
-                    queue.push(new LuaEvent(EventType.RANGE, new LuaPlayerProxy(id, level)));
+                    queue.push(new LuaEvent(EventType.RANGE, new LuaPlayerProxy(id, level.getServer())));
                 }
             }
         }
@@ -636,6 +649,12 @@ public final class LuaNpcEngine {
         CommandSourceStack source = npc.createCommandSourceStack()
                 .withPermission(4)
                 .withSuppressedOutput();
+
+        if (!LuaCommandPolicy.isAllowed(server.getCommands().getDispatcher(), source, formatted)) {
+            EnvoysConstants.LOGGER.warn("[Envoys] Blocked Lua command for NPC {}: {}", npcUUID, formatted);
+            return;
+        }
+
         server.getCommands().performPrefixedCommand(source, formatted);
     }
 
@@ -663,7 +682,7 @@ public final class LuaNpcEngine {
             int index = 1;
             for (Player player : level.players()) {
                 if (player.distanceToSqr(npc) <= radiusSqr) {
-                    table.rawset(index++, new LuaPlayerProxy(player.getUUID(), level));
+                    table.rawset(index++, new LuaPlayerProxy(player.getUUID(), level.getServer()));
                 }
             }
         }

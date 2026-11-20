@@ -33,6 +33,11 @@ public class ServerSkinPayloadHandler {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
+            if (!RequestRateLimiter.tryAcquire(player.getUUID())) {
+                EnvoysConstants.LOGGER.warn("[Envoys] Rate-limited skin request from {}", player.getName().getString());
+                return;
+            }
+
             UUID npcUuid = payload.npcUuid();
             NPCInteractManager manager = NPCInteractManager.byUUID(npcUuid).orElse(null);
 

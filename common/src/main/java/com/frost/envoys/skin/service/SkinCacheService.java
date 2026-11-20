@@ -4,8 +4,11 @@ import com.frost.envoys.action.serialization.EntityActionAdapter;
 import com.frost.envoys.skin.model.SkinMetaData;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 
 public class SkinCacheService {
@@ -57,8 +60,16 @@ public class SkinCacheService {
         Path pngPath = cacheDir.resolve(cleanKey + ".png");
         Path jsonPath = cacheDir.resolve(cleanKey + ".json");
 
-        Files.write(pngPath, pngData);
+        Files.deleteIfExists(pngPath);
+        Files.deleteIfExists(jsonPath);
+
+        Files.write(pngPath, pngData,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
+
         String json = EntityActionAdapter.GSON.toJson(meta);
-        Files.writeString(jsonPath, json);
+        Files.writeString(jsonPath, json, StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
     }
 }

@@ -11,8 +11,10 @@ import com.frost.envoys.util.PathManager;
 import com.frost.envoys.util.SkinModelUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +25,8 @@ import java.util.concurrent.Executors;
 public class SkinSyncService {
 
     private static final ExecutorService IO_EXECUTOR = Executors.newFixedThreadPool(4);
+
+    private static final long MAX_SKIN_BYTES = 2L * 1024 * 1024;
 
     public record SkinFetchResult(byte[] pngData, String hash, String model, String source, String errorMsg) {
         public boolean isSuccess() { return pngData != null && errorMsg == null; }
@@ -78,14 +82,18 @@ public class SkinSyncService {
 
                 SkinIndexData index = SkinLocalService.readIndex(indexFile);
                 Optional<SkinIndexEntry> entryOpt = index.skins.stream()
+                        .filter(e -> e != null
+                                && e.uuid != null
+                                && e.hash != null
+                                && SkinLocalService.isSafeSkinFileName(e.path))
                         .filter(e -> e.uuid.equalsIgnoreCase(fileKey) || e.path.equalsIgnoreCase(fileKey + ".png"))
                         .findFirst();
 
                 if (entryOpt.isPresent()) {
                     SkinIndexEntry entry = entryOpt.get();
-                    Path cachedPng = cacheDir.resolve(entry.path);
-                    if (Files.exists(cachedPng)) {
-                        byte[] data = Files.readAllBytes(cachedPng);
+                    Path cachedPng = cacheDir.resolve(entry.path).normalize();
+                    byte[] data = readSkinFile(cachedPng, cacheDir, false);
+                    if (data != null) {
                         String currentHash = SkinCacheService.calculateSHA256(data);
                         if (currentHash.equalsIgnoreCase(entry.hash)) {
                             return new SkinFetchResult(data, currentHash, entry.model, entry.source, null);
@@ -109,16 +117,20 @@ public class SkinSyncService {
                 Path searchFolder = isClient ? ClientPathManager.getClientEnvoysDir() : PathManager.getServerSkinDir();
                 Optional<Path> foundFile = SkinLocalService.findSkinRecursively(searchFolder, normalizedQuery);
                 if (foundFile.isPresent()) {
-                    byte[] data = Files.readAllBytes(foundFile.get());
-                    String hash = SkinCacheService.calculateSHA256(data);
-                    String model = SkinModelUtil.detectModel(data);
+                    byte[] data = readSkinFile(foundFile.get(), searchFolder, true);
+                    if (data == null) {
+                        EnvoysConstants.LOGGER.warn("Refusing to read skin file outside {}: {}", searchFolder, foundFile.get());
+                    } else {
+                        String hash = SkinCacheService.calculateSHA256(data);
+                        String model = SkinModelUtil.detectModel(data);
 
-                    SkinCacheService.saveToCache(cacheDir, fileKey, data, new SkinMetaData(fileKey, hash, model, "local", System.currentTimeMillis()));
+                        SkinCacheService.saveToCache(cacheDir, fileKey, data, new SkinMetaData(fileKey, hash, model, "local", System.currentTimeMillis()));
 
-                    SkinIndexEntry newEntry = new SkinIndexEntry(fileKey, fileKey + ".png", model, "local", hash, System.currentTimeMillis());
-                    SkinLocalService.addOrUpdateIndex(indexFile, newEntry);
+                        SkinIndexEntry newEntry = new SkinIndexEntry(fileKey, fileKey + ".png", model, "local", hash, System.currentTimeMillis());
+                        SkinLocalService.addOrUpdateIndex(indexFile, newEntry);
 
-                    return new SkinFetchResult(data, hash, model, "local", null);
+                        return new SkinFetchResult(data, hash, model, "local", null);
+                    }
                 }
 
                 if ("NICKNAME".equalsIgnoreCase(skinType)) {
@@ -148,5 +160,28 @@ public class SkinSyncService {
                 return new SkinFetchResult(null, null, null, null, "Network or download error");
             }
         }, IO_EXECUTOR);
+    }
+
+    private static byte[] readSkinFile(Path file, Path root, boolean allowSymlink) {
+        try {
+            Path realRoot = root.toRealPath();
+            boolean regular = allowSymlink
+                    ? Files.isRegularFile(file)
+                    : Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS);
+            if (!regular) {
+                return null;
+            }
+            Path realFile = file.toRealPath();
+            if (!realFile.startsWith(realRoot)) {
+                return null;
+            }
+            long size = Files.size(realFile);
+            if (size <= 0 || size > MAX_SKIN_BYTES) {
+                return null;
+            }
+            return Files.readAllBytes(realFile);
+        } catch (IOException e) {
+            return null;
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.frost.envoys.network.payload;
 
+import io.netty.handler.codec.DecoderException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 public record SyncPlayerQuestsPayload(List<ClientQuestEntry> quests) implements CustomPacketPayload {
+
+    private static final int MAX_COLLECTION_SIZE = 1024;
 
     public static final Type<SyncPlayerQuestsPayload> TYPE =
         new Type<>(ResourceLocation.fromNamespaceAndPath("envoys", "sync_player_quests"));
@@ -23,7 +26,10 @@ public record SyncPlayerQuestsPayload(List<ClientQuestEntry> quests) implements 
         },
         buf -> {
             int size = buf.readInt();
-            List<ClientQuestEntry> list = new ArrayList<>(Math.max(0, size));
+            if (size < 0 || size > MAX_COLLECTION_SIZE) {
+                throw new DecoderException("Invalid quest list size: " + size);
+            }
+            List<ClientQuestEntry> list = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 list.add(ClientQuestEntry.STREAM_CODEC.decode(buf));
             }

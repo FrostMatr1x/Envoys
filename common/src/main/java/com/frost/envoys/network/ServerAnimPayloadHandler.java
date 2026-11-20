@@ -22,6 +22,11 @@ public class ServerAnimPayloadHandler {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
+            if (!RequestRateLimiter.tryAcquire(player.getUUID())) {
+                EnvoysConstants.LOGGER.warn("[Envoys] Rate-limited animation list request from {}", player.getName().getString());
+                return;
+            }
+
             AnimSyncService.listAnimsAsync().thenAccept(entries -> {
                 List<AnimListPayload.AnimInfo> infos = new ArrayList<>(entries.size());
                 for (AnimSyncService.AnimListEntry entry : entries) {
@@ -35,6 +40,11 @@ public class ServerAnimPayloadHandler {
     public static void handleRequestAnim(final RequestAnimPayload payload, final NetworkContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
+
+            if (!RequestRateLimiter.tryAcquire(player.getUUID())) {
+                EnvoysConstants.LOGGER.warn("[Envoys] Rate-limited animation request from {}", player.getName().getString());
+                return;
+            }
 
             AnimSyncService.loadAnimAsync(payload.name()).thenAccept(result -> {
                 if (result.isSuccess()) {

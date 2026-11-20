@@ -13,6 +13,12 @@ import java.util.*;
 
 public class SkinLocalService {
 
+    public static boolean isSafeSkinFileName(String path) {
+        return path != null
+                && !path.startsWith(".")
+                && path.matches("[A-Za-z0-9._-]+\\.png");
+    }
+
     public static SkinIndexData readIndex(File indexFile) {
         if (!indexFile.exists()) {
             return new SkinIndexData();
@@ -20,7 +26,14 @@ public class SkinLocalService {
         try {
             String content = Files.readString(indexFile.toPath());
             SkinIndexData data = EntityActionAdapter.GSON.fromJson(content, SkinIndexData.class);
-            return data != null ? data : new SkinIndexData();
+            if (data == null) {
+                return new SkinIndexData();
+            }
+            if (data.skins == null) {
+                data.skins = new ArrayList<>();
+            }
+            data.skins.removeIf(e -> e == null || e.uuid == null || e.path == null);
+            return data;
         } catch (Exception e) {
             EnvoysConstants.LOGGER.error("Failed to read skin index: {}", indexFile.getAbsolutePath(), e);
             return new SkinIndexData();

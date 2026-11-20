@@ -44,6 +44,7 @@ import net.minecraft.world.phys.Vec3;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -153,31 +154,38 @@ public class EnvoysCommand {
         SkinIndexData indexData = SkinLocalService.readIndex(indexFile);
         List<SkinIndexEntry> toRemove = new ArrayList<>();
         long freedBytes = 0;
+        Path cacheRoot = cacheDir.toAbsolutePath().normalize();
 
         for (SkinIndexEntry entry : indexData.skins) {
-            String entryHash = entry.hash != null ? entry.hash.toLowerCase() : "";
-            String entryUuid = entry.uuid != null ? entry.uuid.toLowerCase() : "";
+            if (entry == null) {
+                continue;
+            }
+
+            if (!SkinLocalService.isSafeSkinFileName(entry.path)) {
+                EnvoysConstants.LOGGER.warn("[Envoys] Dropping skin index entry with unsafe path: {}", entry.path);
+                toRemove.add(entry);
+                continue;
+            }
+
+            String entryHash = entry.hash != null ? entry.hash.toLowerCase(Locale.ROOT) : "";
+            String entryUuid = entry.uuid != null ? entry.uuid.toLowerCase(Locale.ROOT) : "";
 
             if (!activeSkinKeys.contains(entryHash) && !activeSkinKeys.contains(entryUuid)) {
                 toRemove.add(entry);
 
-                Path pngPath = cacheDir.resolve(entry.path);
-                try {
-                    if (Files.exists(pngPath)) {
-                        freedBytes += Files.size(pngPath);
-                        Files.deleteIfExists(pngPath);
-                    }
-                } catch (IOException e) {
-                    EnvoysConstants.LOGGER.error("[Envoys] Failed to delete skin cache file {}", pngPath, e);
+                Path pngPath = cacheRoot.resolve(entry.path).normalize();
+                if (pngPath.startsWith(cacheRoot)) {
+                    freedBytes += deleteCacheFile(pngPath);
+                } else {
+                    EnvoysConstants.LOGGER.warn("[Envoys] Refusing to delete skin cache file outside {}: {}", cacheRoot, pngPath);
                 }
 
-                Path jsonPath = cacheDir.resolve(entry.uuid + ".json");
-                try {
-                    if (Files.exists(jsonPath)) {
-                        freedBytes += Files.size(jsonPath);
-                        Files.deleteIfExists(jsonPath);
+                if (entry.uuid != null && entry.uuid.matches("[A-Za-z0-9._-]+")) {
+                    Path jsonPath = cacheRoot.resolve(entry.uuid + ".json").normalize();
+                    if (jsonPath.startsWith(cacheRoot)) {
+                        freedBytes += deleteCacheFile(jsonPath);
                     }
-                } catch (IOException ignored) {}
+                }
             }
         }
 
@@ -190,6 +198,20 @@ public class EnvoysCommand {
         source.sendSuccess(() -> Component.translatable("envoys.cmd.cleanup.skins_done", finalRemovedCount, String.format("%.2f", finalFreedMb)), true);
 
         return finalRemovedCount;
+    }
+
+    private static long deleteCacheFile(Path path) {
+        try {
+            if (Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+                long size = Files.size(path);
+                Files.deleteIfExists(path);
+                return size;
+            }
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            EnvoysConstants.LOGGER.error("[Envoys] Failed to delete skin cache file {}", path, e);
+        }
+        return 0L;
     }
 
     private static int cleanupNpcs(CommandSourceStack source) {

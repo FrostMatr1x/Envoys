@@ -383,7 +383,9 @@ public class BaseNPC extends PathfinderMob {
                         serverPlayer.sendSystemMessage(Component.literal("§c[Envoys] Lua: " + luaEngine.errorText()));
                     }
                 } else {
-                    luaEngine.dispatchEvent(EventType.KICK, attacker);
+                    if (attacker instanceof ServerPlayer) {
+                        luaEngine.dispatchEvent(EventType.KICK, attacker);
+                    }
                 }
             }
         }

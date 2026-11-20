@@ -1,9 +1,11 @@
 package com.frost.envoys.action.handler;
 
+import com.frost.envoys.EnvoysConstants;
 import com.frost.envoys.action.ActionContext;
 import com.frost.envoys.action.NpcActionHandler;
 import com.frost.envoys.action.model.ActionCommand;
 import com.frost.envoys.npc.entity.BaseNPC;
+import com.frost.envoys.util.LuaCommandPolicy;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -54,6 +56,11 @@ public final class CommandActionHandler implements NpcActionHandler<ActionComman
 
                         if (formattedCmd.startsWith("/")) {
                             formattedCmd = formattedCmd.substring(1);
+                        }
+
+                        if (!LuaCommandPolicy.isAllowed(server.getCommands().getDispatcher(), source, formattedCmd)) {
+                            EnvoysConstants.LOGGER.warn("[Envoys] Blocked NPC action command: {}", formattedCmd);
+                            continue;
                         }
 
                         server.getCommands().performPrefixedCommand(source, formattedCmd);

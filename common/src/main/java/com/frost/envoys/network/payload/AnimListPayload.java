@@ -1,5 +1,6 @@
 package com.frost.envoys.network.payload;
 
+import io.netty.handler.codec.DecoderException;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
@@ -11,6 +12,8 @@ import net.minecraft.resources.ResourceLocation;
 public record AnimListPayload(List<AnimInfo> animations) implements CustomPacketPayload {
     public static final Type<AnimListPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath("envoys", "anim_list"));
 
+    private static final int MAX_COLLECTION_SIZE = 1024;
+
     public static final StreamCodec<FriendlyByteBuf, AnimListPayload> CODEC = StreamCodec.of(
         (buf, payload) -> {
             List<AnimInfo> list = payload.animations() != null ? payload.animations() : List.of();
@@ -21,6 +24,9 @@ public record AnimListPayload(List<AnimInfo> animations) implements CustomPacket
         },
         buf -> {
             int size = buf.readVarInt();
+            if (size < 0 || size > MAX_COLLECTION_SIZE) {
+                throw new DecoderException("Invalid animation list size: " + size);
+            }
             List<AnimInfo> list = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 list.add(AnimInfo.STREAM_CODEC.decode(buf));
