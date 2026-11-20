@@ -7,7 +7,6 @@ import com.frost.envoys.config.NPCConfigManager;
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.NPCPassportData;
 import com.frost.envoys.action.NPCScriptData;
-import com.frost.envoys.action.ScriptRunner;
 import com.frost.envoys.action.event.NpcEventData;
 import com.frost.envoys.action.model.ActionCommand;
 import com.frost.envoys.action.model.ActionTrade;
@@ -268,12 +267,6 @@ public class ServerPayloadHandler {
             ServerLevel level = ((ServerPlayer) player).serverLevel();
             Entity entity = level.getEntity(payload.npcUuid());
             if (entity == null || player.distanceToSqr(entity) > 64.0D) {
-                return;
-            }
-
-            ScriptRunner runner = ScriptRunner.RUNNERS.get(payload.npcUuid());
-            if (runner != null && runner.targetPlayer() == player) {
-                runner.onDialogAnswer(payload.nextActionId());
                 return;
             }
 

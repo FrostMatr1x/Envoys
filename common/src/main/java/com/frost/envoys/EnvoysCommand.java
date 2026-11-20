@@ -3,7 +3,6 @@ package com.frost.envoys;
 import com.frost.envoys.EnvoysConstants;
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.PlayerCheckpointData;
-import com.frost.envoys.action.ScriptRunner;
 import com.frost.envoys.action.event.NpcEventData;
 import com.frost.envoys.action.model.ActionSavePoint;
 import com.frost.envoys.action.model.EntityActionData;
@@ -404,7 +403,6 @@ public class EnvoysCommand {
 
     private static int reloadNpcConfigs(CommandSourceStack source) {
         NPCInteractManager.SCRIPTS.clear();
-        ScriptRunner.clear();
         NPCConfigManager.loadAll();
         
         MinecraftServer server = source.getServer();

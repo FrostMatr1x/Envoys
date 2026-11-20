@@ -50,7 +50,8 @@ Moves the NPC to a target position.
 
 ## `command`
 
-Runs one or more server commands.
+Runs one or more server commands. Commands pass through a safety filter: the blocked
+list is in the [“NPC-issued commands: safety restrictions”](../COMMANDS.md) section.
 
 - Fields:
   - A **list of server commands**, added one by one.
@@ -136,6 +137,7 @@ Branches based on quest completion state.
 ## `savepoint` — Save point
 
 Stores a per-player checkpoint that a `loadpoint` can later return to.
+Saved checkpoints can be reset with `/envoys npc resetpoints <target> <branch>`.
 
 - Fields:
   - **Key** — restricted to `[a-zA-Z0-9_]`.

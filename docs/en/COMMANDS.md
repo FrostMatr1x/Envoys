@@ -38,7 +38,14 @@ Root: `/envoys`. Requires permission level **4 (OP-4)**.
 /envoys npc passport save
 /envoys npc passport load
 /envoys npc kill <target>
+/envoys npc resetpoints <target> <branch>
 ```
+
+- **`/envoys npc resetpoints <target> <branch>`** — resets the saved checkpoints of
+  **all online players** for the given NPC and branch. `target` is a UUID or `aim`, and
+  `branch` is a save-point key (`savepoint`). The `branch` argument is required;
+  suggestions include keys from `savepoint` and already saved checkpoints. If no online
+  player has a checkpoint for that branch, the command reports it.
 
 ### Lua
 
@@ -54,6 +61,25 @@ stays disabled until one of the following occurs:
 - a script upload for that NPC,
 - a server restart.
 
+### NPC-issued commands: safety restrictions
+
+Commands run on behalf of an NPC through `envoys.command(...)` in Lua and through the
+visual editor's `command` action pass through a safety filter. The following commands are
+blocked:
+
+- `op`, `deop`;
+- `ban`, `ban-ip`, `banlist`, `pardon`, `pardon-ip`;
+- `whitelist`;
+- `stop`, `reload`, `datapack`;
+- `function`, `schedule`;
+- `save-all`, `save-off`, `save-on`;
+- `setidletimeout`, `transfer`, `publish`;
+- `debug`, `jfr`, `perf`.
+
+In addition, the `summon` and `store` side effects are blocked inside `/execute ... run`.
+Commands longer than **2048** characters or commands that do not parse completely are
+rejected. A blocked command is not executed, and the server writes a warning to the log.
+
 ## Client commands
 
 Registered on the client for managing local script files. Local scripts live in
@@ -67,9 +93,9 @@ Registered on the client for managing local script files. Local scripts live in
 
 - **`/envoys lua list`** — list local `.lua` files.
 - **`/envoys lua send <target> <file>`** — upload a local file as the NPC's `main.lua` and
-  restart its engine.
+  restart its engine. Requires **OP-4** on the server; the file size limit is **1 MB**.
 - **`/envoys lua pull <target>`** — download the NPC's `main.lua` into
-  `.minecraft/envoys/local/` as `<npc_name>_<uuid4>.lua`.
+  `.minecraft/envoys/local/` as `<npc_name>_<uuid4>.lua`. Requires **OP-4** on the server.
 
 ### Animations
 

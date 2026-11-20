@@ -5,7 +5,6 @@ import com.frost.envoys.network.Network;
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.NPCPassportData;
 import com.frost.envoys.action.NPCScriptData;
-import com.frost.envoys.action.ScriptRunner;
 import com.frost.envoys.action.event.EventType;
 import com.frost.envoys.action.serialization.EntityActionAdapter;
 import com.frost.envoys.client.EmoteIntegration;
@@ -432,7 +431,6 @@ public class BaseNPC extends PathfinderMob {
         super.remove(reason);
         if (this.level() != null && !this.level().isClientSide) {
             LuaEngineManager.remove(this.getUUID());
-            ScriptRunner.remove(this.getUUID());
         }
     }
 

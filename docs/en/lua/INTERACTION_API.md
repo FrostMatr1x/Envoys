@@ -108,7 +108,8 @@ end
 ## Checkpoints
 
 Checkpoints store a string per `(NPC, player)` pair and persist across logout and
-server restart.
+server restart. Checkpoints for a branch can be reset with
+[`/envoys npc resetpoints <target> <branch>`](../COMMANDS.md).
 
 ### `envoys.checkpoint.get(key [, player])`
 

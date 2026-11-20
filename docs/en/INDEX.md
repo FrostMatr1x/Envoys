@@ -2,7 +2,7 @@ Change language? EN, [RU](../ru/INDEX.md)
 
 # Envoys — Documentation
 
-Envoys is a NeoForge 1.21.1 mod that adds fully configurable NPCs. Each NPC can be given a
+Envoys is a NeoForge and Fabric mod for Minecraft 1.21.1 that adds fully configurable NPCs. Each NPC can be given a
 passport (name, size, speed, health, visibility and behaviour flags), a custom skin, a trade list, and a quest
 line. On top of that, Envoys ships a Lua scripting engine and a visual graph editor, so NPC
 logic can be written either as code (`main.lua`) or as a node graph that compiles down to the

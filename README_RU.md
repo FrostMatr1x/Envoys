@@ -4,6 +4,7 @@
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen?style=for-the-badge&logo=minecraft)
 ![NeoForge](https://img.shields.io/badge/NeoForge-21.1.x-orange?style=for-the-badge)
+![Fabric](https://img.shields.io/badge/Fabric-0.16.x-dbb69a?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge)
 
 **Envoys** — модификация для создания кастомных неигровых персонажей (NPC) с ветвящимися диалогами, продвинутой экономикой, квестами и встроенным визуальным редактором логики, совмещённым с легковесным Lua-движком.
@@ -58,7 +59,7 @@
 ## 🛠️ Требования
 
 * **Minecraft:** `1.21.1`
-* **Загрузчик модов:** `NeoForge` (версия `21.1.233` или новее)
+* **Загрузчики модов:** `NeoForge` (версия `21.1.233` или новее) или `Fabric` (версия `0.16.14` или новее с Fabric API `0.116.17+1.21.1`)
 * **Java:** `21`
 
 ---
@@ -67,10 +68,11 @@
 
 | Мод | Обязателен | Описание |
 |-----|-----------|----------|
+| **[Fabric API](https://modrinth.com/mod/fabric-api)** | **Да (только Fabric)** | Требуется на Fabric; предоставляет API загрузчика, используемые Envoys. |
 | **[playerAnimator](https://github.com/Kosmx/AnimLib)** | **Да** | Библиотека анимаций, используемая Envoys для разбора и применения анимаций игроков (эмоций). Без неё анимации не будут проигрываться. |
 | **[Sophisticated Backpacks](https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks)** | Опционально | Мод на рюкзаки, поддерживается как дополнение: NPC могут взаимодействовать с рюкзаками как с контейнерами (например, для квестов на сбор/передачу предметов и товарных запасов). |
 
-> ⚠️ **Примечание:** `playerAnimator` подключён через `compileOnly` — его нужно устанавливать как отдельный мод в папку `mods`. Сам Envoys встраивает Lua-движок [Cobalt](https://github.com/twosigma/Cobalt) как библиотеку.
+> ⚠️ **Примечание:** `playerAnimator` подключён через `compileOnly` — его нужно устанавливать как отдельный мод в папку `mods`. Сам Envoys встраивает Lua-движок [Cobalt](https://codeberg.org/cc-tweaked/Cobalt) как библиотеку.
 >
 > Локальные анимации читаются из `.minecraft/envoys/anim/` (`.json` файлы) и могут быть загружены на сервер командой `/envoys anim push`.
 
@@ -80,7 +82,7 @@
 
 ## 📥 Установка
 
-1. Установите **NeoForge** подходящей версии для клиента и сервера.
+1. Установите **NeoForge** или **Fabric** для клиента и сервера. На Fabric также установите **Fabric API**.
 2. Поместите `.jar` файл мода в папку `.minecraft/mods`.
 3. Запустите игру.
 

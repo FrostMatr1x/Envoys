@@ -44,7 +44,8 @@ Run a server command as the NPC.
 - **Returns** — nothing.
 - **Notes** — requires config `lua.allowCommands` (default `true`). Executes with
   **permission level 4** and suppresses command output. Throws if commands are
-  disabled.
+  disabled. The list of commands blocked for NPCs is in the
+  [“NPC-issued commands: safety restrictions”](../COMMANDS.md) section.
 
 ```lua
 envoys.command("time set day")

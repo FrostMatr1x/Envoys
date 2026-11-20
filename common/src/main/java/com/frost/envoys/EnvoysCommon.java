@@ -1,7 +1,5 @@
 package com.frost.envoys;
 
-import com.frost.envoys.action.ActionEngineManager;
-
 public final class EnvoysCommon {
     private static boolean initialized;
 
@@ -13,6 +11,5 @@ public final class EnvoysCommon {
             return;
         }
         initialized = true;
-        ActionEngineManager.initialize();
     }
 }

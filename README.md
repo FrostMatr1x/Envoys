@@ -4,6 +4,7 @@
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen?style=for-the-badge&logo=minecraft)
 ![NeoForge](https://img.shields.io/badge/NeoForge-21.1.x-orange?style=for-the-badge)
+![Fabric](https://img.shields.io/badge/Fabric-0.16.x-dbb69a?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge)
 
 **Envoys** is a Minecraft modification designed for creating custom Non-Player Characters (NPCs) with branching dialogues, an advanced economy, quests, and a built-in visual logic editor paired with a lightweight Lua engine.
@@ -58,7 +59,7 @@ Comprehensive guides covering mod configuration, the visual editor, commands, an
 ## 🛠️ Requirements
 
 * **Minecraft:** `1.21.1`
-* **Mod Loader:** `NeoForge` (`21.1.233` or newer)
+* **Mod Loaders:** `NeoForge` (`21.1.233` or newer) or `Fabric` (`0.16.14` or newer with Fabric API `0.116.17+1.21.1`)
 * **Java:** `21`
 
 ---
@@ -67,10 +68,11 @@ Comprehensive guides covering mod configuration, the visual editor, commands, an
 
 | Mod | Required | Description |
 |-----|----------|-------------|
+| **[Fabric API](https://modrinth.com/mod/fabric-api)** | **Yes (Fabric only)** | Required on Fabric; provides the loader APIs used by Envoys. |
 | **[playerAnimator](https://github.com/Kosmx/AnimLib)** | **Yes** | Animation library used by Envoys to parse and apply player animations (emotes). Without it, animations will not play on players. |
 | **[Sophisticated Backpacks](https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks)** | Optional | Backpack mod supported as an add-on: NPCs can interact with backpacks as containers (e.g. for item gathering/delivery quests and trading stock). |
 
-> ⚠️ **Note:** `playerAnimator` is loaded via `compileOnly` — it must be installed as a separate mod in the `mods` folder. Envoys itself ships the [Cobalt](https://github.com/twosigma/Cobalt) Lua engine as an embedded library.
+> ⚠️ **Note:** `playerAnimator` is loaded via `compileOnly` — it must be installed as a separate mod in the `mods` folder. Envoys itself ships the [Cobalt](https://codeberg.org/cc-tweaked/Cobalt) Lua engine as an embedded library.
 >
 > Local animations are read from `.minecraft/envoys/anim/` (`.json` files) and can be uploaded to the server with `/envoys anim push`.
 
@@ -80,7 +82,7 @@ Comprehensive guides covering mod configuration, the visual editor, commands, an
 
 ## 📥 Installation
 
-1. Install the matching version of **NeoForge** for both client and server.
+1. Install **NeoForge** or **Fabric** for both client and server. On Fabric, also install **Fabric API**.
 2. Place the downloaded `.jar` file into your `.minecraft/mods` directory.
 3. Launch the game.
 
