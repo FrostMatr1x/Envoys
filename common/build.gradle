@@ -36,6 +36,7 @@ dependencies {
     testImplementation 'cc.tweaked:cobalt:0.9.7'
     testImplementation platform('org.mockito:mockito-bom:5.20.0')
     testImplementation 'org.mockito:mockito-core'
+    testImplementation "dev.kosmx.player-anim:player-animation-lib-forge:${rootProject.player_animator_version}"
 }
 
 tasks.named('test', Test) {
