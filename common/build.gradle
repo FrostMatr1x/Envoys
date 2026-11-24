@@ -34,6 +34,8 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'cc.tweaked:cobalt:0.9.7'
+    testImplementation platform('org.mockito:mockito-bom:5.20.0')
+    testImplementation 'org.mockito:mockito-core'
 }
 
 tasks.named('test', Test) {

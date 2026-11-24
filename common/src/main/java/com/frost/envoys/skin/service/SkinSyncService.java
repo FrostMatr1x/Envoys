@@ -32,6 +32,40 @@ public class SkinSyncService {
         public boolean isSuccess() { return pngData != null && errorMsg == null; }
     }
 
+    record Storage(Path cacheDir, File indexFile, Path searchDir) {
+    }
+
+    interface RemoteGateway {
+        byte[] download(String url) throws Exception;
+
+        Optional<SkinRemoteService.MojangSkinResult> fetchMojang(String username);
+    }
+
+    private static final RemoteGateway DEFAULT_GATEWAY = new RemoteGateway() {
+        @Override
+        public byte[] download(String url) throws Exception {
+            return SkinRemoteService.downloadSkinFromUrl(url);
+        }
+
+        @Override
+        public Optional<SkinRemoteService.MojangSkinResult> fetchMojang(String username) {
+            return SkinRemoteService.fetchMojangSkin(username);
+        }
+    };
+
+    static Storage resolveStorage(boolean isClient, String serverId) {
+        if (isClient) {
+            return new Storage(
+                    ClientPathManager.getClientSkinCacheDir(serverId),
+                    ClientPathManager.getClientIndexFile(serverId),
+                    ClientPathManager.getClientEnvoysDir(serverId));
+        }
+        return new Storage(
+                PathManager.getServerSkinCacheDir(),
+                PathManager.getServerIndexFile(),
+                PathManager.getServerSkinDir());
+    }
+
     public static String resolveFileKey(String query, String skinType) {
         if (query == null || query.isBlank()) return "unknown";
 
@@ -61,6 +95,14 @@ public class SkinSyncService {
     }
 
     public static CompletableFuture<SkinFetchResult> loadSkinAsync(String query, String skinType, boolean isClient) {
+        Storage storage = isClient
+                ? resolveStorage(true, ClientPathManager.getServerId())
+                : resolveStorage(false, null);
+        return loadSkinAsync(query, skinType, storage, DEFAULT_GATEWAY);
+    }
+
+    static CompletableFuture<SkinFetchResult> loadSkinAsync(String query, String skinType,
+            Storage storage, RemoteGateway gateway) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (query == null || query.isBlank()) {
@@ -68,8 +110,8 @@ public class SkinSyncService {
                     return new SkinFetchResult(null, null, null, null, "Empty request");
                 }
 
-                Path cacheDir = isClient ? ClientPathManager.getClientSkinCacheDir() : PathManager.getServerSkinCacheDir();
-                File indexFile = isClient ? ClientPathManager.getClientIndexFile() : PathManager.getServerIndexFile();
+                Path cacheDir = storage.cacheDir();
+                File indexFile = storage.indexFile();
 
                 String normalizedQuery = query.trim();
                 boolean isUrlType = "URL".equalsIgnoreCase(skinType) || normalizedQuery.startsWith("http://") || normalizedQuery.startsWith("https://");
@@ -102,7 +144,7 @@ public class SkinSyncService {
                 }
 
                 if (isUrlType) {
-                    byte[] data = SkinRemoteService.downloadSkinFromUrl(normalizedQuery);
+                    byte[] data = gateway.download(normalizedQuery);
                     String hash = SkinCacheService.calculateSHA256(data);
                     String model = SkinModelUtil.detectModel(data);
 
@@ -116,7 +158,7 @@ public class SkinSyncService {
                     return new SkinFetchResult(data, hash, model, "url", null);
                 }
 
-                Path searchFolder = isClient ? ClientPathManager.getClientEnvoysDir() : PathManager.getServerSkinDir();
+                Path searchFolder = storage.searchDir();
                 Optional<Path> foundFile = SkinLocalService.findSkinRecursively(searchFolder, normalizedQuery);
                 if (foundFile.isPresent()) {
                     byte[] data = readSkinFile(foundFile.get(), searchFolder, true);
@@ -138,9 +180,9 @@ public class SkinSyncService {
                 }
 
                 if ("NICKNAME".equalsIgnoreCase(skinType)) {
-                    var mojangOpt = SkinRemoteService.fetchMojangSkin(normalizedQuery);
+                    var mojangOpt = gateway.fetchMojang(normalizedQuery);
                     if (mojangOpt.isPresent()) {
-                        byte[] data = SkinRemoteService.downloadSkinFromUrl(mojangOpt.get().textureUrl());
+                        byte[] data = gateway.download(mojangOpt.get().textureUrl());
                         String hash = SkinCacheService.calculateSHA256(data);
                         String model = mojangOpt.get().model();
 
@@ -155,14 +197,14 @@ public class SkinSyncService {
                     }
                 }
 
-                EnvoysConstants.LOGGER.warn("Skin '{}' (type={}, client={}) was not found", normalizedQuery, skinType, isClient);
+                EnvoysConstants.LOGGER.warn("Skin '{}' (type={}) was not found", normalizedQuery, skinType);
                 return new SkinFetchResult(null, null, null, null, "Skin not found");
 
             } catch (IllegalArgumentException e) {
-                EnvoysConstants.LOGGER.warn("Invalid skin '{}' (type={}, client={}): {}", query, skinType, isClient, e.getMessage());
+                EnvoysConstants.LOGGER.warn("Invalid skin '{}' (type={}): {}", query, skinType, e.getMessage());
                 return new SkinFetchResult(null, null, null, null, e.getMessage());
             } catch (Exception e) {
-                EnvoysConstants.LOGGER.error("Failed to load skin '{}' (type={}, client={})", query, skinType, isClient, e);
+                EnvoysConstants.LOGGER.error("Failed to load skin '{}' (type={})", query, skinType, e);
                 return new SkinFetchResult(null, null, null, null, "Network or download error");
             }
         }, IO_EXECUTOR);

@@ -2,15 +2,27 @@ package com.frost.envoys;
 
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.client.ClientLuaSaveTracker;
+import com.frost.envoys.config.NPCConfigManager;
+import com.frost.envoys.npc.merchant.TradeCounterStore;
 import com.frost.envoys.network.RequestRateLimiter;
+import com.frost.envoys.platform.EnvoysPlatform;
+import com.frost.envoys.platform.TestPlatform;
 import com.frost.envoys.quest.QuestIndex;
+import com.frost.envoys.util.PathManager;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public final class TestSupport {
 
@@ -19,6 +31,71 @@ public final class TestSupport {
 
     public static UUID uuid(int value) {
         return new UUID(0L, value);
+    }
+
+    public static void installEnvironment(Path tempDir) {
+        try {
+            Path gameDir = Files.createDirectories(tempDir.resolve("game"));
+            Path configDir = Files.createDirectories(tempDir.resolve("config"));
+            Path worldDir = Files.createDirectories(tempDir.resolve("world"));
+            EnvoysPlatform.init(new TestPlatform(gameDir, configDir));
+            setStaticField(PathManager.class, "serverWorldDir", worldDir);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void clearEnvironment() {
+        PathManager.clearServer();
+        EnvoysPlatform.init(null);
+        NPCInteractManager.SCRIPTS.clear();
+        QuestIndex.invalidate();
+    }
+
+    public static void resetNpcConfigMigration() {
+        setStaticField(NPCConfigManager.class, "migratedDir", null);
+    }
+
+    public static void resetTradeCounterState() {
+        try {
+            Field data = TradeCounterStore.class.getDeclaredField("DATA");
+            data.setAccessible(true);
+            ((Map<?, ?>) data.get(null)).clear();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+        setStaticField(TradeCounterStore.class, "migratedDir", null);
+    }
+
+    public static void setStaticField(Class<?> owner, String name, Object value) {
+        try {
+            Field field = owner.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(null, value);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static void shutdownExecutor(Class<?> owner, String name) {
+        try {
+            Field field = owner.getDeclaredField(name);
+            field.setAccessible(true);
+            Object value = field.get(null);
+            if (value instanceof ExecutorService executor) {
+                executor.shutdownNow();
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static <T> T await(CompletableFuture<T> future) {
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     public static void resetQuestState() {
