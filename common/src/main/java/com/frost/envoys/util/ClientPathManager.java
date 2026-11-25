@@ -10,45 +10,76 @@ import java.nio.file.Path;
 
 public class ClientPathManager {
 
-    private static String currentServerId = "singleplayer";
+    private static final String SINGLEPLAYER_ID = "singleplayer";
+
+    private static String currentServerId = SINGLEPLAYER_ID;
 
     public static void setServerId(String hostAndPort) {
-        if (hostAndPort == null || hostAndPort.isBlank()) {
-            currentServerId = "singleplayer";
-        } else {
-            currentServerId = hostAndPort.replaceAll("[^a-zA-Z0-9.-]", "_");
-        }
+        currentServerId = sanitizeServerId(hostAndPort);
     }
 
     public static String getServerId() {
-        if (Minecraft.getInstance().isLocalServer()) {
-            return "singleplayer";
+        Minecraft minecraft = Minecraft.getInstance();
+        boolean localServer = minecraft.isLocalServer();
+        ServerData data = localServer ? null : minecraft.getCurrentServer();
+        return resolveServerId(localServer, data == null ? null : data.ip, currentServerId);
+    }
+
+    static String sanitizeServerId(String hostAndPort) {
+        if (hostAndPort == null || hostAndPort.isBlank()) {
+            return SINGLEPLAYER_ID;
         }
-        ServerData data = Minecraft.getInstance().getCurrentServer();
-        if (data != null) {
-            return data.ip.replaceAll("[^a-zA-Z0-9.-]", "_");
+        return sanitizeHost(hostAndPort);
+    }
+
+    static String resolveServerId(boolean localServer, String currentServerIp, String fallback) {
+        if (localServer) {
+            return SINGLEPLAYER_ID;
         }
-        return currentServerId;
+        if (currentServerIp != null) {
+            return sanitizeHost(currentServerIp);
+        }
+        return fallback;
+    }
+
+    private static String sanitizeHost(String value) {
+        return value.replaceAll("[^a-zA-Z0-9.-]", "_");
     }
 
     public static Path getClientEnvoysDir() {
-        return EnvoysPlatform.getGameDir().resolve("envoysCache").resolve(getServerId());
+        return getClientEnvoysDir(getServerId());
+    }
+
+    public static Path getClientEnvoysDir(String serverId) {
+        return EnvoysPlatform.getGameDir().resolve("envoysCache").resolve(serverId);
     }
 
     public static Path getClientSkinCacheDir() {
-        Path p = getClientEnvoysDir().resolve("skins").resolve("cache");
+        return getClientSkinCacheDir(getServerId());
+    }
+
+    public static Path getClientSkinCacheDir(String serverId) {
+        Path p = getClientEnvoysDir(serverId).resolve("skins").resolve("cache");
         p.toFile().mkdirs();
         return p;
     }
 
     public static File getClientIndexFile() {
-        Path p = getClientEnvoysDir().resolve("skin");
+        return getClientIndexFile(getServerId());
+    }
+
+    public static File getClientIndexFile(String serverId) {
+        Path p = getClientEnvoysDir(serverId).resolve("skin");
         p.toFile().mkdirs();
         return p.resolve("index.json").toFile();
     }
 
     public static Path getClientAnimDir() {
-        Path p = getClientEnvoysDir().resolve("anim");
+        return getClientAnimDir(getServerId());
+    }
+
+    public static Path getClientAnimDir(String serverId) {
+        Path p = getClientEnvoysDir(serverId).resolve("anim");
         p.toFile().mkdirs();
         return p;
     }

@@ -28,7 +28,17 @@ public class SkinRemoteService {
 
     public record MojangSkinResult(String textureUrl, String model) {}
 
-    private static void validateUriForSSRF(URI uri) throws Exception {
+    @FunctionalInterface
+    interface HttpTransport {
+        HttpResponse<InputStream> send(HttpRequest request) throws Exception;
+    }
+
+    @FunctionalInterface
+    interface Sleeper {
+        void sleep(long millis) throws InterruptedException;
+    }
+
+    static void validateUriForSSRF(URI uri) throws Exception {
         String host = uri.getHost();
         if (host == null || host.isBlank()) {
             throw new IllegalArgumentException("Invalid host in URL!");
@@ -44,7 +54,18 @@ public class SkinRemoteService {
         }
     }
 
-    private static HttpResponse<InputStream> sendWithSSRFAndRedirects(String urlString) throws Exception {
+    static String normalizeDownloadUrl(String urlString) {
+        String url = urlString.trim();
+
+        if (url.toLowerCase().startsWith("http://textures.minecraft.net/")) {
+            url = "https://" + url.substring(7);
+        } else if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
+            url = "https://" + url;
+        }
+        return url;
+    }
+
+    static HttpResponse<InputStream> sendWithSSRFAndRedirects(HttpTransport transport, String urlString) throws Exception {
         String url = urlString.trim();
         int maxRedirects = 5;
 
@@ -65,7 +86,7 @@ public class SkinRemoteService {
                     .GET()
                     .build();
 
-            HttpResponse<InputStream> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            HttpResponse<InputStream> response = transport.send(request);
             int status = response.statusCode();
 
             // Если получен редирект (301, 302, 303, 307, 308)
@@ -87,12 +108,12 @@ public class SkinRemoteService {
         throw new RuntimeException("Maximum number of redirects exceeded (5)");
     }
 
-    private static HttpResponse<InputStream> sendWithRetries(String url) throws Exception {
+    static HttpResponse<InputStream> sendWithRetries(HttpTransport transport, String url, Sleeper sleeper) throws Exception {
         final int maxAttempts = 3;
         HttpResponse<InputStream> response = null;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            response = sendWithSSRFAndRedirects(url);
+            response = sendWithSSRFAndRedirects(transport, url);
             int status = response.statusCode();
 
             if (status != 429 && status < 500) {
@@ -101,7 +122,7 @@ public class SkinRemoteService {
 
             response.body().close();
             if (attempt < maxAttempts) {
-                Thread.sleep(400L * attempt);
+                sleeper.sleep(400L * attempt);
             }
         }
 
@@ -109,29 +130,31 @@ public class SkinRemoteService {
     }
 
     public static byte[] downloadSkinFromUrl(String urlString) throws Exception {
-        String url = urlString.trim();
+        return downloadSkinFromUrl(request -> CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream()), urlString, Thread::sleep);
+    }
 
-        if (url.toLowerCase().startsWith("http://textures.minecraft.net/")) {
-            url = "https://" + url.substring(7);
-        } else if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
-            url = "https://" + url;
-        }
+    static byte[] downloadSkinFromUrl(HttpTransport transport, String urlString, Sleeper sleeper) throws Exception {
+        String url = normalizeDownloadUrl(urlString);
 
-        HttpResponse<InputStream> response = sendWithRetries(url);
+        HttpResponse<InputStream> response = sendWithRetries(transport, url, sleeper);
 
         if (response.statusCode() != 200) {
             throw new RuntimeException("HTTP error: " + response.statusCode());
         }
 
         int maxSizeBytes = 2 * 1024 * 1024;
+        return readPngLimited(response.body(), maxSizeBytes);
+    }
+
+    static byte[] readPngLimited(InputStream in, int maxBytes) throws Exception {
         byte[] buffer = new byte[8192];
         int totalRead = 0;
 
-        try (InputStream in = response.body(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (InputStream input = in; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
+            while ((bytesRead = input.read(buffer)) != -1) {
                 totalRead += bytesRead;
-                if (totalRead > maxSizeBytes) {
+                if (totalRead > maxBytes) {
                     throw new IllegalArgumentException("Skin is too large! (max 2MB)");
                 }
                 out.write(buffer, 0, bytesRead);
@@ -148,9 +171,17 @@ public class SkinRemoteService {
     }
 
     public static Optional<MojangSkinResult> fetchMojangSkin(String username) {
+        return fetchMojangSkin(request -> CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream()), username,
+                "https://api.mojang.com/users/profiles/minecraft/",
+                "https://sessionserver.mojang.com/session/minecraft/profile/",
+                Thread::sleep);
+    }
+
+    static Optional<MojangSkinResult> fetchMojangSkin(HttpTransport transport, String username,
+            String uuidEndpointBase, String profileEndpointBase, Sleeper sleeper) {
         try {
-            String uuidUrl = "https://api.mojang.com/users/profiles/minecraft/" + username;
-            HttpResponse<InputStream> resp1 = sendWithRetries(uuidUrl);
+            String uuidUrl = uuidEndpointBase + username;
+            HttpResponse<InputStream> resp1 = sendWithRetries(transport, uuidUrl, sleeper);
 
             if (resp1.statusCode() != 200) {
                 EnvoysConstants.LOGGER.warn("Mojang profile lookup for {} returned HTTP {}", username, resp1.statusCode());
@@ -165,8 +196,8 @@ public class SkinRemoteService {
             JsonObject obj1 = JsonParser.parseString(body1).getAsJsonObject();
             String uuid = obj1.get("id").getAsString();
 
-            String profileUrl = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid;
-            HttpResponse<InputStream> resp2 = sendWithRetries(profileUrl);
+            String profileUrl = profileEndpointBase + uuid;
+            HttpResponse<InputStream> resp2 = sendWithRetries(transport, profileUrl, sleeper);
 
             if (resp2.statusCode() != 200) {
                 EnvoysConstants.LOGGER.warn("Mojang session lookup for {} returned HTTP {}", username, resp2.statusCode());
@@ -178,7 +209,16 @@ public class SkinRemoteService {
             try (InputStream in = resp2.body()) {
                 body2 = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             }
-            JsonObject obj2 = JsonParser.parseString(body2).getAsJsonObject();
+            return parseMojangSkinProfile(body2);
+        } catch (Exception e) {
+            EnvoysConstants.LOGGER.warn("Failed to load Mojang skin for {}: {}", username, e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    static Optional<MojangSkinResult> parseMojangSkinProfile(String profileJson) {
+        try {
+            JsonObject obj2 = JsonParser.parseString(profileJson).getAsJsonObject();
             JsonArray properties = obj2.getAsJsonArray("properties");
 
             for (var elem : properties) {
@@ -202,7 +242,7 @@ public class SkinRemoteService {
                 }
             }
         } catch (Exception e) {
-            EnvoysConstants.LOGGER.warn("Failed to load Mojang skin for {}: {}", username, e.getMessage());
+            EnvoysConstants.LOGGER.warn("Failed to parse Mojang skin profile: {}", e.getMessage());
         }
         return Optional.empty();
     }
