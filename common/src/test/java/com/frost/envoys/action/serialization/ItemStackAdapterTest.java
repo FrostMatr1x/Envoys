@@ -6,6 +6,7 @@ import com.frost.envoys.platform.TestAttachments;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.stream.JsonReader;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,9 +61,11 @@ class ItemStackAdapterTest {
     }
 
     @Test
-    void emptyJsonInputReadsAsNull() {
-        assertNull(gson.fromJson("", ItemStack.class));
-        assertNull(gson.fromJson("   ", ItemStack.class));
+    void rawAdapterReadsJsonNullAsEmptyStack() throws IOException {
+        ItemStackAdapter adapter = new ItemStackAdapter();
+        JsonReader reader = new JsonReader(new StringReader("null"));
+
+        assertEquals(ItemStack.EMPTY, adapter.read(reader));
     }
 
     @Test

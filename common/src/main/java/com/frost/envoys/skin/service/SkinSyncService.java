@@ -21,10 +21,15 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 public class SkinSyncService {
 
-    private static final ExecutorService IO_EXECUTOR = Executors.newFixedThreadPool(4);
+    private static final ExecutorService IO_EXECUTOR = Executors.newFixedThreadPool(4, r -> {
+        Thread thread = new Thread(r, "Envoys-Skin-IO");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private static final long MAX_SKIN_BYTES = 2L * 1024 * 1024;
 
@@ -95,14 +100,20 @@ public class SkinSyncService {
     }
 
     public static CompletableFuture<SkinFetchResult> loadSkinAsync(String query, String skinType, boolean isClient) {
-        Storage storage = isClient
-                ? resolveStorage(true, ClientPathManager.getServerId())
-                : resolveStorage(false, null);
-        return loadSkinAsync(query, skinType, storage, DEFAULT_GATEWAY);
+        return loadSkinAsync(query, skinType,
+                () -> isClient
+                        ? resolveStorage(true, ClientPathManager.getServerId())
+                        : resolveStorage(false, null),
+                DEFAULT_GATEWAY);
     }
 
     static CompletableFuture<SkinFetchResult> loadSkinAsync(String query, String skinType,
             Storage storage, RemoteGateway gateway) {
+        return loadSkinAsync(query, skinType, () -> storage, gateway);
+    }
+
+    private static CompletableFuture<SkinFetchResult> loadSkinAsync(String query, String skinType,
+            Supplier<Storage> storageSupplier, RemoteGateway gateway) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (query == null || query.isBlank()) {
@@ -110,6 +121,7 @@ public class SkinSyncService {
                     return new SkinFetchResult(null, null, null, null, "Empty request");
                 }
 
+                Storage storage = storageSupplier.get();
                 Path cacheDir = storage.cacheDir();
                 File indexFile = storage.indexFile();
 

@@ -3,7 +3,6 @@ package com.frost.envoys.skin.service;
 import com.frost.envoys.TestSupport;
 import com.frost.envoys.skin.model.SkinIndexData;
 import com.frost.envoys.skin.model.SkinIndexEntry;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,11 +38,6 @@ class SkinSyncServiceTest {
     @AfterEach
     void tearDown() {
         TestSupport.clearEnvironment();
-    }
-
-    @AfterAll
-    static void stopIoExecutor() {
-        TestSupport.shutdownExecutor(SkinSyncService.class, "IO_EXECUTOR");
     }
 
     @Test
