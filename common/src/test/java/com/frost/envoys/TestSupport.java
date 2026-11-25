@@ -3,6 +3,7 @@ package com.frost.envoys;
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.client.ClientLuaSaveTracker;
 import com.frost.envoys.config.NPCConfigManager;
+import com.frost.envoys.lua.LuaEngineManager;
 import com.frost.envoys.npc.merchant.TradeCounterStore;
 import com.frost.envoys.network.RequestRateLimiter;
 import com.frost.envoys.platform.EnvoysPlatform;
@@ -122,6 +123,28 @@ public final class TestSupport {
             Field pending = ClientLuaSaveTracker.class.getDeclaredField("PENDING");
             pending.setAccessible(true);
             ((Map<?, ?>) pending.get(null)).clear();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static void resetLuaEngines() {
+        LuaEngineManager.shutdownAll();
+        clearStaticCollection(LuaEngineManager.class, "ENGINES");
+        clearStaticCollection(LuaEngineManager.class, "ABSENT");
+        clearStaticCollection(LuaEngineManager.class, "STOPPED");
+    }
+
+    private static void clearStaticCollection(Class<?> owner, String name) {
+        try {
+            Field field = owner.getDeclaredField(name);
+            field.setAccessible(true);
+            Object value = field.get(null);
+            if (value instanceof Map<?, ?> map) {
+                map.clear();
+            } else if (value instanceof java.util.Collection<?> collection) {
+                collection.clear();
+            }
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
