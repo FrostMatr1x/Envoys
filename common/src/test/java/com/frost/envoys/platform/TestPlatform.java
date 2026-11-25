@@ -9,10 +9,16 @@ public class TestPlatform implements Platform {
     private final Path gameDir;
     private final Path configDir;
     private final ConfigData config = new ConfigData();
+    private final AttachmentAccess attachments;
 
     public TestPlatform(Path gameDir, Path configDir) {
+        this(gameDir, configDir, null);
+    }
+
+    public TestPlatform(Path gameDir, Path configDir, AttachmentAccess attachments) {
         this.gameDir = gameDir;
         this.configDir = configDir;
+        this.attachments = attachments;
     }
 
     @Override
@@ -47,7 +53,7 @@ public class TestPlatform implements Platform {
 
     @Override
     public AttachmentAccess getAttachments() {
-        return null;
+        return attachments;
     }
 
     @Override

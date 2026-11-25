@@ -6,6 +6,7 @@ import com.frost.envoys.config.NPCConfigManager;
 import com.frost.envoys.lua.LuaEngineManager;
 import com.frost.envoys.npc.merchant.TradeCounterStore;
 import com.frost.envoys.network.RequestRateLimiter;
+import com.frost.envoys.platform.AttachmentAccess;
 import com.frost.envoys.platform.EnvoysPlatform;
 import com.frost.envoys.platform.TestPlatform;
 import com.frost.envoys.quest.QuestIndex;
@@ -35,11 +36,15 @@ public final class TestSupport {
     }
 
     public static void installEnvironment(Path tempDir) {
+        installEnvironment(tempDir, null);
+    }
+
+    public static void installEnvironment(Path tempDir, AttachmentAccess attachments) {
         try {
             Path gameDir = Files.createDirectories(tempDir.resolve("game"));
             Path configDir = Files.createDirectories(tempDir.resolve("config"));
             Path worldDir = Files.createDirectories(tempDir.resolve("world"));
-            EnvoysPlatform.init(new TestPlatform(gameDir, configDir));
+            EnvoysPlatform.init(new TestPlatform(gameDir, configDir, attachments));
             setStaticField(PathManager.class, "serverWorldDir", worldDir);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -76,6 +81,23 @@ public final class TestSupport {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public static void setInstanceField(Object target, Class<?> owner, String name, Object value) {
+        Class<?> type = owner;
+        while (type != null) {
+            try {
+                Field field = type.getDeclaredField(name);
+                field.setAccessible(true);
+                field.set(target, value);
+                return;
+            } catch (NoSuchFieldException e) {
+                type = type.getSuperclass();
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        throw new IllegalStateException("Field " + name + " not found on " + owner.getName());
     }
 
     public static void shutdownExecutor(Class<?> owner, String name) {
