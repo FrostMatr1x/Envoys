@@ -1,9 +1,9 @@
-package com.frost.envoys.gui.screen;
+package com.frost.envoys.oldGUI.screen;
 
-import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.action.event.EventType;
 import com.frost.envoys.client.gui.script.ActionGraph;
 import com.frost.envoys.client.gui.script.EventScript;
+import com.frost.envoys.gui.graph.GraphEditorScreen;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,7 +16,6 @@ import net.minecraft.network.chat.Component;
 public class EventConfigScreen extends Screen {
 
     private final Screen parentScreen;
-    private final NPCInteractManager manager;
     private final EventType type;
     private final EventScript script;
     private final boolean isCreativeTuner;
@@ -29,11 +28,10 @@ public class EventConfigScreen extends Screen {
     private boolean enabled;
     private String arg;
 
-    public EventConfigScreen(Screen parentScreen, NPCInteractManager manager, EventType type, EventScript script,
+    public EventConfigScreen(Screen parentScreen, EventType type, EventScript script,
                              boolean isCreativeTuner, Runnable onModified) {
         super(Component.translatable("envoys.gui.event_config.title"));
         this.parentScreen = parentScreen;
-        this.manager = manager;
         this.type = type;
         this.script = script;
         this.isCreativeTuner = isCreativeTuner;
@@ -67,8 +65,7 @@ public class EventConfigScreen extends Screen {
         }
 
         this.actionsButton = Button.builder(actionLabel(), button ->
-                Minecraft.getInstance().setScreen(new NPCScriptScreen(EventConfigScreen.this, this.manager,
-                        this.script.graphOrEmpty(this.type.jsonKey()), this.onModified)))
+                Minecraft.getInstance().setScreen(new GraphEditorScreen(EventConfigScreen.this)))
                 .bounds(centerX - 100, this.height / 2 + 20, 200, 20).build();
         this.addRenderableWidget(this.actionsButton);
 

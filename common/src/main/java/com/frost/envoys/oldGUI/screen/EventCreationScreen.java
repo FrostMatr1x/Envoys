@@ -1,4 +1,4 @@
-package com.frost.envoys.gui.screen;
+package com.frost.envoys.oldGUI.screen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +16,7 @@ import com.frost.envoys.client.gui.script.ScenarioCompileException;
 import com.frost.envoys.client.gui.script.ScenarioCompiler;
 import com.frost.envoys.client.gui.script.ScenarioDecompiler;
 import com.frost.envoys.client.gui.script.ScriptProject;
+import com.frost.envoys.gui.screen.QuestManagementScreen;
 import com.frost.envoys.lua.LuaSandbox;
 import com.frost.envoys.network.payload.NpcLuaScriptResponsePayload;
 
@@ -313,7 +314,7 @@ public class EventCreationScreen extends Screen {
 
             this.configureButton = Button.builder(Component.translatable("envoys.gui.common.configure"), button ->
                     Minecraft.getInstance().setScreen(new EventConfigScreen(EventCreationScreen.this,
-                            EventCreationScreen.this.manager, this.type, this.script,
+                            this.type, this.script,
                             EventCreationScreen.this.isCreativeTuner,
                             () -> EventCreationScreen.this.markModified(this.type.jsonKey()))))
                     .bounds(0, 0, 75, 20).build();

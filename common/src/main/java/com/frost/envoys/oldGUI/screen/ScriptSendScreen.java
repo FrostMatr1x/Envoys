@@ -1,4 +1,4 @@
-package com.frost.envoys.gui.screen;
+package com.frost.envoys.oldGUI.screen;
 
 import com.frost.envoys.network.Network;
 

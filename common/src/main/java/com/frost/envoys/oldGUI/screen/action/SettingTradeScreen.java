@@ -1,4 +1,4 @@
-package com.frost.envoys.gui.screen.action;
+package com.frost.envoys.oldGUI.screen.action;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.frost.envoys.action.model.ActionTrade;
+import com.frost.envoys.gui.screen.action.ItemSelectorScreen;
 import com.frost.envoys.npc.NPCTrade;
 
 public class SettingTradeScreen extends Screen {

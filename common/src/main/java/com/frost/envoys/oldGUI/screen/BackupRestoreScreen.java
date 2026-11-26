@@ -1,4 +1,4 @@
-package com.frost.envoys.gui.screen;
+package com.frost.envoys.oldGUI.screen;
 
 import com.frost.envoys.action.NPCInteractManager;
 import com.frost.envoys.client.gui.backup.ClientBackupManager;

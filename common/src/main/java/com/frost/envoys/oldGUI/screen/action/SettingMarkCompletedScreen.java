@@ -1,7 +1,7 @@
-package com.frost.envoys.gui.screen.action;
+package com.frost.envoys.oldGUI.screen.action;
 
 import com.frost.envoys.action.NPCInteractManager;
-import com.frost.envoys.action.model.ActionQuestGive;
+import com.frost.envoys.action.model.ActionQuestMarkCompleted;
 import com.frost.envoys.gui.screen.QuestPickerScreen;
 
 import net.minecraft.client.Minecraft;
@@ -12,10 +12,10 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-public class SettingQuestGiveScreen extends Screen {
+public class SettingMarkCompletedScreen extends Screen {
 
     private final Screen parentScreen;
-    private final ActionQuestGive action;
+    private final ActionQuestMarkCompleted action;
     private final NPCInteractManager manager;
 
     private EditBox questTargetEditBox;
@@ -24,8 +24,8 @@ public class SettingQuestGiveScreen extends Screen {
     private String questTarget = "";
     private String nextActionId = "";
 
-    public SettingQuestGiveScreen(Screen parentScreen, ActionQuestGive action, NPCInteractManager manager) {
-        super(Component.translatable("envoys.setting.quest_give.title"));
+    public SettingMarkCompletedScreen(Screen parentScreen, ActionQuestMarkCompleted action, NPCInteractManager manager) {
+        super(Component.translatable("envoys.setting.mark_completed.title"));
         this.parentScreen = parentScreen;
         this.action = action;
         this.manager = manager;
@@ -38,17 +38,17 @@ public class SettingQuestGiveScreen extends Screen {
         super.init();
 
         int centerX = this.width / 2;
-        int startY = this.height / 2 - 45;
+        int startY = this.height / 2 - 40;
 
         this.questTargetEditBox = new EditBox(this.font, centerX + 10, startY - 2, 80, 20, Component.literal("questTarget"));
         this.questTargetEditBox.setMaxLength(128);
         this.questTargetEditBox.setValue(this.questTarget);
         this.questTargetEditBox.setResponder(text -> this.questTarget = text);
-        this.questTargetEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.quest_give.target_tooltip")));
+        this.questTargetEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.mark_completed.target_tooltip")));
         this.addRenderableWidget(this.questTargetEditBox);
 
         this.addRenderableWidget(Button.builder(
-            Component.translatable("envoys.setting.quest_give.select"),
+            Component.translatable("envoys.setting.mark_completed.select"),
             button -> Minecraft.getInstance().setScreen(new QuestPickerScreen(this, this.manager, selected -> {
                 this.questTarget = selected;
                 if (this.questTargetEditBox != null) {
@@ -60,7 +60,7 @@ public class SettingQuestGiveScreen extends Screen {
         this.nextActionIdEditBox = new EditBox(this.font, centerX + 10, startY + 28, 200, 20, Component.literal("nextActionId"));
         this.nextActionIdEditBox.setValue(this.nextActionId);
         this.nextActionIdEditBox.setResponder(text -> this.nextActionId = text);
-        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.quest_give.next_tooltip")));
+        this.nextActionIdEditBox.setTooltip(Tooltip.create(Component.translatable("envoys.setting.mark_completed.next_tooltip")));
         this.addRenderableWidget(this.nextActionIdEditBox);
 
         this.addRenderableWidget(Button.builder(
@@ -86,11 +86,11 @@ public class SettingQuestGiveScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
-        int startY = this.height / 2 - 45;
+        int startY = this.height / 2 - 40;
 
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.quest_give.quest_target"), centerX - 160, startY, 0xA0A0A0);
-        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.quest_give.next_action"), centerX - 160, startY + 30, 0xA0A0A0);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.mark_completed.quest_target"), centerX - 160, startY, 0xFFFFFF);
+        guiGraphics.drawString(this.font, Component.translatable("envoys.setting.mark_completed.next_action"), centerX - 160, startY + 30, 0xFFFFFF);
     }
 
     @Override

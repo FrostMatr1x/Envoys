@@ -1,4 +1,4 @@
-package com.frost.envoys.gui.screen;
+package com.frost.envoys.oldGUI.screen;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,19 +24,19 @@ import com.frost.envoys.client.gui.script.ActionGraph;
 import com.frost.envoys.client.gui.script.GraphActionBridge;
 import com.frost.envoys.client.gui.script.GraphNode;
 import com.frost.envoys.client.gui.script.ScriptNodeTypes;
-import com.frost.envoys.gui.screen.action.SettingAdvanceStepScreen;
-import com.frost.envoys.gui.screen.action.SettingQuestCheckScreen;
-import com.frost.envoys.gui.screen.action.SettingChatScreen;
-import com.frost.envoys.gui.screen.action.SettingCommandScreen;
-import com.frost.envoys.gui.screen.action.SettingDelayScreen;
-import com.frost.envoys.gui.screen.action.SettingLookAtScreen;
-import com.frost.envoys.gui.screen.action.SettingMarkCompletedScreen;
-import com.frost.envoys.gui.screen.action.SettingMoveScreen;
-import com.frost.envoys.gui.screen.action.SettingLoadPointScreen;
-import com.frost.envoys.gui.screen.action.SettingQuestGiveScreen;
-import com.frost.envoys.gui.screen.action.SettingSavePointScreen;
-import com.frost.envoys.gui.screen.action.SettingStartScreen;
-import com.frost.envoys.gui.screen.action.SettingTradeScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingAdvanceStepScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingQuestCheckScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingChatScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingCommandScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingDelayScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingLookAtScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingMarkCompletedScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingMoveScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingLoadPointScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingQuestGiveScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingSavePointScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingStartScreen;
+import com.frost.envoys.oldGUI.screen.action.SettingTradeScreen;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

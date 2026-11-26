@@ -1,4 +1,4 @@
-package com.frost.envoys.gui.screen.action;
+package com.frost.envoys.oldGUI.screen.action;
 
 import java.util.ArrayList;
 import java.util.List;
